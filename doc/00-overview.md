@@ -6,9 +6,9 @@ Satori 是一个由 LeanCloud 维护的监控系统。
 后续的使用过程中因为自己的需求开始做修改，形成的现在的这样的结构。
 
 # 截图
-![Nodes](images/nodes.png)
-![Events](images/events.png)
-![BitBar](images/bitbar.png)
+![Nodes](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/nodes.png)
+![Events](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/events.png)
+![BitBar](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/bitbar.png)
 
 # 怎么安装？
 
@@ -133,7 +133,7 @@ git push  # 然后就生效了
 ```
 
 # 架构
-![Architecture](images/arch.png)
+![Architecture](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/arch.png)
 
 # 与 Open-Falcon 的区别
 
