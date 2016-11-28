@@ -1,0 +1,107 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
+from gevent import monkey
+monkey.patch_all()
+
+# -- stdlib --
+import json
+import socket
+import sys
+import time
+
+# -- third party --
+from gevent.pool import Pool
+import requests
+
+# -- own --
+
+# -- code --
+endpoint = socket.gethostname()
+ts = int(time.time())
+
+requested = json.loads(sys.stdin.read())
+
+[{
+    "_metric": "tsdb.query",
+    "_step": 60,
+    "name": "leanengine.log_collect_check_point",
+    "server": "tsdb2:4242",
+    "endpoint": "foo",  # optional
+    "expr": "len(v[0]['dps'])",  # optional
+
+    # rest args are applied to tsdb query
+    "start": "5m-ago",
+    "m": r"sum:cloud.log.rpm\{host=foo\}",
+}]
+
+[{
+    "_metric": "tsdb.query",
+    "_step": 60,
+    "name": "leanengine.log_collect_check_point",
+    "server": "tsdb2:4242",
+    "endpoint": "foo",
+    "start": "5m-ago",
+    "m": "sum:cloud.log.rpm{host=docker29}"
+}]
+
+pool = Pool(20)
+
+EXPR_WHITELIST = [
+    "list(sorted(v[0]['dps'].items()))[-1][1]",
+    "len(v[0]['dps'])",
+]
+
+
+def fetch(req):
+    assert req["_metric"] == "tsdb.query"
+    step = req["_step"]
+    name = req["name"]
+    server = req["server"]
+    ep = req.get("endpoint", endpoint)
+
+    try:
+        req1 = dict(req)
+        [req1.pop(i, '') for i in ["_metric", "_step", "name", "endpoint", "expr"]]
+
+        rst = requests.get("http://%s/api/query" % server, params=req1).json()
+
+        if 'error' in rst:
+            return None
+
+        try:
+            expr = req.get('expr', EXPR_WHITELIST[0])
+            if expr in EXPR_WHITELIST:
+                rst = eval(expr, {'v': rst})
+            else:
+                rst = -403
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            rst = -500
+
+        return {
+            "metric": "tsdb.query.%s" % name,
+            "endpoint": ep,
+            "timestamp": ts,
+            "step": step,
+            "tags": {"server": server},
+            "value": rst,
+        }
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+metrics = []
+
+for r in pool.imap_unordered(fetch, requested):
+    r and metrics.append(r)
+
+print json.dumps(metrics)
