@@ -1,0 +1,15 @@
+teams:
+  th11:
+    - satori
+    - koishi
+
+users:
+  satori:
+    name: "古明地觉"
+    email: satori@gensokyo.jp
+    threshold: 1
+
+  koishi:
+    name: "古明地恋"
+    email: koishi@gensokyo.jp
+    phone: 18911674224

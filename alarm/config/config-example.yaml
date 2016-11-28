@@ -1,0 +1,6 @@
+host: 0.0.0.0
+port: 6060
+redis: 'redis://localhost:6379/0'
+sentry: ''
+# rules: '/path/to/config/repo'
+rules: '/Users/Proton/dev/satori-conf'

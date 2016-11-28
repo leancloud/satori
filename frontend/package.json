@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "fastclick": "^1.0.6",
+    "font-awesome": "^4.7.0",
+    "jquery": "^3.1.1",
+    "lodash": "^4.16.5",
+    "moment": "^2.15.1",
+    "vue": "^2.0.3",
+    "whatwg-fetch": "^2.0.1"
+  }
+}

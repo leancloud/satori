@@ -1,0 +1,21 @@
+digraph Architecture {
+  {
+    rank=same;
+    "用户" [shape=doublecircle];
+    "机器" [shape=doublecircle];
+  }
+
+  "规则仓库" [shape=rect];
+  InfluxDB [shape=cylinder];
+
+  "用户" -> "规则仓库" [label="修改"];
+  "规则仓库" -> {riemann alarm} [label="触发更新"];
+  "用户" -> alarm [label="查看报警"];
+  "用户" -> Grafana [label="查看指标"];
+  Grafana -> InfluxDB [label="请求数据"];
+  "机器" -> agent -> transfer -> {InfluxDB riemann} [label="监控指标"];
+  riemann -> alarm [label="生成报警"];
+  alarm -> {SMS Mail "微信"};
+  riemann -> master -> agent [label="下发插件参数"];
+  agent -> master [label="心跳"];
+}

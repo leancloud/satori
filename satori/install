@@ -1,0 +1,390 @@
+#!/bin/bash
+
+CONF_DIR="/etc/satori"
+DOMAIN="satori.example.com"
+INTERNAL_DOMAIN="meh"
+RULES_REPO="/tmp/rules-repo"
+RULES_REPO_SSH="user@domain.com:repo"
+
+set -e
+
+if [ "$0" != "./install" ]; then
+    echo Please change working dir to satori and run ./install
+    exit 1
+fi
+
+
+function prepare-docker-images
+{
+
+    local USE_MIRROR=""
+    if whiptail --title Satori --yesno "Do you want to pull docker images from daocloud.io?\nThis is a mirror of Docker things in mainland China." 9 60; then
+        USE_MIRROR="daocloud.io/"
+    fi
+    echo :: Preparing docker images
+    echo :: - Copy alarm to build dir
+    rm -rf images/alarm/.build
+    cp -r ../alarm images/alarm/.build
+
+    echo :: - Copy frontend to build dir
+    rm -rf images/nginx/.build
+    mkdir -p images/nginx/.build
+    cp -r ../frontend images/nginx/.build
+
+    echo :: - Build golang executables
+    sudo docker run -it --rm \
+        -v /tmp/go-github:/go/src/github.com \
+        -v $PWD/..:/go/src/github.com/leancloud/satori \
+        ${USE_MIRROR}golang:wheezy \
+        /bin/bash -c '
+        set -e
+        for c in agent transfer master riemann-reloader; do
+            echo :: - - Building $c...
+            cd /go/src/github.com/leancloud/satori/$c
+            go build &
+        done
+        wait
+        for c in agent transfer master riemann-reloader; do
+            cd /go/src/github.com/leancloud/satori/$c
+            mv $c /go/src/github.com
+        done'
+
+    mkdir -p ./images/{transfer,master,riemann}/.build
+    cp /tmp/go-github/transfer images/transfer/.build
+    cp /tmp/go-github/master images/master/.build
+    cp /tmp/go-github/riemann-reloader images/riemann/.build
+    cp /tmp/go-github/agent ../satori-agent
+
+    echo :: - Generate docker-compose.yml
+    cat <<EOF > docker-compose.yml
+version: '2'
+services:
+  master:
+    build: images/master
+    restart: always
+    links: [redis]
+    volumes:
+      - "$CONF_DIR:/conf"
+    ports:
+      - "6040:6040"
+      - "6041:6041"
+
+  transfer:
+    build: images/transfer
+    restart: always
+    links: [influxdb, riemann]
+    volumes:
+      - "$CONF_DIR:/conf"
+    ports:
+      - "8433:8433"
+
+  alarm:
+    build: images/alarm
+    restart: always
+    links: [redis]
+    volumes:
+      - "$RULES_REPO:/satori-conf"
+      - "$CONF_DIR:/conf"
+
+  influxdb:
+    build: images/influxdb
+    restart: always
+    volumes:
+      - "influxdb:/var/lib/influxdb"
+
+  grafana:
+    build: images/grafana
+    restart: always
+    volumes:
+      - "$CONF_DIR:/conf"
+      - "grafana:/var/lib/grafana"
+
+  redis:
+    build: images/redis
+    restart: always
+    volumes:
+      - "redis:/data"
+
+  nginx:
+    build: images/nginx
+    links: [influxdb, grafana, alarm, master]
+    restart: always
+    volumes:
+      - "$CONF_DIR:/conf"
+      - "/etc/letsencrypt:/ssl"
+      - "$RULES_REPO:/satori-conf"
+    ports:
+      - "80:80"
+      - "443:443"
+
+  riemann:
+    build: images/riemann
+    restart: always
+    volumes:
+      - "$RULES_REPO:/satori-conf"
+    ports:
+      - "5555:5555"
+
+volumes:
+  influxdb: {}
+  grafana: {}
+  redis: {}
+EOF
+    echo :: - Generating Dockerfiles
+
+    for f in images/*/Dockerfile.tpl; do
+        sed "s|USE_MIRROR|$USE_MIRROR|g" $f > $(dirname $f)/Dockerfile
+    done
+
+    echo :: - Build docker images
+    sudo $(which docker-compose) build
+}
+
+
+function prepare-rules-repo
+{
+    [ -d "$RULES_REPO" ] && return
+
+    echo :: Preparing rules repo $RULES_REPO
+    cp -rL ../satori-rules $RULES_REPO
+    pushd $RULES_REPO >/dev/null
+    rm -rf doc/images
+    git init
+    git add -A :/
+    git commit -m 'Initial Satori rules repo'
+    popd >/dev/null
+}
+
+
+function setup-configs
+{
+    [ -d "$CONF_DIR" ] && return
+
+    echo :: Setup configs in $CONF_DIR
+    sudo cp -r conf $CONF_DIR
+    sudo sed -i "s|SERVER_NAME_TO_REPLACE|$DOMAIN|g" $CONF_DIR/nginx/nginx.conf
+}
+
+
+function setup-frontend-vars
+{
+    [ -f "$CONF_DIR/frontend-vars.js" ] && return
+
+    echo :: Setup frontend
+    cat <<EOF | sudo bash -c "cat > $CONF_DIR/frontend-vars.js"
+var SatoriVars = {
+    domain: "$DOMAIN",
+    rulesRepo: "$RULES_REPO_SSH",
+};
+EOF
+}
+
+function generate-basic-auth
+{
+    # [ -f "$CONF_DIR/nginx/basic_auth" ] && return
+    BASIC_AUTH_PASSWD=$(cat /proc/sys/kernel/random/uuid)
+
+    echo :: Generate basic_auth file for nginx...
+    sudo htpasswd -cb $CONF_DIR/nginx/basic_auth satori $BASIC_AUTH_PASSWD
+}
+
+function setup-bitbar-plugin
+{
+    [ -z "$BASIC_AUTH_PASSWD" ] && return
+
+    echo ":: Setup your BitBar plugin (which resides in your rules repo ${RULES_REPO})"
+    sed "s|YOUR_URL|satori:$BASIC_AUTH_PASSWD@$DOMAIN|g" ../alarm/bitbar-plugin.py > $RULES_REPO/bitbar-plugin.py
+    pushd $RULES_REPO >/dev/null
+    chmod +x bitbar-plugin.py
+    git add bitbar-plugin.py
+    git commit -a -m 'Update bitbar plugin'
+    popd >/dev/null
+}
+
+function generate-agent-config
+{
+    echo :: Generate agent config ../agent-cfg.json
+    pushd .. >/dev/null
+    cp agent/cfg.example.json agent-cfg.json
+    sed -i "s|INTERNAL_DOMAIN|$INTERNAL_DOMAIN|g" agent-cfg.json
+    sed -i "s|DOMAIN|$DOMAIN|g" agent-cfg.json
+    sed -i "s|PASSWD|$BASIC_AUTH_PASSWD|g" agent-cfg.json
+    popd >/dev/null
+}
+
+function detect-accidental-run
+{
+    if [ -f "$CONF_DIR/.configured" ]; then
+        whiptail --title Satori --msgbox "Satori is already configured.\nIf you insist, please remove /etc/satori and try again." 8 60
+        exit 1
+    fi
+
+    if [ "$(whoami)" == "root" ]; then
+        if ! whiptail --title Satori --yesno "You are running install as root.\nThis is highly discouraged since rules repo should have R/W access for regular user.\nContinue with root?" 10 60; then
+            exit 1
+        fi
+        if ! whiptail --title Satori --yesno "Please double check.\nYou are configuring as root.\nARE YOU SURE?" 9 60; then
+            exit 1
+        fi
+    fi
+}
+
+function ensure-docker
+{
+    if ! which docker > /dev/null 2>&1; then
+        if whiptail --title Satori --yesno "It seems that Docker is unavailable.\nDo you want to install Docker?" 8 60; then
+            if whiptail --title Satori --yesno "Do you want to install Docker from daocloud.io?\nThis is a mirror of Docker things in mainland China." 10 60; then
+                curl -sSL https://get.daocloud.io/docker | sh
+            else
+                curl -sSL https://get.docker.com/ | sh
+            fi
+        else
+            echo '!! Please install Docker.'
+        fi
+        exit 1
+    fi
+}
+
+function ensure-docker-compose
+{
+    local COMPOSE_MIRROR=github.com
+    if ! which docker-compose > /dev/null 2>&1; then
+        if whiptail --title Satori --yesno "It seems that Docker Compose is unavailable.\nDo you want to install Docker Compose?" 8 60; then
+            if whiptail --title Satori --yesno "Do you want to install Docker Compose from daocloud.io?\nThis is a mirror of Docker things in mainland China." 9 60; then
+                COMPOSE_MIRROR="get.daocloud.io"
+            fi
+            curl -L "https://$COMPOSE_MIRROR/docker/compose/releases/download/1.8.1/docker-compose-$(uname -s)-$(uname -m)" > /tmp/docker-compose
+            sudo cp /tmp/docker-compose /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            echo ':: Docker Compose installed to /usr/local/bin/docker-compose'
+        else
+            echo '!! Please install Docker Compose.'
+        fi
+        exit 1
+    fi
+}
+
+function ensure-htpasswd
+{
+    if ! which htpasswd > /dev/null 2>&1; then
+        if whiptail --title Satori --yesno "It seems that htpasswd is unavaliable.\nDo you want to install relevant packages?" 8 60; then
+            if which apt-get > /dev/null 2>&1; then
+                sudo apt-get -y install apache2-utils
+                echo ':: apache2-utils installed'
+            elif which yum > /dev/null 2>&1; then
+                sudo yum install -y httpd-tools
+                echo ':: httpd-tools installed'
+            else
+                echo "!! Don't know how to install htpasswd. Sorry."
+                exit 1
+            fi
+        else
+            echo '!! Installer requires htpasswd to function.'
+        fi
+        exit 1
+    fi
+}
+
+function save-parameters
+{
+    sudo touch $CONF_DIR/.configured
+    sudo chmod 0666 $CONF_DIR/.configured
+    cat <<EOF > $CONF_DIR/.configured
+DOMAIN="$DOMAIN"
+INTERNAL_DOMAIN="$INTERNAL_DOMAIN"
+RULES_REPO="$RULES_REPO"
+RULES_REPO_SSH="$RULES_REPO_SSH"
+EOF
+    sudo chmod 0644 $CONF_DIR/.configured
+}
+
+function go-live
+{
+    sudo $(which docker-compose) up -d
+}
+
+function ask-for-variables
+{
+    DOMAIN=""
+    whiptail --title Satori --inputbox "What's your public accessable domain name for this machine?\nThis domain is used to setup nginx configurations." 10 70 $(hostname -f) 2>/tmp/satori-setting
+    DOMAIN=$(cat /tmp/satori-setting)
+    if [ -z "$DOMAIN" ]; then
+        echo '!! Aborting.'
+        exit 1
+    fi
+
+    INTERNAL_DOMAIN=""
+    whiptail --title Satori --inputbox "What's your internal accessable domain name or IP address for this machine?\nThis is used for transferring metrics by satori-agent.\nUse default if unsure." 10 70 "$DOMAIN" 2>/tmp/satori-setting
+    INTERNAL_DOMAIN=$(cat /tmp/satori-setting)
+    if [ -z "$INTERNAL_DOMAIN" ]; then
+        echo '!! Aborting.'
+        exit 1
+    fi
+
+    RULES_REPO=""
+    whiptail --title Satori --inputbox "Where do you want to put your rules repo?\nRules repo is a git repository where your rules and plugins stored, it should be easily accessable by git clone.\nUse default if unsure." 10 70 "$HOME/satori-rules" 2>/tmp/satori-setting
+    RULES_REPO=$(cat /tmp/satori-setting)
+    if [ -z "$RULES_REPO" ]; then
+        echo '!! Aborting.'
+        exit 1
+    fi
+
+    RULES_REPO_SSH=""
+    whiptail --title Satori --inputbox "What's your public git-clonable address for your rules repo?\nThis value will show on frontend landing page." 10 70 "$(whoami)@$DOMAIN:$RULES_REPO" 2>/tmp/satori-setting
+    RULES_REPO_SSH=$(cat /tmp/satori-setting)
+    if [ -z "$RULES_REPO_SSH" ]; then
+        echo '!! Aborting.'
+        exit 1
+    fi
+}
+
+function init-influxdb
+{
+    echo ":: Create initial InfluxDB database"
+    sudo docker exec $(docker ps | grep satori_influxdb | awk '{print $1}') influx -execute 'CREATE DATABASE influx;'
+}
+
+function finish
+{
+    echo
+    echo ":: Satori is installed."
+    echo ":: Config: $CONF_DIR"
+    echo ":: Rules repo: $RULES_REPO ($RULES_REPO_SSH)"
+    echo ":: When upgrading, please run:"
+    echo "     $ git pull"
+    echo "     $ ./install rebuild"
+    echo "     $ sudo docker-compose up -d"
+    echo
+    echo ":: When restarting components, please run:"
+    echo "     $ sudo docker-compose restart <component>"
+    echo "     $ sudo docker-compose restart alarm"
+    echo "     $ sudo docker-compose restart transfer"
+    echo "     $ sudo docker-compose restart ..."
+}
+
+ensure-docker
+ensure-docker-compose
+ensure-htpasswd
+
+if [ "$1" == "rebuild" ]; then
+    if ! . $CONF_DIR/.configured 2>/dev/null; then
+        echo :: Failed to load parameters, you should install first.
+        exit 1
+    fi
+    prepare-docker-images
+else
+    detect-accidental-run
+    ask-for-variables
+    prepare-rules-repo
+    setup-configs
+    prepare-docker-images
+    generate-basic-auth
+    setup-bitbar-plugin
+    setup-frontend-vars
+    generate-agent-config
+    save-parameters
+    go-live
+    sleep 5
+    init-influxdb
+    finish
+fi

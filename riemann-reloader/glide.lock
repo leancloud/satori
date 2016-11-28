@@ -1,0 +1,16 @@
+hash: 4161f209d87fe0238dd0e44aaf26e9f5c28f6bca31fc6f1badceac6973e56240
+updated: 2016-11-04T07:27:37.402177733Z
+imports:
+- name: github.com/amir/raidman
+  version: c74861fe6a7bb8ede0a010ce4485bdbb4fc4c985
+  subpackages:
+  - proto
+- name: github.com/golang/protobuf
+  version: 2bc9827a78f95c6665b5fe0abd1fd66b496ae2d8
+  subpackages:
+  - proto
+- name: golang.org/x/net
+  version: 569280fa63be4e201b975e5411e30a92178f0118
+  subpackages:
+  - proxy
+testImports: []

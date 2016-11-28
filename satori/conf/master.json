@@ -1,0 +1,6 @@
+{
+    "debug": true,
+    "redis": "redis://redis:6379/0",
+    "listen": ":6040",
+    "http": ":6041"
+}

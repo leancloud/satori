@@ -1,0 +1,36 @@
+{
+    "debug": true,
+    "minStep": 30,
+    "rpc": {
+        "enabled": true,
+        "listen": "0.0.0.0:8433"
+    },
+    "tsdb": {
+        "enabled": false,
+        "batch": 200,
+        "connTimeout": 1000,
+        "callTimeout": 5000,
+        "maxConns": 32,
+        "maxIdle": 32,
+        "retry": 3,
+        "address": "tsdb:8088"
+    },
+    "influxdb": {
+        "enabled": true,
+        "batch": 50,
+        "connTimeout": 1000,
+        "callTimeout": 5000,
+        "maxConns": 32,
+        "maxIdle": 32,
+        "addr": "http://root@influxdb:8086/influxdb"
+    },
+    "riemann": {
+        "enabled": true,
+        "batch": 20,
+        "connTimeout": 1000,
+        "callTimeout": 5000,
+        "maxConns": 32,
+        "maxIdle": 32,
+        "addr": "tcp://riemann:5555"
+    }
+}

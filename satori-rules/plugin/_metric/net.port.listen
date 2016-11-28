@@ -1,0 +1,47 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- stdlib --
+import json
+import socket
+import subprocess
+import sys
+import time
+
+# -- third party --
+# -- own --
+
+# -- code --
+endpoint = socket.gethostname()
+ts = int(time.time())
+
+proc = subprocess.Popen(
+    "ss -t -l -n | awk '{print $4}' | grep -Po '[0-9]+$'",
+    shell=True, stdout=subprocess.PIPE
+)
+ports = set(map(int, proc.stdout.read().split()))
+
+requested = json.loads(sys.stdin.read())
+# [{"_metric": "net.port.listen", "port": 1923}]
+
+metrics = []
+
+for r in requested:
+    assert r["_metric"] == "net.port.listen"
+    step = int(r["_step"])
+    port = int(r["port"])
+
+    metrics.append({
+        "metric": "net.port.listen",
+        "endpoint": endpoint,
+        "timestamp": ts,
+        "step": 30,
+        "tags": {
+            "port": str(port),
+            "name": r.get('name', 'default'),
+        },
+        "value": int(port in ports),
+    })
+
+print json.dumps(metrics)

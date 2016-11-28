@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>报警 - Satori</title>
+
+    <!-- Bootstrap -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="node_modules/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="css/custom.css" rel="stylesheet">
+    <link href="css/custom-satori.css" rel="stylesheet">
+  </head>
+
+  <body class="nav-sm">
+    <div class="container body">
+      <div class="main_container">
+        <sidebar current="events"></sidebar>
+
+        <!-- top navigation -->
+        <!--<Nav></Nav>-->
+        <!-- /top navigation -->
+
+        <!-- page content -->
+        <div class="right_col" role="main">
+          <div class="">
+            <div class="page-title">
+              <div class="title_left">
+                <h3>报警 <small>查看，静音，删除（解决）当前的报警</small></h3>
+              </div>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <block title="报警">
+                  <events-table api-endpoint="alarm/alarms">
+                  </events-table>
+                </block>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /page content -->
+
+        <!-- footer content -->
+        <!--
+        <footer>
+          <div class="pull-right">
+            Gentelella - Bootstrap Admin Template by <a href="https://colorlib.com">Colorlib</a>
+          </div>
+          <div class="clearfix"></div>
+        </footer>
+        -->
+        <!-- /footer content -->
+      </div>
+    </div>
+
+    <script src="node_modules/lodash/lodash.min.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/whatwg-fetch/fetch.js"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="node_modules/vue/dist/vue.js"></script>
+    <script src="node_modules/fastclick/lib/fastclick.js"></script>
+    <script src="node_modules/moment/min/moment-with-locales.min.js"></script>
+
+    <script src="frontend-vars.js"></script>
+    <script src="view/block.js"></script>
+    <script src="view/sidebar.js"></script>
+    <script src="view/events/table.js"></script>
+
+    <script type="text/javascript">
+        Page = new Vue({
+          el: ".container.body",
+          data: {
+            SatoriVars: SatoriVars,
+          },
+        });
+    </script>
+  </body>
+</html>

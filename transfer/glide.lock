@@ -1,0 +1,38 @@
+hash: 50ca0918c853939fa7c30e347ddb2683128ba68008c35346d919a83593fef985
+updated: 2016-11-04T07:25:33.123513517Z
+imports:
+- name: github.com/amir/raidman
+  version: c74861fe6a7bb8ede0a010ce4485bdbb4fc4c985
+  subpackages:
+  - proto
+- name: github.com/golang/protobuf
+  version: 2bc9827a78f95c6665b5fe0abd1fd66b496ae2d8
+  subpackages:
+  - proto
+- name: github.com/influxdata/influxdb
+  version: dd8caa750a7bb0b1df638b6e3126fd2229997082
+  subpackages:
+  - client/v2
+  - models
+  - pkg/escape
+- name: github.com/toolkits/concurrent
+  version: a4371d70e3e308db0d5f90c2b1f5efaa84add725
+  subpackages:
+  - semaphore
+- name: github.com/toolkits/consistent
+  version: a6f56a64d1b1c43cf2a37082bd21f71a4f9e5c05
+- name: github.com/toolkits/container
+  version: ba7d73adeaca8dc16c676dedbbb48cc46d3eccb0
+  subpackages:
+  - list
+- name: github.com/toolkits/file
+  version: a5b3c5147e07f934d9f9d00b901a20b2529f1a57
+- name: github.com/toolkits/proc
+  version: 99adface3d9ebe698aa73c740ee1056e843c4abf
+- name: github.com/toolkits/time
+  version: c274716e8d7f05a41031c2fe34b0c1ac6f5e94f9
+- name: golang.org/x/net
+  version: 569280fa63be4e201b975e5411e30a92178f0118
+  subpackages:
+  - proxy
+testImports: []

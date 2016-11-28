@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>首页 - Satori</title>
+
+    <!-- Bootstrap -->
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="node_modules/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="css/custom.css" rel="stylesheet">
+    <link href="css/custom-satori.css" rel="stylesheet">
+  </head>
+
+  <body class="nav-sm">
+    <div class="container body">
+      <div class="main_container">
+        <sidebar current="index"></sidebar>
+
+        <!-- top navigation -->
+        <!--<Nav></Nav>-->
+        <!-- /top navigation -->
+
+        <!-- page content -->
+        <div class="right_col" role="main">
+          <div class="">
+            <div class="page-title">
+              <div class="title_left">
+                <h3>首页</h3>
+              </div>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <block title="报警配置的仓库地址">
+                    <div class="well"><code>$ git clone {{ SatoriVars.rulesRepo }}</code></div>
+                </block>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <block title="Grafana 的配置">
+                    初次安装后，Grafana（图表）是没有数据源的，需要添加 InfluxDB 数据源，url 如下：
+                    <div class="well"><code>{{ origin }}/influxdb</code></div>
+                </block>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <block title="BitBar 插件">
+                    <p>
+                    如果你在用 macOS，你可以 <a href="https://github.com/matryer/bitbar">&gt;&gt; 从这里下载 BitBar &lt;&lt;</a> ，
+                    将配置仓库内的 <code>bitbar-plugin.py</code> 软链接到插件目录内，就可以在状态栏上获得一个可以查看、静音当前报警的图标。
+                    </p>
+                </block>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <block title="编写规则">
+                    <p>规则仓库内有 README，可以读一下来学习怎么添加报警规则和数据采集插件。</p>
+                    <p>编写完成后直接 push 就可以生效了。</p>
+                    <p>报警规则已经有了很多例子，请找合适的 copy &amp; paste。</p>
+                    <p>对于高级用户来说，报警规则是建立在 <a href="http://riemann.io/">riemann</a> 上的，了解 riemann 会有很大的帮助。</p>
+                </block>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /page content -->
+
+        <!-- footer content -->
+        <!--
+        <footer>
+          <div class="pull-right">
+            Gentelella - Bootstrap Admin Template by <a href="https://colorlib.com">Colorlib</a>
+          </div>
+          <div class="clearfix"></div>
+        </footer>
+        -->
+        <!-- /footer content -->
+      </div>
+    </div>
+
+    <script src="node_modules/lodash/lodash.min.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/whatwg-fetch/fetch.js"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="node_modules/vue/dist/vue.js"></script>
+    <script src="node_modules/fastclick/lib/fastclick.js"></script>
+    <script src="node_modules/moment/min/moment-with-locales.min.js"></script>
+
+    <script src="frontend-vars.js"></script>
+    <script src="view/block.js"></script>
+    <script src="view/sidebar.js"></script>
+    <script src="view/events/table.js"></script>
+
+    <script type="text/javascript">
+        Page = new Vue({
+          el: ".container.body",
+          data: {
+            SatoriVars: SatoriVars,
+            origin: document.location.origin,
+          },
+        });
+    </script>
+  </body>
+</html>

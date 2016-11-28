@@ -1,0 +1,13 @@
+hash: 344a60832c5779a226103753eb203864519a86b59a92eb46f73bb7c40df9d6a5
+updated: 2016-11-04T07:06:40.652124384Z
+imports:
+- name: github.com/garyburd/redigo
+  version: 8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13
+  subpackages:
+  - internal
+  - redis
+- name: github.com/toolkits/file
+  version: a5b3c5147e07f934d9f9d00b901a20b2529f1a57
+- name: github.com/toolkits/time
+  version: c274716e8d7f05a41031c2fe34b0c1ac6f5e94f9
+testImports: []
