@@ -13,8 +13,7 @@ Satori 是一个由 LeanCloud 维护的监控系统。
 # 怎么安装？
 
 请找一个干净的虚拟机，内存大一点，要有 SSD，不要部署其他的服务。
-LeanCloud 用了一个 2 cores, 8GB 的内存的 VM，管理了大概 300 个节点。
-目测这个配置可以撑住大概 2000 个左右的节点（InfluxDB 查询不多的情况下）。
+LeanCloud 用了一个 2 cores, 8GB 的内存的 VM，目测这个配置可以撑住大概 2000 个左右的节点（InfluxDB 查询不多的情况下）。
 
 执行下面的命令：
 
@@ -172,7 +171,7 @@ git push  # 然后就生效了
 
 ## judge：
 - 被 riemann 代替
-- riemann 较 judge 相比，可以节省 60% 以上的内存，CPU占用要低 50%（在 300 个节点的情况下）。
+- riemann 较 judge 相比，可以节省 60% 以上的内存，CPU占用要低 50%。
 
 ## task
 在 Satori 中移除了。InfluxDB 自带 task 的功能。
