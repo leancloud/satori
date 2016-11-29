@@ -207,7 +207,8 @@ class AlarmDFA(object):
         else:
             return 'OK'
 
-    @transition(when='ACK', action='TOGGLE_ACK', valid=['PROBLEM'])
+    @transition(when='ACK',      action='TOGGLE_ACK', valid=['PROBLEM'])
+    @transition(when='FLAPPING', action='TOGGLE_ACK', valid=['PROBLEM'])
     def do_to_problem(self, when, action, ev):
         return 'PROBLEM'
 
