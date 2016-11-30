@@ -78,7 +78,7 @@ def fetch(req):
             b4 = time.time()
             resp = requests.request(method, url, **kwargs)
             req_time = time.time() - b4
-            content_length = int(resp.headers['content-length'])
+            content_length = int(resp.headers.get('content-length', -1))
             content = resp.content
             status = resp.status_code
         except requests.exceptions.Timeout:
