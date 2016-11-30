@@ -1,0 +1,3 @@
+* agent 编译后打包 deb 和 rpm
+* transfer 集成 gateway
+* 前端页面可以看到 agent 上收集的所有 metrics
