@@ -35,7 +35,7 @@
       (by :host
         (set-state (< 120)
           (changed :state
-            (shoud-alarm-every 60
+            (should-alarm-every 60
               (! {:note "Mesos Master 重启了"
                   :level 1
                   :expected 300
