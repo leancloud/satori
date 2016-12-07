@@ -346,7 +346,7 @@ function ask-for-variables
 function init-influxdb
 {
     echo ":: Create initial InfluxDB database"
-    sudo docker exec $(docker ps | grep satori_influxdb | awk '{print $1}') influx -execute 'CREATE DATABASE influx;'
+    sudo docker exec $(sudo docker ps | grep satori_influxdb | awk '{print $1}') influx -execute 'CREATE DATABASE influx;'
 }
 
 function finish
