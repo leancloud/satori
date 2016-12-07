@@ -32,6 +32,25 @@ install 时会问你几个问题，填好以后会自动的生成配置，build 
 
 agent 不会自己 daemonize，如果用了传统的 `/etc/init.d` 脚本的方式部署，需要注意这个问题。
 
+如果需要无人工干预安装，请创建一个配置文件：
+
+```bash
+USE_MIRROR=1  # 或者 0，是否使用国内的镜像
+DOMAIN="www.example.com"  # 外网可以访问的域名
+INTERNAL_DOMAIN="satori01"  # 内网可以访问的域名
+RULES_REPO="/home/app/satori-conf"  # 规则仓库的地址
+RULES_REPO_SSH="app@www.example.com:/home/app/satori-conf"  # 外网可以访问的 git 仓库地址
+```
+
+保存为 `/tmp/install.conf`。
+
+然后执行：
+```bash
+$ git clone https://github.com/leancloud/satori
+$ cd satori/satori
+$ ./install -f /tmp/install.conf
+```
+
 # 设计思路
 - Satori 希望最大程度的减少监控系统的部署维护难度。如果在任何的部署、增删维护报警的时候觉得好麻烦，那么这是个 bug。
 - 监控时的需求很多样，Satori 希望做到『让简单的事情简单，让复杂的事情可能』。常用的监控项都会有模板，可以用 Copy & Paste 解决。略复杂的监控需求可以阅读 [riemann 的文档](http://riemann.io/)，来得知怎么编写复杂的监控规则。

@@ -1,10 +1,14 @@
 #!/bin/bash
 
+BATCH_INSTALL=0
+
 CONF_DIR="/etc/satori"
 DOMAIN="satori.example.com"
 INTERNAL_DOMAIN="meh"
 RULES_REPO="/tmp/rules-repo"
 RULES_REPO_SSH="user@domain.com:repo"
+
+DOCKER_MIRROR="daocloud.io/"
 
 set -e
 
@@ -16,11 +20,6 @@ fi
 
 function prepare-docker-images
 {
-
-    local USE_MIRROR=""
-    if whiptail --title Satori --yesno "Do you want to pull docker images from daocloud.io?\nThis is a mirror of Docker things in mainland China." 9 60; then
-        USE_MIRROR="daocloud.io/"
-    fi
     echo :: Preparing docker images
     echo :: - Copy alarm to build dir
     rm -rf images/alarm/.build
@@ -290,6 +289,7 @@ function save-parameters
     sudo touch $CONF_DIR/.configured
     sudo chmod 0666 $CONF_DIR/.configured
     cat <<EOF > $CONF_DIR/.configured
+USE_MIRROR="$USE_MIRROR"
 DOMAIN="$DOMAIN"
 INTERNAL_DOMAIN="$INTERNAL_DOMAIN"
 RULES_REPO="$RULES_REPO"
@@ -305,6 +305,11 @@ function go-live
 
 function ask-for-variables
 {
+    USE_MIRROR=""
+    if whiptail --title Satori --yesno "Do you want to use various mirrors from mainland China?\nThis will speed up installation process if your server resides in mainland China." 9 60; then
+        USE_MIRROR=$DOCKER_MIRROR
+    fi
+
     DOMAIN=""
     whiptail --title Satori --inputbox "What's your public accessable domain name for this machine?\nThis domain is used to setup nginx configurations." 10 70 $(hostname -f) 2>/tmp/satori-setting
     DOMAIN=$(cat /tmp/satori-setting)
@@ -362,19 +367,30 @@ function finish
     echo "     $ sudo docker-compose restart ..."
 }
 
-ensure-docker
-ensure-docker-compose
-ensure-htpasswd
-
 if [ "$1" == "rebuild" ]; then
     if ! . $CONF_DIR/.configured 2>/dev/null; then
-        echo :: Failed to load parameters, you should install first.
+        echo !! Failed to load parameters, you should install first.
         exit 1
     fi
     prepare-docker-images
-else
-    detect-accidental-run
-    ask-for-variables
+
+elif [ "$1" = "-f" -a -f "$2" ]; then
+    echo :: Performing batch install
+
+    . $2
+
+    [ -z "$USE_MIRROR" ] && echo "!! Missing conf USE_MIRROR" && exit 1
+    [ -z "$DOMAIN" ] && echo "!! Missing conf DOMAIN" && exit 1
+    [ -z "$INTERNAL_DOMAIN" ] && echo "!! Missing conf INTERNAL_DOMAIN" && exit 1
+    [ -z "$RULES_REPO" ] && echo "!! Missing conf RULES_REPO" && exit 1
+    [ -z "$RULES_REPO_SSH" ] && echo "!! Missing conf RULES_REPO_SSH" && exit 1
+
+    if [ "$USE_MIRROR" = "1" ]; then
+        USE_MIRROR=$DOCKER_MIRROR
+    else
+        USE_MIRROR=""
+    fi
+
     prepare-rules-repo
     setup-configs
     prepare-docker-images
@@ -387,4 +403,27 @@ else
     sleep 5
     init-influxdb
     finish
+
+elif [ "$1" = "" ]; then
+    ensure-docker
+    ensure-docker-compose
+    ensure-htpasswd
+    detect-accidental-run
+    ask-for-variables
+
+    prepare-rules-repo
+    setup-configs
+    prepare-docker-images
+    generate-basic-auth
+    setup-bitbar-plugin
+    setup-frontend-vars
+    generate-agent-config
+    save-parameters
+    go-live
+    sleep 5
+    init-influxdb
+    finish
+else
+    echo "!! Don't know how to proceed your command."
+    exit 1
 fi
