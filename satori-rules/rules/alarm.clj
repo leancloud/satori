@@ -32,7 +32,7 @@
   (reset! alarm-url url))
 
 (defn !
-  """
+  "
   创建一个发送报警的流，流经这个流的事件都会被发到 alarm 产生报警。
   接受一个 map 做参数，map 中需要可以指定如下的参数
 
@@ -42,7 +42,7 @@
       :expected 233  ; 可选，期望值，暂时没用到)
       :outstanding-tags [:region :mount]  ; 可选，相关的tag，写在这里的 tag 会用于区分不同的事件，以及显示在报警内容中, 不填的话默认是所有的tag
       :groups [:operation]})  ; groups 是在规则仓库的 alarm 配置里管理的)
-  """
+  "
   [m]
   (let [conn {:pool {}, :spec {:uri @alarm-url}}]
     (fn [ev]
