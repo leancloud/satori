@@ -127,6 +127,9 @@
    常接在 (moving|fixed)-(time|event)-window 流后面。"
   [f & children]
   (fn [evts]
+    (when-not (sequential? evts)
+      (throw (Exception. "aggregate must accept list of events")))
+
     (when (> (count evts) 0)
       (let [m (mapv :metric evts), v (f m)]
         (call-rescue
@@ -152,6 +155,18 @@
   (let [r (last m)]
     (->> (map #(/ (- r %) r) m)
          (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
+
+
+(defn ->difference
+  "接受事件的数组，变换成另外一个事件数组。
+   新的事件数组中，每一个事件的 metric 是之前相邻两个事件 metric 的差。
+   如果你的事件是一个一直增长的计数器，那么用这个流可以将它变成每次实际增长的值。"
+  [& children]
+  (apply smap (fn [l]
+    (map
+      (fn [[ev' ev]] (assoc ev' :metric (- (:metric ev') (:metric ev))))
+      (map vector (rest l) l)))
+    children))
 
 
 (defn feed-dog
