@@ -231,7 +231,7 @@ def send_alarm(ev):
     for u in ev['users']:
         for p in backends:
             try:
-                p(u, ev)
+                gevent.spawn(p, u, ev)
             except Exception:
                 log.exception('Error processing event')
 
