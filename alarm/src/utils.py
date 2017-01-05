@@ -19,3 +19,11 @@ def spawn_autorestart(*args, **kwargs):
         spawn_autorestart(*args, **kwargs)
 
     gevent.spawn(*args, **kwargs).link(restart)
+
+
+def status2emoji(s):
+    return {
+        'PROBLEM': u'😱',
+        'EVENT': u'😱',
+        'OK': u'😅',
+    }.get(s, s)

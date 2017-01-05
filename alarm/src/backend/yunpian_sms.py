@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 # -- stdlib --
 # -- third party --
@@ -6,6 +7,7 @@ import requests
 
 # -- own --
 from backend.common import register_backend
+from utils import status2emoji
 
 
 # -- code --
@@ -16,7 +18,7 @@ def yunpian_sms(conf, user, event):
 
     msg = u'【%s】%s[P%s]\n%s\n' % (
         conf['signature'],
-        u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
+        status2emoji(event['status']),
         event['level'],
         event['title'],
     ) + event['text']

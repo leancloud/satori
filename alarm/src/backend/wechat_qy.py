@@ -11,10 +11,10 @@ import requests
 
 # -- own --
 from backend.common import register_backend
+from utils import status2emoji
 
 
 # -- code --
-
 '''
   - name: wechat
     backend: wechat_qy
@@ -105,7 +105,7 @@ def wechat_qy(conf, user, event):
         return
 
     msg = u'%s[P%s]\n%s\n' % (
-        u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
+        status2emoji(event['status']),
         event['level'],
         event['title'],
     ) + event['text']

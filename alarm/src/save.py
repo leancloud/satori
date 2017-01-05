@@ -13,7 +13,7 @@ from state import State
 from utils import spawn_autorestart
 
 # -- code --
-log = logging.getLogger('ack')
+log = logging.getLogger('save')
 
 
 def dump():

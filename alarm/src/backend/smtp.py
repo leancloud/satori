@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 # -- stdlib --
 from email.MIMEMultipart import MIMEMultipart
@@ -9,10 +10,10 @@ import smtplib
 # -- third party --
 # -- own --
 from backend.common import register_backend
+from utils import status2emoji
+
 
 # -- code --
-
-
 def send_mail(send_from, send_to, subject, text, files=[], server="localhost", username=None, password=None):
     msg = MIMEMultipart('alternative')
     msg.set_charset('utf-8')
@@ -36,7 +37,7 @@ def smtp(conf, user, event):
         return
 
     subject = u'%s[P%s]%s' % (
-        u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
+        status2emoji(event['status']),
         event['level'],
         event['title'],
     )
