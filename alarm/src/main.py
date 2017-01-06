@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 # -- stdlib --
 from functools import partial
+import copy
 import datetime
 import json
 import logging
@@ -231,7 +232,7 @@ def send_alarm(ev):
     for u in ev['users']:
         for p in backends:
             try:
-                gevent.spawn(p, u, ev)
+                gevent.spawn(p, u, copy.deepcopy(ev))
             except Exception:
                 log.exception('Error processing event')
 
