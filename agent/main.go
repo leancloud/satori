@@ -35,6 +35,7 @@ func main() {
 
 	go cron.SyncWithMaster()
 	go cron.StartCollect()
+	go g.SendToTransferProc()
 	go http.Start()
 
 	select {}

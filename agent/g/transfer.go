@@ -7,45 +7,99 @@ import (
 	"time"
 
 	"github.com/leancloud/satori/agent/rpc"
+	"github.com/leancloud/satori/common/cpool"
 	"github.com/leancloud/satori/common/model"
 )
 
+//----------------------------
+
+type TransferClient struct {
+	cli  *rpc.RpcClient
+	name string
+}
+
+func (this TransferClient) Name() string {
+	return this.name
+}
+
+func (this TransferClient) Closed() bool {
+	return this.cli == nil
+}
+
+func (this TransferClient) Close() error {
+	this.cli = nil
+	return nil
+}
+
+func (this TransferClient) Call(metrics interface{}) error {
+	var resp model.TransferResponse
+	err := this.cli.Call("Transfer.Update", metrics, &resp)
+	if Config().Debug {
+		log.Println("<=", &resp)
+	}
+	return err
+}
+
+func transferConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+	connTimeout := time.Duration(p.ConnTimeout) * time.Millisecond
+	cli := &rpc.RpcClient{
+		RpcServer: p.Address,
+		Timeout:   connTimeout,
+	}
+
+	return TransferClient{
+		cli:  cli,
+		name: name,
+	}, nil
+}
+
 var (
-	TransferClientsLock *sync.RWMutex             = new(sync.RWMutex)
-	TransferClients     map[string]*rpc.RpcClient = map[string]*rpc.RpcClient{}
+	transferClients map[string]*cpool.ConnPool = map[string]*cpool.ConnPool{}
+
+	metricsBufferLock *sync.RWMutex        = new(sync.RWMutex)
+	metricsBuffer     []*model.MetricValue = make([]*model.MetricValue, 0, 5)
 )
 
-func SendMetrics(metrics []*model.MetricValue, resp *model.TransferResponse) {
+// -------------------------
+func sendMetrics() {
+	metricsBufferLock.Lock()
+	if len(metricsBuffer) == 0 {
+		metricsBufferLock.Unlock()
+		return
+	}
+	send := metricsBuffer
+	metricsBuffer = make([]*model.MetricValue, 0, 5)
+	metricsBufferLock.Unlock()
+
+	addrs := Config().Transfer.Addrs
+
+	for c := 0; c < 3; c++ {
+		for _, i := range rand.Perm(len(addrs)) {
+			cli := transferClients[addrs[i]]
+			err := cli.Call(send)
+			if err != nil {
+				log.Println("sendMetrics fail", addrs[i], err)
+				continue
+			}
+			return
+		}
+	}
+	log.Printf("%s\n", "No available transfer client to send metrics, metrics dropped!")
+}
+
+func SendToTransferProc() {
 	rand.Seed(time.Now().UnixNano())
-	for _, i := range rand.Perm(len(Config().Transfer.Addrs)) {
-		addr := Config().Transfer.Addrs[i]
-		if _, ok := TransferClients[addr]; !ok {
-			initTransferClient(addr)
-		}
-		if updateMetrics(addr, metrics, resp) {
-			break
-		}
+	cfg := Config().Transfer
+	for _, addr := range cfg.Addrs {
+		transferClients[addr] = cpool.NewConnPool(
+			"transfer", addr, 5, 3, cfg.Timeout, cfg.Timeout, transferConnect,
+		)
 	}
-}
 
-func initTransferClient(addr string) {
-	TransferClientsLock.Lock()
-	defer TransferClientsLock.Unlock()
-	TransferClients[addr] = &rpc.RpcClient{
-		RpcServer: addr,
-		Timeout:   time.Duration(Config().Transfer.Timeout) * time.Millisecond,
+	for {
+		time.Sleep(5 * time.Second)
+		go sendMetrics()
 	}
-}
-
-func updateMetrics(addr string, metrics []*model.MetricValue, resp *model.TransferResponse) bool {
-	TransferClientsLock.RLock()
-	defer TransferClientsLock.RUnlock()
-	err := TransferClients[addr].Call("Transfer.Update", metrics, resp)
-	if err != nil {
-		log.Println("call Transfer.Update fail", addr, err)
-		return false
-	}
-	return true
 }
 
 func SendToTransfer(metrics []*model.MetricValue) {
@@ -59,10 +113,8 @@ func SendToTransfer(metrics []*model.MetricValue) {
 		log.Printf("=> <Total=%d> %v\n", len(metrics), metrics[0])
 	}
 
-	var resp model.TransferResponse
-	SendMetrics(metrics, &resp)
+	metricsBufferLock.Lock()
+	defer metricsBufferLock.Unlock()
 
-	if debug {
-		log.Println("<=", &resp)
-	}
+	metricsBuffer = append(metricsBuffer, metrics...)
 }

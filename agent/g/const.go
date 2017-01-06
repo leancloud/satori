@@ -8,6 +8,7 @@ package g
 // 5.1.1: 修复往多个transfer发送数据的时候crash的问题
 // 6.0.0: 配合 satori master
 // 7.0.0: tags 改成 map[string]string 了，不兼容
+// 7.0.3: 优化与 transfer 之间的数据传输
 const (
-	VERSION = "7.0.2"
+	VERSION = "7.0.3"
 )
