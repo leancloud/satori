@@ -1,4 +1,4 @@
-package conn_pool
+package cpool
 
 import (
 	"fmt"
@@ -92,7 +92,7 @@ func (this *ConnPool) Fetch() (NConn, error) {
 		return conn, nil
 	}
 
-	if this.overMax() {
+	if this.active >= this.MaxConns {
 		return nil, ErrMaxConn
 	}
 
@@ -102,7 +102,7 @@ func (this *ConnPool) Fetch() (NConn, error) {
 		return nil, err
 	}
 
-	this.increActive()
+	this.active += 1
 	return conn, nil
 }
 
@@ -138,9 +138,9 @@ func (this *ConnPool) Release(conn NConn) {
 	this.Lock()
 	defer this.Unlock()
 
-	if this.overMaxIdle() {
+	if len(this.free) >= this.MaxIdle {
 		this.deleteConn(conn)
-		this.decreActive()
+		this.active -= 1
 	} else {
 		this.addFree(conn)
 	}
@@ -151,7 +151,7 @@ func (this *ConnPool) ForceClose(conn NConn) {
 	defer this.Unlock()
 
 	this.deleteConn(conn)
-	this.decreActive()
+	this.active -= 1
 }
 
 func (this *ConnPool) Destroy() {
@@ -210,20 +210,4 @@ func (this *ConnPool) fetchFree() NConn {
 	conn := this.free[0]
 	this.free = this.free[1:]
 	return conn
-}
-
-func (this *ConnPool) increActive() {
-	this.active += 1
-}
-
-func (this *ConnPool) decreActive() {
-	this.active -= 1
-}
-
-func (this *ConnPool) overMax() bool {
-	return this.active >= this.MaxConns
-}
-
-func (this *ConnPool) overMaxIdle() bool {
-	return len(this.free) >= this.MaxIdle
 }

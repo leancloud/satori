@@ -14,9 +14,9 @@ import (
 	nlist "github.com/toolkits/container/list"
 	nproc "github.com/toolkits/proc"
 
+	"github.com/leancloud/satori/common/cpool"
 	cmodel "github.com/leancloud/satori/common/model"
 	"github.com/leancloud/satori/transfer/g"
-	cpool "github.com/leancloud/satori/transfer/sender/conn_pool"
 )
 
 var (

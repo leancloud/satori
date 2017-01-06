@@ -1,8 +1,8 @@
 package sender
 
 import (
+	"github.com/leancloud/satori/common/cpool"
 	cmodel "github.com/leancloud/satori/common/model"
-	"github.com/leancloud/satori/transfer/sender/conn_pool"
 	"github.com/toolkits/consistent"
 	nproc "github.com/toolkits/proc"
 	"time"
@@ -19,7 +19,7 @@ type BackendStats struct {
 	DropCounter   *nproc.SCounterQps
 	FailCounter   *nproc.SCounterQps
 	QueueLength   *nproc.SCounterBase
-	ConnPoolStats []*conn_pool.ConnPoolStats
+	ConnPoolStats []*cpool.ConnPoolStats
 }
 
 type Backend struct {
