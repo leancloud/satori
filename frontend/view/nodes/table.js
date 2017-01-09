@@ -44,7 +44,7 @@
               :class="i & 1 ? 'odd' : 'even'">
             <td>{{ n.hostname }}</td>
             <td>{{ n.ip }}</td>
-            <td><img width=32 height=32 :src="'https://www.gravatar.com/avatar/' + n['agent-version'].replace('.', '0') + '?s=64&d=identicon&r=PG'" :alt="n['agent-version']">{{ n['agent-version'] }}</td>
+            <td><img width=32 height=32 :src="'https://www.gravatar.com/avatar/' + n['agent-version'].replace(/\\./g, '0') + '?s=64&d=identicon&r=PG'" :alt="n['agent-version']">{{ n['agent-version'] }}</td>
             <td><img width=32 height=32 :src="'https://www.gravatar.com/avatar/' + n['plugin-version'] + '?s=64&d=identicon&r=PG'" :alt="n['plugin-version']"></td>
             <!--<td></td>-->
             <td>{{ timeFromNow(n.lastseen) }}</td>
