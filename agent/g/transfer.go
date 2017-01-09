@@ -107,6 +107,12 @@ func SendToTransfer(metrics []*model.MetricValue) {
 		return
 	}
 
+	metrics = filterMetrics(metrics)
+
+	if len(metrics) == 0 {
+		return
+	}
+
 	debug := Config().Debug
 
 	if debug {

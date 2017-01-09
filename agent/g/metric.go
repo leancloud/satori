@@ -18,7 +18,7 @@ func cachedMatch(re string, v string) bool {
 	return r.MatchString(v)
 }
 
-func FilterMetrics(metrics []*model.MetricValue) []*model.MetricValue {
+func filterMetrics(metrics []*model.MetricValue) []*model.MetricValue {
 	cfg := Config()
 	addTags := cfg.AddTags
 	ignore := cfg.Ignore

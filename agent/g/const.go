@@ -9,6 +9,7 @@ package g
 // 6.0.0: 配合 satori master
 // 7.0.0: tags 改成 map[string]string 了，不兼容
 // 7.0.3: 优化与 transfer 之间的数据传输
+// 7.0.4: 报告执行失败的插件
 const (
-	VERSION = "7.0.3"
+	VERSION = "7.0.4"
 )

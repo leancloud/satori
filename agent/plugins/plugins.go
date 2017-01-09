@@ -52,6 +52,24 @@ func (this *Plugin) Run() {
 	}()
 }
 
+func (this *Plugin) reportFailure(subject string, desc string) {
+	hostname, _ := g.Hostname()
+	now := time.Now().Unix()
+	m := []*model.MetricValue{
+		&model.MetricValue{
+			Endpoint:  hostname,
+			Metric:    ".satori.agent.plugin." + subject,
+			Step:      0,
+			Timestamp: now,
+			Tags: map[string]string{
+				"file": this.FilePath,
+			},
+			Desc: desc,
+		},
+	}
+	g.SendToTransfer(m)
+}
+
 func (this *Plugin) RunOnce() {
 	cfg := g.Config().Plugin
 	timeout := this.Step*1000 - 500
@@ -85,23 +103,26 @@ func (this *Plugin) RunOnce() {
 	cmd.Start()
 
 	err, isTimeout := sys.CmdRunWithTimeout(cmd, time.Duration(timeout)*time.Millisecond)
-
 	errStr := stderr.String()
+
 	if errStr != "" {
 		logFile := filepath.Join(cfg.LogDir, this.FilePath+".stderr.log")
 		if _, err = file.WriteString(logFile, errStr); err != nil {
 			log.Printf("[ERROR] write log to %s fail, error: %s\n", logFile, err)
 		}
+		this.reportFailure("error", errStr)
 	}
 
 	if isTimeout {
-		// has be killed
+		// has been killed
 		if err == nil && debug {
 			log.Println("[INFO] timeout and kill process", fpath, "successfully")
+			this.reportFailure("timeout", "")
 		}
 
 		if err != nil {
 			log.Println("[ERROR] kill process", fpath, "occur error:", err)
+			this.reportFailure("cant-kill", "")
 		}
 
 		return
@@ -109,6 +130,7 @@ func (this *Plugin) RunOnce() {
 
 	if err != nil {
 		log.Println("[ERROR] exec plugin", fpath, "fail. error:", err)
+		this.reportFailure("error", err.Error())
 		return
 	}
 
@@ -118,18 +140,20 @@ func (this *Plugin) RunOnce() {
 		if debug {
 			log.Println("[DEBUG] stdout of", fpath, "is blank")
 		}
+		this.reportFailure("no-stdout", "")
 		return
 	}
 
 	var metrics []*model.MetricValue
 	err = json.Unmarshal(data, &metrics)
 	if err != nil {
-		log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, stdout.String())
+		s := stdout.String()
+		log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, s)
+		this.reportFailure("bad-format", err.Error()+"\n\n"+stdout.String())
 		return
 	}
 
-	filtered := g.FilterMetrics(metrics)
-	g.SendToTransfer(filtered)
+	g.SendToTransfer(metrics)
 }
 
 func (this *Plugin) Kill() {
