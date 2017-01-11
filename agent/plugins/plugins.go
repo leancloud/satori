@@ -59,7 +59,8 @@ func (this *Plugin) reportFailure(subject string, desc string) {
 		&model.MetricValue{
 			Endpoint:  hostname,
 			Metric:    ".satori.agent.plugin." + subject,
-			Step:      0,
+			Value:     1,
+			Step:      1,
 			Timestamp: now,
 			Tags: map[string]string{
 				"file": this.FilePath,
