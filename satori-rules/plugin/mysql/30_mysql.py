@@ -6,7 +6,7 @@
 # 自己修改相应的参数，并且在这台机器上启用这个插件
 # {
 #     "host":     "localhost",
-#     "port":     3389,
+#     "port":     3306,
 #     "database": "foo",
 #     "user":     "foo",
 #     "password": "bar",

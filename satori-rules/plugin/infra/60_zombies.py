@@ -15,9 +15,16 @@ import time
 endpoint = socket.gethostname()
 ts = int(time.time())
 
-l = os.listdir('/proc')
+
+def get_state(pid):
+    try:
+        return open('/proc/%s/stat' % i).read().split()[2]
+    except Exception:
+        return ''
+
+
 l = filter(str.isdigit, os.listdir('/proc'))
-states = ''.join([open('/proc/%s/stat' % i).read().split()[2] for i in l])
+states = ''.join([get_state(i) for i in l])
 
 rst = [{
     'metric': 'proc.zombies',
