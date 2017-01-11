@@ -137,7 +137,7 @@ func (this *Plugin) RunOnce() {
 
 	// exec successfully
 	data := stdout.Bytes()
-	if len(data) == 0 {
+	if len(data) == 0 && errStr != "" {
 		if debug {
 			log.Println("[DEBUG] stdout of", fpath, "is blank")
 		}
