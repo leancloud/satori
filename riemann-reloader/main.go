@@ -116,7 +116,7 @@ func main() {
 		var entry LogEntry
 		var errord bool = false
 		conn := GetRiemannConn()
-		for i := 0; i < 5; {
+		for i := 0; i < 30; {
 			s, err := f.ReadBytes('\n')
 			if err == io.EOF {
 				errord = true
