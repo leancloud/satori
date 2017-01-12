@@ -21,10 +21,10 @@ func CreateClusteredConnPool(connPoolFactory func(addr string) *ConnPool, cluste
 }
 
 // 同步发送, 完成发送或超时后 才能返回
-func (this *ClusteredConnPool) Call(addr string, arg interface{}) error {
+func (this *ClusteredConnPool) Call(addr string, arg interface{}) (interface{}, error) {
 	connPool, exists := this.Get(addr)
 	if !exists {
-		return fmt.Errorf("%s has no connection pool", addr)
+		return nil, fmt.Errorf("%s has no connection pool", addr)
 	}
 	return connPool.Call(arg)
 }

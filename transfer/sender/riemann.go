@@ -53,9 +53,9 @@ func (this RiemannClient) Close() error {
 	return nil
 }
 
-func (this RiemannClient) Call(items interface{}) error {
+func (this RiemannClient) Call(items interface{}) (interface{}, error) {
 	err := this.cli.SendMulti(items.([]*raidman.Event))
-	return err
+	return nil, err
 }
 
 func riemannConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
@@ -132,7 +132,7 @@ func riemannTransfer() {
 
 			var err error
 			for i := 0; i < 3; i++ {
-				err = riemannConnPool.Call(riemannItems)
+				_, err = riemannConnPool.Call(riemannItems)
 				if err == nil {
 					riemannSendCounter.IncrBy(int64(len(itemList)))
 					break

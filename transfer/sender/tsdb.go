@@ -84,10 +84,8 @@ func (this TsdbClient) Close() error {
 	return nil
 }
 
-func (this TsdbClient) Call(items interface{}) error {
-	var err error
-	_, err = this.cli.Write(items.([]byte))
-	return err
+func (this TsdbClient) Call(items interface{}) (interface{}, error) {
+	return this.cli.Write(items.([]byte))
 }
 
 func tsdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
@@ -165,7 +163,7 @@ func tsdbTransfer() {
 
 			var err error
 			for i := 0; i < retry; i++ {
-				err = tsdbConnPool.Call(tsdbBuffer.Bytes())
+				_, err = tsdbConnPool.Call(tsdbBuffer.Bytes())
 				if err == nil {
 					tsdbSendCounter.IncrBy(int64(len(itemList)))
 					break

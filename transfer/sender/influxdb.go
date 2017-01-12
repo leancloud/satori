@@ -64,13 +64,13 @@ func (this InfluxdbClient) Close() error {
 	return nil
 }
 
-func (this InfluxdbClient) Call(arg interface{}) error {
+func (this InfluxdbClient) Call(arg interface{}) (interface{}, error) {
 	bp, err := influxdb.NewBatchPoints(influxdb.BatchPointsConfig{
 		Database:  this.dbName,
 		Precision: "s",
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	items := arg.([]*cmodel.MetricValue)
@@ -98,13 +98,13 @@ func (this InfluxdbClient) Call(arg interface{}) error {
 		}
 		pt, err := influxdb.NewPoint(measurement, tags, fields, time.Unix(item.Timestamp, 0))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		bp.AddPoint(pt)
 	}
 
 	// Write the batch
-	return this.cli.Write(bp)
+	return nil, this.cli.Write(bp)
 }
 
 func influxdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
@@ -218,7 +218,7 @@ func influxdbTransfer() {
 			var err error
 			sendOk := false
 			for i := 0; i < 3; i++ { //最多重试3次
-				err = influxdbConnPool.Call(influxdbItems)
+				_, err = influxdbConnPool.Call(influxdbItems)
 				if err == nil {
 					sendOk = true
 					break

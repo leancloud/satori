@@ -15,7 +15,7 @@ var ErrMaxConn = fmt.Errorf("maximum connections reached")
 type NConn interface {
 	io.Closer
 	Name() string
-	Call(arg interface{}) error
+	Call(arg interface{}) (interface{}, error)
 	Closed() bool
 }
 
@@ -106,23 +106,25 @@ func (this *ConnPool) Fetch() (NConn, error) {
 	return conn, nil
 }
 
-func (this *ConnPool) Call(arg interface{}) error {
+func (this *ConnPool) Call(arg interface{}) (interface{}, error) {
 	conn, err := this.Fetch()
 	if err != nil {
-		return fmt.Errorf("%s get connection fail: conn %v, err %v. stats: %s", this.Name, conn, err, this.Stats())
+		return nil, fmt.Errorf("%s get connection fail: conn %v, err %v. stats: %s", this.Name, conn, err, this.Stats())
 	}
 
 	callTimeout := time.Duration(this.CallTimeout) * time.Millisecond
 
 	done := make(chan error)
+	var resp interface{}
 	go func() {
-		done <- conn.Call(arg)
+		resp, err = conn.Call(arg)
+		done <- err
 	}()
 
 	select {
 	case <-time.After(callTimeout):
 		this.ForceClose(conn)
-		return fmt.Errorf("%s, call timeout", conn.Name())
+		return nil, fmt.Errorf("%s, call timeout", conn.Name())
 	case err = <-done:
 		if err != nil {
 			this.ForceClose(conn)
@@ -130,7 +132,7 @@ func (this *ConnPool) Call(arg interface{}) error {
 		} else {
 			this.Release(conn)
 		}
-		return err
+		return resp, err
 	}
 }
 

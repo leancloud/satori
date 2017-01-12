@@ -3,18 +3,19 @@ package g
 import (
 	"log"
 	"math/rand"
+	"net"
+	"net/rpc"
+	"net/rpc/jsonrpc"
 	"sync"
 	"time"
 
-	"github.com/leancloud/satori/agent/rpc"
 	"github.com/leancloud/satori/common/cpool"
 	"github.com/leancloud/satori/common/model"
 )
 
 //----------------------------
-
 type TransferClient struct {
-	cli  *rpc.RpcClient
+	cli  *rpc.Client
 	name string
 }
 
@@ -27,28 +28,32 @@ func (this TransferClient) Closed() bool {
 }
 
 func (this TransferClient) Close() error {
-	this.cli = nil
+	if this.cli == nil {
+		this.cli.Close()
+		this.cli = nil
+	}
 	return nil
 }
 
-func (this TransferClient) Call(metrics interface{}) error {
+func (this TransferClient) Call(metrics interface{}) (interface{}, error) {
 	var resp model.TransferResponse
 	err := this.cli.Call("Transfer.Update", metrics, &resp)
 	if Config().Debug {
 		log.Println("<=", &resp)
 	}
-	return err
+	return resp, err
 }
 
 func transferConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
 	connTimeout := time.Duration(p.ConnTimeout) * time.Millisecond
-	cli := &rpc.RpcClient{
-		RpcServer: p.Address,
-		Timeout:   connTimeout,
+	conn, err := net.DialTimeout("tcp", p.Address, connTimeout)
+	if err != nil {
+		log.Printf("Connect transfer %s fail: %v", p.Address, err)
+		return nil, err
 	}
 
 	return TransferClient{
-		cli:  cli,
+		cli:  jsonrpc.NewClient(conn),
 		name: name,
 	}, nil
 }
@@ -76,7 +81,7 @@ func sendMetrics() {
 	for c := 0; c < 3; c++ {
 		for _, i := range rand.Perm(len(addrs)) {
 			cli := transferClients[addrs[i]]
-			err := cli.Call(send)
+			_, err := cli.Call(send)
 			if err != nil {
 				log.Println("sendMetrics fail", addrs[i], err)
 				continue
