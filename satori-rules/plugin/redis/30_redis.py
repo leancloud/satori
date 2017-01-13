@@ -23,7 +23,7 @@ import redis
 endpoint = socket.gethostname()
 ts = int(time.time())
 
-proc = subprocess.Popen(['/bin/bash', '-c', "ps -axo cmd | grep 'redis-server '"], stdout=subprocess.PIPE)
+proc = subprocess.Popen(['/bin/bash', '-c', "ps axo cmd | grep 'redis-server '"], stdout=subprocess.PIPE)
 ports = map(int, re.findall(r'redis-server .*?:(\d+) *$', proc.stdout.read(), re.MULTILINE))
 
 interested = {
