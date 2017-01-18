@@ -9,8 +9,26 @@ import (
 	"time"
 
 	"github.com/leancloud/satori/agent/g"
+	"github.com/leancloud/satori/common/model"
 	"github.com/toolkits/file"
 )
+
+func reportFailure(subject string, desc string) {
+	hostname, _ := g.Hostname()
+	now := time.Now().Unix()
+	m := []*model.MetricValue{
+		&model.MetricValue{
+			Endpoint:  hostname,
+			Metric:    ".satori.agent.plugin." + subject,
+			Value:     1,
+			Step:      1,
+			Timestamp: now,
+			Tags:      map[string]string{},
+			Desc:      desc,
+		},
+	}
+	g.SendToTransfer(m)
+}
 
 func GetCurrentPluginVersion() (string, error) {
 	cfg := g.Config().Plugin
@@ -20,20 +38,24 @@ func GetCurrentPluginVersion() (string, error) {
 
 	pluginDir := cfg.CheckoutPath
 	if !file.IsExist(pluginDir) {
+		reportFailure("plugin-dir-does-not-exist", "")
 		return "", fmt.Errorf("plugin-dir-does-not-exist")
 	}
 
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = pluginDir
 
-	var out bytes.Buffer
-	cmd.Stdout = &out
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
+		reportFailure("git-fail", err.Error()+"\n"+stderr.String())
 		return "", err
 	}
 
-	return strings.TrimSpace(out.String()), nil
+	return strings.TrimSpace(stdout.String()), nil
 }
 
 var updateInflight bool = false
@@ -72,25 +94,38 @@ func UpdatePlugin(ver string) error {
 		ver = "origin/master"
 	}
 
+	var buf bytes.Buffer
+
 	if file.IsExist(cfg.CheckoutPath) {
 		// git fetch
 		log.Println("Begin update plugins by fetch")
 		updateInflight = true
 		defer func() { updateInflight = false }()
 		lastPluginUpdate = time.Now().Unix()
+
+		buf.Reset()
 		cmd := exec.Command("git", "fetch")
 		cmd.Dir = cfg.CheckoutPath
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
-			log.Println("Update plugins by fetch error: %s", err)
+			s := fmt.Sprintf("Update plugins by fetch error: %s", err)
+			log.Println(s)
+			reportFailure("git-fail", s+"\n"+buf.String())
 			return fmt.Errorf("git fetch in dir:%s fail. error: %s", cfg.CheckoutPath, err)
 		}
 
+		buf.Reset()
 		cmd = exec.Command("git", "reset", "--hard", ver)
 		cmd.Dir = cfg.CheckoutPath
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
 		err = cmd.Run()
 		if err != nil {
-			log.Println("git reset --hard failed: %s", err)
+			s := fmt.Sprintf("git reset --hard failed: %s", err)
+			log.Println(s)
+			reportFailure("git-fail", s+"\n"+buf.String())
 			return fmt.Errorf("git reset --hard in dir:%s fail. error: %s", cfg.CheckoutPath, err)
 		}
 		log.Println("Update plugins by fetch complete")
@@ -98,19 +133,29 @@ func UpdatePlugin(ver string) error {
 		// git clone
 		log.Println("Begin update plugins by clone")
 		lastPluginUpdate = time.Now().Unix()
+		buf.Reset()
 		cmd := exec.Command("git", "clone", cfg.Git, file.Basename(cfg.CheckoutPath))
 		cmd.Dir = parentDir
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
-			log.Println("Update plugins by clone error: %s", err)
+			s := fmt.Sprintf("Update plugins by clone error: %s", err)
+			log.Println(s)
+			reportFailure("git-fail", s+"\n"+buf.String())
 			return fmt.Errorf("git clone in dir:%s fail. error: %s", parentDir, err)
 		}
 
+		buf.Reset()
 		cmd = exec.Command("git", "reset", "--hard", ver)
 		cmd.Dir = cfg.CheckoutPath
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
 		err = cmd.Run()
 		if err != nil {
-			log.Println("git reset --hard failed: %s", err)
+			s := fmt.Sprintf("git reset --hard failed: %s", err)
+			log.Println(s)
+			reportFailure("git-fail", s+"\n"+buf.String())
 			return fmt.Errorf("git reset --hard in dir:%s fail. error: %s", cfg.CheckoutPath, err)
 		}
 		log.Println("Update plugins by clone complete")
@@ -127,10 +172,16 @@ func ForceResetPlugin() error {
 	dir := cfg.CheckoutPath
 
 	if file.IsExist(dir) {
+		var buf bytes.Buffer
 		cmd := exec.Command("git", "reset", "--hard")
 		cmd.Dir = dir
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
+			s := fmt.Sprintf("git reset --hard failed: %s", err)
+			log.Println(s)
+			reportFailure("git-fail", s+"\n"+buf.String())
 			return fmt.Errorf("git reset --hard in dir:%s fail. error: %s", dir, err)
 		}
 	}
