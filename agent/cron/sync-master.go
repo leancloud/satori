@@ -40,6 +40,7 @@ func (this HeartbeatClient) Call(req interface{}) (interface{}, error) {
 	err := this.cli.Call("Agent.Heartbeat", req, &resp)
 	if err != nil {
 		log.Println("call Agent.Heartbeat fail:", err, "Request:", req, "Response:", resp)
+		return nil, err
 	}
 	return resp, nil
 }

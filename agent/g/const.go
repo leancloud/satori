@@ -10,6 +10,8 @@ package g
 // 7.0.0: tags 改成 map[string]string 了，不兼容
 // 7.0.3: 优化与 transfer 之间的数据传输
 // 7.0.4: 报告执行失败的插件
+// 7.0.5: 修复与 master 断线之后不能恢复的bug
+
 const (
-	VERSION = "7.0.4"
+	VERSION = "7.0.5"
 )
