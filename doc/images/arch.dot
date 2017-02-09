@@ -18,4 +18,5 @@ digraph Architecture {
   alarm -> {SMS Mail "微信"};
   riemann -> master -> agent [label="下发插件参数"];
   agent -> master [label="心跳"];
+  master -> transfer [label="报告 agent 存活"];
 }

@@ -8,10 +8,12 @@ import (
 )
 
 type GlobalConfig struct {
-	Debug  bool   `json:"debug"`
-	Redis  string `json:"redis"`
-	Listen string `json:"listen"`
-	Http   string `json:"http"`
+	Debug        bool   `json:"debug"`
+	Redis        string `json:"redis"`
+	Listen       string `json:"listen"`
+	Http         string `json:"http"`
+	Transfer     string `json:"transfer"`
+	PurgeSeconds int64  `json:"purgeSeconds"`
 }
 
 var (
