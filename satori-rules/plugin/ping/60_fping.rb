@@ -27,7 +27,6 @@ o, _ = Open3.capture2e("/usr/bin/timeout -k 3 --preserve-status 40s /usr/bin/fpi
 
 ts   = Time.now.strftime('%s').to_i
 metric_template = {
-    :endpoint  => HOSTNAME,
     :timestamp => ts,
     :step      => 60,
 }
@@ -43,7 +42,11 @@ o.split("\n").each do |line|
       'ping.latency' => latency,
       'ping.alive'   => loss == 100.0 ? 0 : 1,
     }.map { |k,v|
-      metrics.push( metric_template.merge({ :metric => k, :value => v, :tags => { :to => to, :from => HOSTNAME }} ))
+      metrics.push( metric_template.merge({ :metric => k,
+                                            :endpoint => to,
+                                            :value => v,
+                                            :tags => { :to => to,
+                                                       :from => HOSTNAME }} ))
     }
   end
 end
