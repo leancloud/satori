@@ -32,7 +32,7 @@ metric_template = {
 }
 
 # redis-push-stats    : xmt/rcv/%loss = 10/10/0%, min/avg/max = 0.40/0.50/0.72
-FPING_SPLIT_REGEX = /^([a-z0-9\.\-_]+)[ ]+: xmt\/rcv\/%loss = ([0-9]+)\/([0-9]+)\/([0-9]+)%, min\/avg\/max = ([0-9\.]+)\/([0-9\.]+)\/([0-9\.]+)$/
+FPING_SPLIT_REGEX = /^([a-z0-9\.\-_]+)[ ]+: xmt\/rcv\/%loss = ([0-9]+)\/([0-9]+)\/([0-9]+)%(, min\/avg\/max = ([0-9\.]+)\/([0-9\.]+)\/([0-9\.]+))?$/
 o.split("\n").each do |line|
   if line.chomp =~ FPING_SPLIT_REGEX
     to = $1
