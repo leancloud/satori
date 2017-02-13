@@ -94,7 +94,7 @@
         fetch(this.apiEndpoint, opts).then(resp => resp.json()).then((state) => {
           this.pluginVersion = state['plugin-version'];
           this.numNodes = Object.keys(state['agents']).length;
-          this.numInactiveNodes = _.sum(_.map(state.agents, (a) => new Date() / 1000 - a.lastseen > 3600));
+          this.numInactiveNodes = _.sum(_.map(state.agents, (a) => (new Date() / 1000 - a.lastseen > 3600) ? 1 : 0));
           this.nodes = _.map(state.agents, (v, k) => {
             v.pluginDirs = _.sortBy(state['plugin-dirs'][k]);
             v.pluginMetrics = _.sortBy(state['plugin-metrics'][k], v => v._metric);
