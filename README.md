@@ -10,6 +10,10 @@ Satori 是一个由 LeanCloud 维护的监控系统。
 ![Events](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/events.png)
 ![BitBar](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/bitbar.png)
 
+# 交流
+如果你有什么建议，欢迎在 issue 里面说一下。
+也有 QQ 群可以参与讨论：554765935
+
 # 怎么安装？
 
 请找一个干净的虚拟机，内存大一点，要有 SSD，不要部署其他的服务。
