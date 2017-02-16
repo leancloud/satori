@@ -1,0 +1,34 @@
+关于 watchdog
+
+Oliver'  16:10:43
+(watchdog
+      (where (service "agent.alive")
+        (by :host
+          (set-state (< 1)
+            (run 2 :state
+              (should-alarm-every 120
+                (! {:note "Agent.Alive 不上报了！"
+                    :level 2
+                    :expected 1
+                    :outstanding-tags [:region]
+                    :groups host->group})))))))
+Oliver'  16:10:55
+这样修改对么 ?
+Oliver'  16:11:34
+如果 刚才那个问题真的有 bug... set-state(<1) 这可能不会成立... 
+Proton  16:13:02
+(watchdog 流下出现的东西肯定是失败了……
+Proton  16:13:11
+我看看代码
+Proton  16:14:23
+因为是一定时间后过期，重新把之前的 event 再发一遍，所以里面的 value 是没有意义的
+Proton  16:15:03
+不能 set-state
+Proton  16:15:15
+thx，这些我要加到文档里！
+Proton  16:18:09
+不能加 (run 2 :state 因为 :ok 只会报一遍，这就相当于吧 :ok 吃掉了
+Proton  16:18:29
+这个 watchdog 流特有的……
+Proton  16:19:07
+其他的流因为是收集上来自己判断的，所以会不停的有 :ok 的 event 向下转发
