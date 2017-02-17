@@ -1,7 +1,7 @@
 # 请按照自己的需求添加
-# teams 就是规则中的的报警组
+# groups 就是规则中的的报警组
 
-teams:
+groups:
   operation:
     - proton
     - phone_ops

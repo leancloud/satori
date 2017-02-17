@@ -37,6 +37,11 @@ def read_config(path):
             assert not set(teams) & set(conf['teams'])
             teams.update(conf['teams'])
             conf.pop('teams', 0)
+        # 'groups' is acronym of 'teams'
+        if 'groups' in conf:
+            assert not set(teams) & set(conf['groups'])
+            teams.update(conf['groups'])
+            conf.pop('groups', 0)
         if 'users' in conf:
             assert not set(users) & set(conf['users'])
             users.update(conf['users'])
