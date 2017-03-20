@@ -12,7 +12,7 @@ from backend.common import register_backend
 
 @register_backend
 def nexmo_tts(conf, user, event):
-    if not user['phone']:
+    if not user.get('phone'):
         return
 
     if event['status'] not in ('PROBLEM', 'EVENT'):
