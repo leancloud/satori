@@ -32,3 +32,36 @@ Proton  16:18:29
 这个 watchdog 流特有的……
 Proton  16:19:07
 其他的流因为是收集上来自己判断的，所以会不停的有 :ok 的 event 向下转发
+
+多节点部署：
+digraph {
+    subgraph cluster0 {
+        label = "Dedicated";
+        redis0 -> alarm0;
+    }
+
+    subgraph cluster1 {
+        label = "Cluster1";
+        agent11 -> transfer1;
+        agent12 -> transfer1;
+        transfer1 -> riemann1;
+        agent11 -> master1;
+        agent12 -> master1;
+        master1 -> redis1;
+        riemann1 -> redis0 [label="alarm"];
+        riemann1 -> redis1 [label="master"];
+    }
+
+    subgraph cluster2 {
+        label = "Cluster2";
+        agent21 -> transfer2;
+        agent22 -> transfer2;
+        transfer2 -> riemann2;
+        agent21 -> master2;
+        agent22 -> master2;
+        master2 -> redis2;
+        riemann2 -> redis0 [label="alarm"];
+        riemann2 -> redis2 [label="master"];
+    }
+
+}
