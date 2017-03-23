@@ -20,7 +20,7 @@ entry_points = {
 }
 
 setup(
-    name="falcon-alarm",
+    name="satori-alarm",
     version="1.0.0",
     url='https://leancloud.cn',
     license='Propritary',

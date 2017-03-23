@@ -8,11 +8,12 @@ RUN echo "Asia/Shanghai" | tee /etc/timezone
 RUN dpkg-reconfigure --frontend noninteractive tzdata
 RUN adduser ubuntu
 RUN [ -z "USE_MIRROR" ] || (wget http://mirrors.163.com/.help/sources.list.jessie -O /etc/apt/sources.list && rm -rf /etc/apt/sources.list.d/jessie-backports.list)
-RUN apt-get update && apt-get install -y curl python python-dev python-setuptools build-essential git
+RUN apt-get update && apt-get install -y curl python python-dev build-essential git
 RUN mkdir /alarm/src
-ADD .build/buildout.cfg .build/setup.py .build/docker/use-china-mirror /alarm/
+ADD .build/buildout.cfg .build/setup.py .build/docker/use-china-mirror .build/docker/get-pip.py /alarm/
 RUN [ -z "USE_MIRROR" ] || /alarm/use-china-mirror
-RUN easy_install -U pip zc.buildout setuptools
+RUN python /alarm/get-pip.py
+RUN pip install --upgrade pip zc.buildout setuptools
 RUN cd /alarm && buildout
 
 ADD .build/src /alarm/src

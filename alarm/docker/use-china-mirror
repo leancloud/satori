@@ -1,10 +1,5 @@
 #!/bin/bash
 
-wget http://pypi.doubanio.com/packages/1d/04/97e37cf85972ea19364c22db34ee8192db3876a80ed5bffd6413dcdabe2d/setuptools-28.7.1.tar.gz
-tar -xzvf setuptools-28.7.1.tar.gz
-cd setuptools-28.7.1
-python setup.py install
-
 cat <<EOF >> /alarm/buildout.cfg
 [buildout]
 index = http://pypi.doubanio.com/simple
@@ -15,12 +10,11 @@ mkdir -p ~/.pip
 cat <<EOF >> ~/.pip/pip.conf
 [global]
 index-url = http://pypi.doubanio.com/simple
+[install]
+trusted-host = pypi.doubanio.com
 EOF
 
 cat <<EOF > ~/.pydistutils.cfg
 [easy_install]
 index-url=http://pypi.doubanio.com/simple
 EOF
-
-cd ..
-rm -rf setuptools*

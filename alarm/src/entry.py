@@ -87,7 +87,7 @@ def init_logging(level='INFO'):
 
 
 def start():
-    parser = argparse.ArgumentParser('falcon-alarm')
+    parser = argparse.ArgumentParser('satori-alarm')
     parser.add_argument('--config', help='Config file')
     parser.add_argument('--log', type=str, default="INFO", help='Config file')
     options = parser.parse_args()
