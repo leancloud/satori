@@ -29,7 +29,7 @@ if not os.path.exists(CLI):
     sys.exit(0)
 
 p = subprocess.Popen(
-    CLI + " -LdPdInfo -a0 | grep -c 'Firmware state: Offline'",
+    CLI + " -LdPdInfo -a0 | grep -Ec 'Firmware state: (Failed|Offline)'",
     shell=True, stdout=subprocess.PIPE,
 )
 
