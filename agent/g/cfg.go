@@ -53,6 +53,7 @@ type GlobalConfig struct {
 	Collector *CollectorConfig  `json:"collector"`
 	Ignore    [][3]string       `json:"ignore"`
 	AddTags   map[string]string `json:"addTags"`
+	NoBuiltin bool              `json:"noBuiltin"`
 }
 
 var (

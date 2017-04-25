@@ -1,6 +1,7 @@
 {
     "debug": false,
     "hostname": "",
+    "noBuiltin": false,
     "ip": "",
     "plugin": {
         "enabled": false,

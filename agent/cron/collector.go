@@ -14,6 +14,11 @@ func StartCollect() {
 		log.Fatalln("Transfer not configured!")
 	}
 
+	if g.Config().NoBuiltin {
+		log.Println("No builtin specified")
+		return
+	}
+
 	go collectCpuDisks()
 	for _, v := range funcs.Mappers {
 		go collect(int64(v.Interval), v.Fs)
