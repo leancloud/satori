@@ -11,7 +11,8 @@ package g
 // 7.0.3: 优化与 transfer 之间的数据传输
 // 7.0.4: 报告执行失败的插件
 // 7.0.5: 修复与 master 断线之后不能恢复的bug
+// 7.0.6: 增加 noBuiltIn 参数，打开后只采集插件参数。
 
 const (
-	VERSION = "7.0.5"
+	VERSION = "7.0.6"
 )
