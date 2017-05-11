@@ -151,6 +151,7 @@ function prepare-rules-repo
     git init
     git add -A :/
     git commit -m 'Initial Satori rules repo'
+    git config receive.denyCurrentBranch ignore
     popd >/dev/null
 }
 
