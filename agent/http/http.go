@@ -14,8 +14,9 @@ type Dto struct {
 }
 
 func init() {
-	configPluginRoutes()
-	configPushRoutes()
+	http.HandleFunc("/v1/ping", httpPing)
+	http.HandleFunc("/v1/push", httpPush)
+	http.HandleFunc("/v1/plugin/reset", httpPluginReset)
 }
 
 func RenderJson(w http.ResponseWriter, v interface{}) {

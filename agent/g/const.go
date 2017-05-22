@@ -14,5 +14,5 @@ package g
 // 7.0.6: 增加 noBuiltIn 参数，打开后只采集插件参数。
 
 const (
-	VERSION = "7.0.6"
+	VERSION = "7.0.7"
 )
