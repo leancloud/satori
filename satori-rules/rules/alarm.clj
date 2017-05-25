@@ -36,10 +36,9 @@
   创建一个发送报警的流，流经这个流的事件都会被发到 alarm 产生报警。
   接受一个 map 做参数，map 中需要可以指定如下的参数
 
-  (! {:note \"报警标题，标题对于一个特定的报警是不能变的（不要把报警的数据编码在这里面）\"
+  (! {:note string ; 报警标题，标题对于一个特定的报警是不能变的（不要把报警的数据编码在这里面）
       :level 1  ;报警级别, 0最高，6最小。报警级别影响报警方式。
       :event? false  ; 可选，是不是事件（而不是状态）。默认 false。如果是事件的话，只会发报警，不会记录状态（alarm插件里看不到）。
-      :expected 233  ; 可选，期望值，暂时没用到)
       :outstanding-tags [:region :mount]  ; 可选，相关的tag，写在这里的 tag 会用于区分不同的事件，以及显示在报警内容中, 不填的话默认是所有的tag
       :groups [:operation]})  ; groups 是在规则仓库的 alarm 配置里管理的)
   "
@@ -145,18 +144,6 @@
   [from to & children]
   (apply smap #(assoc % to (from %)) children))
 
-
-(defn |>| [& args] (apply > (map #(Math/abs %) args)))
-(defn |<| [& args] (apply < (map #(Math/abs %) args)))
-
-(defn maxpdiff
-  "计算最大变化率，与 aggregate 搭配使用(MAX Percentage DIFFerence)"
-  [& m]
-  (let [r (last m)]
-    (->> (map #(/ (- r %) r) m)
-         (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
-
-
 (defn ->difference
   "接受事件的数组，变换成另外一个事件数组。
    新的事件数组中，每一个事件的 metric 是之前相邻两个事件 metric 的差。
@@ -167,6 +154,17 @@
       (fn [[ev' ev]] (assoc ev' :metric (- (:metric ev') (:metric ev))))
       (map vector (rest l) l)))
     children))
+
+
+(defn |>| [& args] (apply > (map #(Math/abs %) args)))
+(defn |<| [& args] (apply < (map #(Math/abs %) args)))
+
+(defn maxpdiff
+  "计算最大变化率，与 aggregate 搭配使用(MAX Percentage DIFFerence)"
+  [& m]
+  (let [r (last m)]
+    (->> (map #(/ (- r %) r) m)
+         (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
 
 
 (defn feed-dog
@@ -202,3 +200,37 @@
         (smap :metric
           (with {:state :ok}
             (apply sdo children)))))))
+
+(defn group-window
+  "将事件分组后向下传递，类似 fixed-time-window，但不使用时间切割，
+  而是通过 (group-fn event) 的值进行切割。(group-fn event) 的值会被记录下来，
+  每一次出现重复值的时候，会将当前缓存住的事件数组向下传递。
+
+  比如你有一组同质的机器，跑了相同的服务，但是机器名不一样，可以通过
+  (group-window :host
+    ....)
+  将事件分组后处理（e.g. 对单台的容量求和获得总体容量）
+  e.g.: 一个事件流中的事件先后到达，其中 :host 的值如下
+      a b c d b a c a b
+  那么会被这个流分成
+    [a b c d] [b a c] [a b]
+  分成 3 次向下游传递
+  "
+  [group-fn & children]
+  (let [buffer (ref [])
+        group-keys (ref #{})]
+    (fn stream [event]
+      (let [evkey (group-fn event)]
+        (-> (dosync
+              (if (@group-keys evkey)
+                (let [rst @buffer]
+                  (ref-set buffer [event])
+                  (ref-set group-keys #{evkey})
+                  rst)
+                (do
+                  (alter buffer conj event)
+                  (alter group-keys conj evkey)
+                  nil)))
+            ((fn [rst]
+              (when rst
+                (call-rescue rst children)))))))))
