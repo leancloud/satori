@@ -22,7 +22,7 @@
         "callTimeout": 5000,
         "maxConns": 32,
         "maxIdle": 32,
-        "addr": "http://root@influxdb:8086/influxdb"
+        "addr": "http://root@influxdb:8086/influx"
     },
     "riemann": {
         "enabled": true,
