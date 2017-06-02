@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -15,8 +16,16 @@ import (
 	"github.com/leancloud/satori/agent/g"
 	"github.com/leancloud/satori/common/model"
 	"github.com/toolkits/file"
-	"github.com/toolkits/sys"
 )
+
+func closed(c chan struct{}) bool {
+	select {
+	case <-c:
+		return true
+	default:
+		return false
+	}
+}
 
 type Plugin struct {
 	FilePath string
@@ -32,21 +41,23 @@ func (this *Plugin) Run() {
 		log.Printf("Starting plugin scheduler for %s/%d/%s", this.FilePath, this.Step, this.Params)
 	}
 
-	if this.killSwitch != nil {
-		this.Kill()
-	}
-
-	ticker := time.NewTicker(time.Duration(this.Step) * time.Second)
+	this.Kill()
 	this.killSwitch = make(chan struct{})
 
+	dur := this.Step
+	if dur <= 0 {
+		dur = 1
+	}
+
+	ticker := time.NewTicker(time.Duration(dur) * time.Second)
 	go func() {
+		s := this.killSwitch
 		for {
-			select {
-			case <-ticker.C:
-				this.RunOnce()
-			case <-this.killSwitch:
-				ticker.Stop()
+			<-ticker.C
+			if closed(s) {
 				return
+			} else {
+				this.RunOnce()
 			}
 		}
 	}()
@@ -73,7 +84,6 @@ func (this *Plugin) reportFailure(subject string, desc string) {
 
 func (this *Plugin) RunOnce() {
 	cfg := g.Config().Plugin
-	timeout := this.Step*1000 - 500
 	fpath := filepath.Join(cfg.CheckoutPath, cfg.Subdir, this.FilePath)
 
 	if !file.IsExist(fpath) {
@@ -97,37 +107,11 @@ func (this *Plugin) RunOnce() {
 		stdin.Write(s)
 		cmd.Stdin = &stdin
 	}
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	cmd.Start()
-
-	err, isTimeout := sys.CmdRunWithTimeout(cmd, time.Duration(timeout)*time.Millisecond)
-	errStr := stderr.String()
-
-	if errStr != "" {
-		logFile := filepath.Join(cfg.LogDir, this.FilePath+".stderr.log")
-		if _, err = file.WriteString(logFile, errStr); err != nil {
-			log.Printf("[ERROR] write log to %s fail, error: %s\n", logFile, err)
-		}
-		this.reportFailure("error", errStr)
-	}
-
-	if isTimeout {
-		// has been killed
-		if err == nil && debug {
-			log.Println("[INFO] timeout and kill process", fpath, "successfully")
-			this.reportFailure("timeout", "")
-		}
-
-		if err != nil {
-			log.Println("[ERROR] kill process", fpath, "occur error:", err)
-			this.reportFailure("cant-kill", "")
-		}
-
-		return
-	}
+	stdoutPipe, _ := cmd.StdoutPipe()
+	stdout := bufio.NewReader(stdoutPipe)
+	stderrPipe, _ := cmd.StderrPipe()
+	stderr := bufio.NewReader(stderrPipe)
+	err := cmd.Start()
 
 	if err != nil {
 		log.Println("[ERROR] exec plugin", fpath, "fail. error:", err)
@@ -135,26 +119,64 @@ func (this *Plugin) RunOnce() {
 		return
 	}
 
-	// exec successfully
-	data := stdout.Bytes()
-	if len(data) == 0 && errStr != "" {
-		if debug {
-			log.Println("[DEBUG] stdout of", fpath, "is blank")
+	go func() {
+		for {
+			s, err := stdout.ReadBytes('\n')
+			if err != nil {
+				return
+			}
+			var metrics []*model.MetricValue
+			err = json.Unmarshal(s, &metrics)
+			if err != nil {
+				log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, s)
+				this.reportFailure("bad-format", err.Error()+"\n\n"+string(s))
+				stderrPipe.Close()
+				stdoutPipe.Close()
+				go func() {
+					proc := cmd.Process
+					time.Sleep(time.Seconds * 5)
+					proc.Kill()
+				}()
+				return
+			}
+			g.SendToTransfer(metrics)
 		}
-		this.reportFailure("no-stdout", "")
-		return
+	}()
+
+	go func() {
+		s, _ := ioutil.ReadAll(stderr)
+		if len(s) > 0 {
+			this.reportFailure("error", string(s))
+		}
+	}()
+
+	finished := make(chan error, 1)
+	go func() {
+		finished <- cmd.Wait()
+	}()
+
+	var timeout <-chan time.Time
+	if this.Step > 0 {
+		t := this.Step*1000 - 500
+		timeout = time.After(time.Duration(t) * time.Millisecond)
+	} else {
+		// Long running plugin
+		timeout = make(chan time.Time)
 	}
 
-	var metrics []*model.MetricValue
-	err = json.Unmarshal(data, &metrics)
-	if err != nil {
-		s := stdout.String()
-		log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, s)
-		this.reportFailure("bad-format", err.Error()+"\n\n"+stdout.String())
-		return
-	}
+	killSwitch := this.killSwitch
 
-	g.SendToTransfer(metrics)
+	select {
+	case <-finished:
+		break
+	case <-timeout:
+		cmd.Process.Kill()
+		log.Println("[INFO] Plugin timed out, terminating: ", fpath)
+		this.reportFailure("timeout", "")
+	case <-killSwitch:
+		cmd.Process.Kill()
+		log.Println("[INFO] Plugin was asked to terminate: ", fpath)
+	}
 }
 
 func (this *Plugin) Kill() {
@@ -270,7 +292,7 @@ func RunPlugins(dirs []string, metrics []model.PluginParam) {
 
 	debug := g.Config().Debug
 	if debug {
-		log.Printf("Reschedule for %s plugins", len(L))
+		log.Printf("Reschedule for %d plugins", len(L))
 	}
 
 	PluginsLock.Lock()
