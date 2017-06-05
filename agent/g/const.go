@@ -12,7 +12,9 @@ package g
 // 7.0.4: 报告执行失败的插件
 // 7.0.5: 修复与 master 断线之后不能恢复的bug
 // 7.0.6: 增加 noBuiltIn 参数，打开后只采集插件参数。
+// 7.0.7: 增加了 /v1/ping ，用来检测 agent 存活
+// 7.0.8: 支持 long running 的插件
 
 const (
-	VERSION = "7.0.7"
+	VERSION = "7.0.8"
 )
