@@ -5,7 +5,7 @@ MAINTAINER bwang@leancloud.rocks
 ENV TERM xterm
 WORKDIR /tmp
 
-ADD influxdb_1.0.2_amd64.deb influxdb.deb
+ADD influxdb_1.2.4_amd64.deb influxdb.deb
 RUN dpkg -i influxdb.deb
 
 # Admin server WebUI
