@@ -134,7 +134,7 @@ func (this *Plugin) RunOnce() {
 				stdoutPipe.Close()
 				go func() {
 					proc := cmd.Process
-					time.Sleep(time.Seconds * 5)
+					time.Sleep(time.Second * 5)
 					proc.Kill()
 				}()
 				return
