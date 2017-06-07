@@ -16,7 +16,7 @@ def yunpian_sms(conf, user, event):
     if not user.get('phone'):
         return
 
-    msg = u'【%s】%s[P%s]\n%s\n' % (
+    msg = u'【%s】%s[P%s] %s\n' % (
         conf['signature'],
         status2emoji(event['status']),
         event['level'],

@@ -104,7 +104,7 @@ def wechat_qy(conf, user, event):
     if not (touser or toparty):
         return
 
-    msg = u'%s[P%s]\n%s\n' % (
+    msg = u'%s[P%s] %s\n' % (
         status2emoji(event['status']),
         event['level'],
         event['title'],

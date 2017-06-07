@@ -8,8 +8,16 @@ import requests
 
 # -- own --
 from backend.common import register_backend
+from utils import status2emoji
 
 # -- code --
+
+def status2bccode(s):
+    return {
+        'PROBLEM': u':scream:',
+        'EVENT': u':scream:',
+        'OK': u':sweat_smile:',
+    }.get(s, s)
 
 
 @register_backend
@@ -30,12 +38,17 @@ def bearychat(conf, user, event):
     else:
         color = u'#5cab2a'  # green
 
+    title = u'%s[P%s] %s' % (
+        status2bccode(event['status']),
+        event['level'],
+        event['title'],
+    )
     requests.post(
         url,
         headers={'Content-Type': 'application/json'},
         timeout=10,
         data=json.dumps({
-            'text': event['title'],
+            'text': title,
             'attachments': [{
                 'title': event['status'],
                 'text': event['text'],
