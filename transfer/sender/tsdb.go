@@ -206,10 +206,6 @@ func convert2TsdbItem(d *cmodel.MetricValue) *TsdbItem {
 	return &t
 }
 
-func alignTs(ts int64, period int64) int64 {
-	return ts - ts%period
-}
-
 func tsdbStats() *BackendStats {
 	tsdbQueueLength.SetCnt(int64(tsdbQueue.Len()))
 	return &BackendStats{

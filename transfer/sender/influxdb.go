@@ -240,15 +240,8 @@ func influxdbTransfer() {
 // Push data to 3rd-party database
 func pushToInfluxdb(items []*cmodel.MetricValue) {
 	for _, item := range items {
-		// align ts
-		step := int(item.Step)
-		if step < MinStep {
-			step = MinStep
-		}
-		ts := alignTs(item.Timestamp, int64(step))
-
 		myItem := item
-		myItem.Timestamp = ts
+		myItem.Timestamp = item.Timestamp
 
 		isSuccess := influxdbQueue.PushFront(myItem)
 
