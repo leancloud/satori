@@ -205,9 +205,14 @@ func influxdbTransfer() {
 			continue
 		}
 
-		influxdbItems := make([]*cmodel.MetricValue, count)
+		influxdbItems := make([]*cmodel.MetricValue, 0, count)
 		for i := 0; i < count; i++ {
-			influxdbItems[i] = items[i].(*cmodel.MetricValue)
+			m := items[i].(*cmodel.MetricValue)
+			if m.Metric[0:7] == ".satori" {
+				// skip internal events
+				continue
+			}
+			influxdbItems = append(influxdbItems, m)
 		}
 
 		//	同步Call + 有限并发 进行发送
