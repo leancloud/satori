@@ -1,11 +1,13 @@
 package rpc
 
 import (
-	"github.com/leancloud/satori/transfer/g"
 	"log"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
+	"time"
+
+	"github.com/leancloud/satori/transfer/g"
 )
 
 func StartRpc() {
@@ -30,12 +32,12 @@ func StartRpc() {
 	server.Register(new(Transfer))
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := listener.AcceptTCP()
 		if err != nil {
 			log.Println("listener.Accept occur error:", err)
 			continue
 		}
-		// go rpc.ServeConn(conn)
+		conn.SetDeadline(time.Now().Add(time.Second * 900))
 		go server.ServeCodec(jsonrpc.NewServerCodec(conn))
 	}
 }
