@@ -8,6 +8,7 @@
   (sdo
     (where (host #"^redis\d+$")
       (plugin-dir "redis")
+      (plugin-metric "proc.cpu" 0 {:name "redis", :cmdline "^/usr/bin/redis-server", :interval 5})
 
       (where (and (service "net.port.listen")
                   (= (:name event) "redis-port"))
@@ -16,6 +17,17 @@
             (runs 3 :state
               (should-alarm-every 120
                 (! {:note "Redis 端口不监听了"
+                    :level 1
+                    :expected 3
+                    :groups [:operation :api]}))))))
+
+      (where (and (service "proc.cpu")
+                  (= (:name event) "redis"))
+        (by [:host :name]
+          (set-state-gapped (> 85) (< 50)
+            (runs 12 :state
+              (should-alarm-every 120
+                (! {:note "Redis 进程 CPU 占用过高"
                     :level 1
                     :expected 3
                     :groups [:operation :api]}))))))
@@ -30,5 +42,3 @@
             :expected 1
             :outstanding-tags [:port :region]
             :groups [:operation]})))))
-
-
