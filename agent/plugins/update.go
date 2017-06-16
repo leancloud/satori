@@ -104,7 +104,7 @@ func UpdatePlugin(ver string) error {
 		lastPluginUpdate = time.Now().Unix()
 
 		buf.Reset()
-		cmd := exec.Command("git", "fetch")
+		cmd := exec.Command("timeout", "120s", "git", "fetch")
 		cmd.Dir = cfg.CheckoutPath
 		cmd.Stdout = &buf
 		cmd.Stderr = &buf
@@ -134,7 +134,7 @@ func UpdatePlugin(ver string) error {
 		log.Println("Begin update plugins by clone")
 		lastPluginUpdate = time.Now().Unix()
 		buf.Reset()
-		cmd := exec.Command("git", "clone", cfg.Git, file.Basename(cfg.CheckoutPath))
+		cmd := exec.Command("timeout", "120s", "git", "clone", cfg.Git, file.Basename(cfg.CheckoutPath))
 		cmd.Dir = parentDir
 		cmd.Stdout = &buf
 		cmd.Stderr = &buf
