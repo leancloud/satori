@@ -23,6 +23,7 @@ func filterMetrics(metrics []*model.MetricValue) []*model.MetricValue {
 	addTags := cfg.AddTags
 	ignore := cfg.Ignore
 	debug := cfg.Debug
+	hostname, _ := Hostname()
 
 	filtered := make([]*model.MetricValue, 0)
 
@@ -55,6 +56,11 @@ metricsLoop:
 				}
 			}
 		}
+
+		if mv.Endpoint == "" {
+			mv.Endpoint = hostname
+		}
+
 		filtered = append(filtered, mv)
 	}
 	return filtered

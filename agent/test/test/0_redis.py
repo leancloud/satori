@@ -20,8 +20,8 @@ rst = []
 for k in range(100000):
     time.sleep(1)
     print json.dumps([{
+        'endpoint': '',
         'metric': 'redis.%s' % k,
-        'endpoint': endpoint,
         'timestamp': ts,
         'step': 30,
         'value': k,

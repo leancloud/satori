@@ -14,7 +14,8 @@ package g
 // 7.0.6: 增加 noBuiltIn 参数，打开后只采集插件参数。
 // 7.0.7: 增加了 /v1/ping ，用来检测 agent 存活
 // 7.0.8: 支持 long running 的插件
+// 7.0.9: 补全插件上报的事件中的 endpoint
 
 const (
-	VERSION = "7.0.8"
+	VERSION = "7.0.9"
 )
