@@ -118,6 +118,7 @@ services:
 
   riemann:
     build: images/riemann
+    links: [redis]
     restart: always
     volumes:
       - "$RULES_REPO:/satori-conf"
