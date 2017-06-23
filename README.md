@@ -164,6 +164,7 @@ git push  # 然后就生效了
 - 支持从 agent 上附加固定的 tag（用例：region=cn-west）
 - 支持自主的插件更新
 - 支持带参数的插件
+- 支持持续执行(long running)的插件
 - 去除了 push 和 plugin 以外的所有 http 接口
 - 去掉了单机部署的功能，现在强制要求指定一个 transfer 组件
 - 不兼容 open-falcon 的 heartbeat
