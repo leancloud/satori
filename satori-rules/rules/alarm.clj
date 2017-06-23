@@ -163,7 +163,7 @@
   "计算最大变化率，与 aggregate 搭配使用(MAX Percentage DIFFerence)"
   [& m]
   (let [r (last m)]
-    (->> (map #(/ (- r %) r) m)
+    (->> (map #(/ (- r %) %) m)
          (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
 
 
