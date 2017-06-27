@@ -160,10 +160,13 @@
 (defn |<| [& args] (apply < (map #(Math/abs %) args)))
 
 (defn maxpdiff
-  "计算最大变化率，与 aggregate 搭配使用(MAX Percentage DIFFerence)"
+  "计算列表中最后一个点相对之前的点的最大变化率(MAX Percentage DIFFerence)，
+   与 aggregate 搭配使用。计算变化率时总是使用两个点中的最小值做分母，
+   所以由1变到2的变化率是 1.0, 由2变到1的变化率是 -1.0 （而不是 -0.5)
+   "
   [& m]
   (let [r (last m)]
-    (->> (map #(/ (- r %) %) m)
+    (->> (map #(/ (- r %) (min r %)) m)
          (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
 
 
@@ -221,16 +224,16 @@
         group-keys (ref #{})]
     (fn stream [event]
       (let [evkey (group-fn event)]
-        (-> (dosync
-              (if (@group-keys evkey)
-                (let [rst @buffer]
-                  (ref-set buffer [event])
-                  (ref-set group-keys #{evkey})
-                  rst)
-                (do
-                  (alter buffer conj event)
-                  (alter group-keys conj evkey)
-                  nil)))
-            ((fn [rst]
-              (when rst
-                (call-rescue rst children)))))))))
+        (as-> nil rst
+          (dosync
+            (if (@group-keys evkey)
+              (let [events @buffer]
+                (ref-set buffer [event])
+                (ref-set group-keys #{evkey})
+                events)
+              (do
+                (alter buffer conj event)
+                (alter group-keys conj evkey)
+                nil)))
+          (when rst
+            (call-rescue rst children)))))))
