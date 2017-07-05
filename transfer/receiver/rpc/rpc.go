@@ -11,11 +11,7 @@ import (
 )
 
 func StartRpc() {
-	if !g.Config().Rpc.Enabled {
-		return
-	}
-
-	addr := g.Config().Rpc.Listen
+	addr := g.Config().Listen
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		log.Fatalf("net.ResolveTCPAddr fail: %s", err)

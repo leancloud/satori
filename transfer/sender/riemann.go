@@ -1,35 +1,26 @@
 package sender
 
 import (
-	"fmt"
 	"log"
-	"net/url"
 	"time"
 
 	"github.com/amir/raidman"
 	nsema "github.com/toolkits/concurrent/semaphore"
-	nlist "github.com/toolkits/container/list"
-	nproc "github.com/toolkits/proc"
 
 	"github.com/leancloud/satori/common/cpool"
 	cmodel "github.com/leancloud/satori/common/model"
-	"github.com/leancloud/satori/transfer/g"
 )
 
-var (
-	riemannConnPool    *cpool.ConnPool
-	riemannQueue       = nlist.NewSafeListLimited(DefaultSendQueueMaxSize)
-	riemannSendCounter = nproc.NewSCounterQps("riemannSend")
-	riemannDropCounter = nproc.NewSCounterQps("riemannDrop")
-	riemannFailCounter = nproc.NewSCounterQps("riemannFail")
-	riemannQueueLength = nproc.NewSCounterBase("riemannQueueLength")
-)
+type RiemannBackend struct {
+	BackendCommon
+}
 
-var RiemannBackend = Backend{
-	Name:     "riemann",
-	Start:    startRiemannTransfer,
-	Send:     pushToRiemann,
-	GetStats: riemannStats,
+func newRiemannBackend(cfg *BackendConfig) Backend {
+	if cfg.Engine == "riemann" {
+		return &RiemannBackend{*newBackendCommon(cfg)}
+	} else {
+		return nil
+	}
 }
 
 type RiemannClient struct {
@@ -58,14 +49,17 @@ func (this RiemannClient) Call(items interface{}) (interface{}, error) {
 	return nil, err
 }
 
-func riemannConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
-	u, err := url.Parse(p.Address)
-	if err != nil {
-		return nil, err
+func (this *RiemannBackend) riemannConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+	cfg := this.config
+	u := cfg.Url
+
+	proto := cfg.Protocol
+	if proto == "" {
+		proto = "tcp"
 	}
 
 	conn, err := raidman.DialWithTimeout(
-		u.Scheme,
+		proto,
 		u.Host,
 		time.Duration(p.ConnTimeout)*time.Millisecond,
 	)
@@ -77,45 +71,35 @@ func riemannConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
 	return RiemannClient{conn, name}, nil
 }
 
-func riemannConnPoolFactory() *cpool.ConnPool {
-	cfg := g.Config().Riemann
-	addr := cfg.Address
+func (this *RiemannBackend) createConnPool() *cpool.ConnPool {
+	cfg := this.config
+	u := cfg.Url
+
 	p := cpool.NewConnPool(
-		"riemann",
-		addr,
-		cfg.MaxConns,
+		cfg.Name,
+		u.Host,
+		cfg.MaxConn,
 		cfg.MaxIdle,
 		cfg.ConnTimeout,
 		cfg.CallTimeout,
-		riemannConnect,
+		this.riemannConnect,
 	)
 
 	return p
 }
 
-func startRiemannTransfer() error {
-	cfg := g.Config().Riemann
-	if cfg == nil {
-		return fmt.Errorf("Riemann not configured")
-	}
-
-	if !cfg.Enabled {
-		return fmt.Errorf("Riemann not enabled")
-	}
-
-	riemannConnPool = riemannConnPoolFactory()
-
-	go riemannTransfer()
+func (this *RiemannBackend) Start() error {
+	this.pool = this.createConnPool()
+	go this.sendProc()
 	return nil
 }
 
-func riemannTransfer() {
-	cfg := g.Config().Riemann
-	batch := cfg.Batch // 一次发送,最多batch条数据
-	sema := nsema.NewSemaphore(cfg.MaxConns)
+func (this *RiemannBackend) sendProc() {
+	cfg := this.config
+	sema := nsema.NewSemaphore(cfg.MaxConn)
 
 	for {
-		items := riemannQueue.PopBackBy(batch)
+		items := this.queue.PopBackBy(cfg.Batch)
 		if len(items) == 0 {
 			time.Sleep(DefaultSendTaskSleepInterval)
 			continue
@@ -132,16 +116,16 @@ func riemannTransfer() {
 
 			var err error
 			for i := 0; i < 3; i++ {
-				_, err = riemannConnPool.Call(riemannItems)
+				_, err = this.pool.Call(riemannItems)
 				if err == nil {
-					riemannSendCounter.IncrBy(int64(len(itemList)))
+					this.sendCounter.IncrBy(int64(len(itemList)))
 					break
 				}
 				time.Sleep(100 * time.Millisecond)
 			}
 
 			if err != nil {
-				riemannFailCounter.IncrBy(int64(len(itemList)))
+				this.failCounter.IncrBy(int64(len(itemList)))
 				log.Println(err)
 				return
 			}
@@ -150,7 +134,7 @@ func riemannTransfer() {
 }
 
 // 将原始数据入到riemann发送缓存队列
-func pushToRiemann(items []*cmodel.MetricValue) {
+func (this *RiemannBackend) Send(items []*cmodel.MetricValue) {
 	for _, item := range items {
 		riemannItem := raidman.Event{
 			Service:     item.Metric,
@@ -168,21 +152,10 @@ func pushToRiemann(items []*cmodel.MetricValue) {
 			riemannItem.Attributes[k] = v
 		}
 
-		isSuccess := riemannQueue.PushFront(&riemannItem)
+		isSuccess := this.queue.PushFront(&riemannItem)
 
 		if !isSuccess {
-			riemannDropCounter.Incr()
+			this.dropCounter.Incr()
 		}
-	}
-}
-
-func riemannStats() *BackendStats {
-	riemannQueueLength.SetCnt(int64(riemannQueue.Len()))
-	return &BackendStats{
-		SendCounter:   riemannSendCounter.Get(),
-		DropCounter:   riemannDropCounter.Get(),
-		FailCounter:   riemannFailCounter.Get(),
-		QueueLength:   riemannQueueLength.Get(),
-		ConnPoolStats: []*cpool.ConnPoolStats{riemannConnPool.Stats()},
 	}
 }

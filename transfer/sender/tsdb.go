@@ -3,34 +3,27 @@ package sender
 import (
 	"bytes"
 	"fmt"
-	"github.com/leancloud/satori/transfer/g"
 	"log"
 	"net"
 	"strings"
 	"time"
 
 	nsema "github.com/toolkits/concurrent/semaphore"
-	nlist "github.com/toolkits/container/list"
-	nproc "github.com/toolkits/proc"
 
 	"github.com/leancloud/satori/common/cpool"
 	cmodel "github.com/leancloud/satori/common/model"
 )
 
-var (
-	tsdbConnPool    *cpool.ConnPool
-	tsdbQueue       = nlist.NewSafeListLimited(DefaultSendQueueMaxSize)
-	tsdbSendCounter = nproc.NewSCounterQps("tsdbSend")
-	tsdbDropCounter = nproc.NewSCounterQps("tsdbDrop")
-	tsdbFailCounter = nproc.NewSCounterQps("tsdbFail")
-	tsdbQueueLength = nproc.NewSCounterBase("tsdbQueueLength")
-)
+type TsdbBackend struct {
+	BackendCommon
+}
 
-var TsdbBackend = Backend{
-	Name:     "tsdb",
-	Start:    startTsdbTransfer,
-	Send:     pushToTsdb,
-	GetStats: tsdbStats,
+func newTsdbBackend(cfg *BackendConfig) Backend {
+	if cfg.Engine == "tsdb" {
+		return &TsdbBackend{*newBackendCommon(cfg)}
+	} else {
+		return nil
+	}
 }
 
 type TsdbItem struct {
@@ -88,7 +81,7 @@ func (this TsdbClient) Call(items interface{}) (interface{}, error) {
 	return this.cli.Write(items.([]byte))
 }
 
-func tsdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+func (this *TsdbBackend) tsdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
 	addr := p.Address
 	_, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
@@ -104,47 +97,33 @@ func tsdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
 	return TsdbClient{conn, name}, nil
 }
 
-func tsdbConnPoolFactory() *cpool.ConnPool {
-	cfg := g.Config().Tsdb
-	addr := cfg.Address
+func (this *TsdbBackend) createConnPool() *cpool.ConnPool {
+	cfg := this.config
 	p := cpool.NewConnPool(
-		"tsdb",
-		addr,
-		cfg.MaxConns,
+		cfg.Name,
+		cfg.Url.Host,
+		cfg.MaxConn,
 		cfg.MaxIdle,
 		cfg.ConnTimeout,
 		cfg.CallTimeout,
-		tsdbConnect,
+		this.tsdbConnect,
 	)
 
 	return p
 }
 
-func startTsdbTransfer() error {
-	cfg := g.Config().Tsdb
-	if cfg == nil {
-		return fmt.Errorf("TSDB not configured")
-	}
-
-	if !cfg.Enabled {
-		return fmt.Errorf("TSDB not enabled")
-	}
-
-	tsdbConnPool = tsdbConnPoolFactory()
-
-	go tsdbTransfer()
+func (this *TsdbBackend) Start() error {
+	this.pool = this.createConnPool()
+	go this.sendProc()
 	return nil
 }
 
-func tsdbTransfer() {
-	cfg := g.Config().Tsdb
-
-	batch := cfg.Batch // 一次发送,最多batch条数据
-	retry := cfg.MaxRetry
-	sema := nsema.NewSemaphore(cfg.MaxConns)
+func (this *TsdbBackend) sendProc() {
+	cfg := this.config
+	sema := nsema.NewSemaphore(cfg.MaxConn)
 
 	for {
-		items := tsdbQueue.PopBackBy(batch)
+		items := this.queue.PopBackBy(cfg.Batch)
 		if len(items) == 0 {
 			time.Sleep(DefaultSendTaskSleepInterval)
 			continue
@@ -162,17 +141,17 @@ func tsdbTransfer() {
 			}
 
 			var err error
-			for i := 0; i < retry; i++ {
-				_, err = tsdbConnPool.Call(tsdbBuffer.Bytes())
+			for i := 0; i < cfg.Retry; i++ {
+				_, err = this.pool.Call(tsdbBuffer.Bytes())
 				if err == nil {
-					tsdbSendCounter.IncrBy(int64(len(itemList)))
+					this.sendCounter.IncrBy(int64(len(itemList)))
 					break
 				}
 				time.Sleep(100 * time.Millisecond)
 			}
 
 			if err != nil {
-				tsdbFailCounter.IncrBy(int64(len(itemList)))
+				this.failCounter.IncrBy(int64(len(itemList)))
 				log.Println(err)
 				return
 			}
@@ -181,13 +160,13 @@ func tsdbTransfer() {
 }
 
 // 将原始数据入到tsdb发送缓存队列
-func pushToTsdb(items []*cmodel.MetricValue) {
+func (this *TsdbBackend) Send(items []*cmodel.MetricValue) {
 	for _, item := range items {
 		tsdbItem := convert2TsdbItem(item)
-		isSuccess := tsdbQueue.PushFront(tsdbItem)
+		isSuccess := this.queue.PushFront(tsdbItem)
 
 		if !isSuccess {
-			tsdbDropCounter.Incr()
+			this.dropCounter.Incr()
 		}
 	}
 }
@@ -204,15 +183,4 @@ func convert2TsdbItem(d *cmodel.MetricValue) *TsdbItem {
 	t.Timestamp = d.Timestamp
 	t.Value = d.Value
 	return &t
-}
-
-func tsdbStats() *BackendStats {
-	tsdbQueueLength.SetCnt(int64(tsdbQueue.Len()))
-	return &BackendStats{
-		SendCounter:   tsdbSendCounter.Get(),
-		DropCounter:   tsdbDropCounter.Get(),
-		FailCounter:   tsdbFailCounter.Get(),
-		QueueLength:   tsdbQueueLength.Get(),
-		ConnPoolStats: []*cpool.ConnPoolStats{tsdbConnPool.Stats()},
-	}
 }

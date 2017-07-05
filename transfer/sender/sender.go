@@ -12,10 +12,12 @@ var (
 	MinStep int //最小上报周期,单位sec
 )
 
-var Backends = []*Backend{
-	&TsdbBackend,
-	&InfluxdbBackend,
-	&RiemannBackend,
+var Backends = make([]Backend, 0, 5)
+
+var BackendConstructors = []func(cfg *BackendConfig) Backend{
+	newRiemannBackend,
+	newInfluxdbBackend,
+	newTsdbBackend,
 }
 
 // 连接池
@@ -27,18 +29,25 @@ func Start() {
 		MinStep = 30 //默认30s
 	}
 
-	avail := make([]*Backend, 0, 5)
-	for _, b := range Backends {
-		err := b.Start()
-		if err == nil {
-			log.Printf("Started backend %s\n", b.Name)
-			avail = append(avail, b)
-		} else {
-			log.Printf("Backend %s not started: %s\n", b.Name, err)
+	for _, s := range g.Config().Backends {
+		cfg := parseBackendUrl(s)
+		for _, f := range BackendConstructors {
+			b := f(cfg)
+			if b != nil {
+				Backends = append(Backends, b)
+				break
+			}
 		}
 	}
 
-	Backends = avail
+	for _, b := range Backends {
+		err := b.Start()
+		if err == nil {
+			log.Printf("Started backend %s\n", b.GetConfig().Name)
+		} else {
+			log.Printf("Backend %s not started: %s\n", b.GetConfig().Name, err)
+		}
+	}
 
 	go periodicallyPrintBackendStats()
 	log.Println("send.Start, ok")
@@ -52,15 +61,15 @@ func Send(items []*cmodel.MetricValue) {
 
 func periodicallyPrintBackendStats() {
 	for {
-		time.Sleep(DefaultLogCronPeriod)
+		time.Sleep(180 * time.Second)
 		log.Println(">>>>>------------------------------------")
 		for _, b := range Backends {
 			stats := b.GetStats()
 			log.Printf("Backend %s: Send: %d, Drop: %d, Fail: %d, QueueLength: %d\n",
-				b.Name,
-				stats.SendCounter.Qps,
-				stats.DropCounter.Qps,
-				stats.FailCounter.Qps,
+				b.GetConfig().Name,
+				stats.Send.Qps,
+				stats.Drop.Qps,
+				stats.Fail.Qps,
 				stats.QueueLength.Cnt,
 			)
 			for _, s := range stats.ConnPoolStats {

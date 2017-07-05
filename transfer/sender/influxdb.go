@@ -1,8 +1,6 @@
 package sender
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -11,34 +9,21 @@ import (
 
 	influxdb "github.com/influxdata/influxdb/client/v2"
 	nsema "github.com/toolkits/concurrent/semaphore"
-	nlist "github.com/toolkits/container/list"
-	nproc "github.com/toolkits/proc"
 
 	"github.com/leancloud/satori/common/cpool"
 	cmodel "github.com/leancloud/satori/common/model"
-	"github.com/leancloud/satori/transfer/g"
 )
 
-var (
-	errInvalidDSNUnescaped = errors.New("Invalid DSN: Did you forget to escape a param value?")
-	errInvalidDSNAddr      = errors.New("Invalid DSN: Network Address not terminated (missing closing brace)")
-	errInvalidDSNNoSlash   = errors.New("Invalid DSN: Missing the slash separating the database name")
-)
+type InfluxdbBackend struct {
+	BackendCommon
+}
 
-var (
-	influxdbConnPool    *cpool.ConnPool
-	influxdbQueue       = nlist.NewSafeListLimited(DefaultSendQueueMaxSize)
-	influxdbSendCounter = nproc.NewSCounterQps("influxdbSend")
-	influxdbDropCounter = nproc.NewSCounterQps("influxdbDrop")
-	influxdbFailCounter = nproc.NewSCounterQps("influxdbFail")
-	influxdbQueueLength = nproc.NewSCounterBase("influxdbQueueLength")
-)
-
-var InfluxdbBackend = Backend{
-	Name:     "influxdb",
-	Start:    startInfluxdbTransfer,
-	Send:     pushToInfluxdb,
-	GetStats: influxdbStats,
+func newInfluxdbBackend(cfg *BackendConfig) Backend {
+	if cfg.Engine == "influxdb" {
+		return &InfluxdbBackend{*newBackendCommon(cfg)}
+	} else {
+		return nil
+	}
 }
 
 type InfluxdbClient struct {
@@ -107,25 +92,28 @@ func (this InfluxdbClient) Call(arg interface{}) (interface{}, error) {
 	return nil, this.cli.Write(bp)
 }
 
-func influxdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
-	conf, err := url.Parse(p.Address)
-	if err != nil {
-		return nil, err
-	}
+func (this *InfluxdbBackend) influxdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+	cfg := this.config
+	u := cfg.Url
 
 	connTimeout := time.Duration(p.ConnTimeout) * time.Millisecond
-	_, err = net.DialTimeout("tcp", conf.Host, connTimeout)
+	_, err := net.DialTimeout("tcp", u.Host, connTimeout)
 	if err != nil {
 		// log.Printf("new conn fail, addr %s, err %v", p.Address, err)
 		return nil, err
 	}
 
-	pwd, _ := conf.User.Password()
+	pwd, _ := u.User.Password()
+
+	proto := cfg.Protocol
+	if proto == "" {
+		proto = "http"
+	}
 
 	c, err := influxdb.NewHTTPClient(
 		influxdb.HTTPConfig{
-			Addr:     (&url.URL{Scheme: conf.Scheme, Host: conf.Host}).String(),
-			Username: conf.User.Username(),
+			Addr:     (&url.URL{Scheme: proto, Host: u.Host}).String(),
+			Username: u.User.Username(),
 			Password: pwd,
 		},
 	)
@@ -137,68 +125,36 @@ func influxdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
 	return InfluxdbClient{
 		cli:    c,
 		name:   name,
-		dbName: conf.Path[1:],
+		dbName: u.Path[1:],
 	}, nil
 }
 
-func influxdbConnPoolFactory() (*cpool.ConnPool, error) {
-	cfg := g.Config().Influxdb
-	addr := cfg.Address
-	_, err := url.Parse(cfg.Address)
-
-	if err != nil {
-		return nil, err
-	}
-
-	p := cpool.NewConnPool(
-		"influxdb",
-		addr,
-		cfg.MaxConns,
+func (this *InfluxdbBackend) createConnPool() *cpool.ConnPool {
+	cfg := this.config
+	return cpool.NewConnPool(
+		cfg.Name,
+		cfg.Url.Host,
+		cfg.MaxConn,
 		cfg.MaxIdle,
 		cfg.ConnTimeout,
 		cfg.CallTimeout,
-		influxdbConnect,
+		this.influxdbConnect,
 	)
-
-	return p, nil
 }
 
-func startInfluxdbTransfer() error {
-	cfg := g.Config().Influxdb
-	if cfg == nil {
-		return fmt.Errorf("Influxdb not configured")
-	}
-
-	if !cfg.Enabled {
-		return fmt.Errorf("Influxdb not enabled")
-	}
-
-	var err error
-	influxdbConnPool, err = influxdbConnPoolFactory()
-
-	if err != nil {
-		log.Print("syntax of influxdb address is wrong")
-		return err
-	}
-
-	go influxdbTransfer()
+func (this *InfluxdbBackend) Start() error {
+	this.pool = this.createConnPool()
+	go this.sendProc()
 	return nil
 }
 
-func influxdbTransfer() {
-	cfg := g.Config().Influxdb
+func (this *InfluxdbBackend) sendProc() {
+	cfg := this.config
 	batch := cfg.Batch // 一次发送,最多batch条数据
-	conn, err := url.Parse(cfg.Address)
-	if err != nil {
-		log.Print("syntax of influxdb address is wrong")
-		return
-	}
-	addr := conn.Host
 
-	sema := nsema.NewSemaphore(cfg.MaxConns)
-
+	sema := nsema.NewSemaphore(cfg.MaxConn)
 	for {
-		items := influxdbQueue.PopBackBy(batch)
+		items := this.queue.PopBackBy(batch)
 		count := len(items)
 		if count == 0 {
 			time.Sleep(DefaultSendTaskSleepInterval)
@@ -217,13 +173,13 @@ func influxdbTransfer() {
 
 		//	同步Call + 有限并发 进行发送
 		sema.Acquire()
-		go func(addr string, influxdbItems []*cmodel.MetricValue, count int) {
+		go func(influxdbItems []*cmodel.MetricValue, count int) {
 			defer sema.Release()
 
 			var err error
 			sendOk := false
-			for i := 0; i < 3; i++ { //最多重试3次
-				_, err = influxdbConnPool.Call(influxdbItems)
+			for i := 0; i < cfg.Retry; i++ {
+				_, err = this.pool.Call(influxdbItems)
 				if err == nil {
 					sendOk = true
 					break
@@ -233,37 +189,26 @@ func influxdbTransfer() {
 
 			// statistics
 			if !sendOk {
-				log.Printf("send influxdb %s fail: %v", addr, err)
-				influxdbFailCounter.IncrBy(int64(count))
+				log.Printf("send influxdb %s fail: %v", cfg.Name, err)
+				this.failCounter.IncrBy(int64(count))
 			} else {
-				influxdbSendCounter.IncrBy(int64(count))
+				this.sendCounter.IncrBy(int64(count))
 			}
-		}(addr, influxdbItems, count)
+		}(influxdbItems, count)
 	}
 }
 
 // Push data to 3rd-party database
-func pushToInfluxdb(items []*cmodel.MetricValue) {
+func (this *InfluxdbBackend) Send(items []*cmodel.MetricValue) {
 	for _, item := range items {
 		myItem := item
 		myItem.Timestamp = item.Timestamp
 
-		isSuccess := influxdbQueue.PushFront(myItem)
+		isSuccess := this.queue.PushFront(myItem)
 
 		// statistics
 		if !isSuccess {
-			influxdbDropCounter.Incr()
+			this.dropCounter.Incr()
 		}
-	}
-}
-
-func influxdbStats() *BackendStats {
-	influxdbQueueLength.SetCnt(int64(influxdbQueue.Len()))
-	return &BackendStats{
-		SendCounter:   influxdbSendCounter.Get(),
-		DropCounter:   influxdbDropCounter.Get(),
-		FailCounter:   influxdbFailCounter.Get(),
-		QueueLength:   influxdbQueueLength.Get(),
-		ConnPoolStats: []*cpool.ConnPoolStats{influxdbConnPool.Stats()},
 	}
 }

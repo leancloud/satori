@@ -41,7 +41,7 @@ class RPCClient(object):
 
 if __name__ == '__main__':
     rpc = RPCClient(("127.0.0.1", 8433))
-    for i in xrange(1):
+    for i in xrange(1000):
         evts = [
             {'endpoint': 'host.niean',
             'description': 'meh1',
@@ -70,4 +70,4 @@ if __name__ == '__main__':
             'step': 60,
             },
         ]
-        print rpc.call("Transfer.Update", evts[2:])
+        print rpc.call("Transfer.Update", evts)

@@ -1,36 +1,13 @@
 {
     "debug": true,
     "minStep": 30,
-    "rpc": {
-        "enabled": true,
-        "listen": "0.0.0.0:8433"
-    },
-    "tsdb": {
-        "enabled": false,
-        "batch": 200,
-        "connTimeout": 1000,
-        "callTimeout": 5000,
-        "maxConns": 32,
-        "maxIdle": 32,
-        "retry": 3,
-        "address": "tsdb:8088"
-    },
-    "influxdb": {
-        "enabled": true,
-        "batch": 50,
-        "connTimeout": 1000,
-        "callTimeout": 5000,
-        "maxConns": 32,
-        "maxIdle": 32,
-        "addr": "http://root@influxdb:8086/influx"
-    },
-    "riemann": {
-        "enabled": true,
-        "batch": 20,
-        "connTimeout": 1000,
-        "callTimeout": 5000,
-        "maxConns": 32,
-        "maxIdle": 32,
-        "addr": "tcp://riemann:5555"
-    }
+    "listen": "0.0.0.0:8433",
+    "backends": [
+        "influxdb+http://root@influxdb:8086/influx?batch=50",
+        "riemann+tcp://riemann:5555/?batch=20"
+    ],
+    "_backends_unused": [
+        "tsdb://tsdb:8088/?batch=200",
+        "transfer://transfer-alt:8433/?batch=20&connTimeout=1000&callTimeout=5000&maxConn=32&maxIdle=32&retry=3"
+    ]
 }
