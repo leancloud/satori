@@ -18,6 +18,7 @@ var BackendConstructors = []func(cfg *BackendConfig) Backend{
 	newRiemannBackend,
 	newInfluxdbBackend,
 	newTsdbBackend,
+	newTransferBackend,
 }
 
 // 连接池
@@ -61,7 +62,7 @@ func Send(items []*cmodel.MetricValue) {
 
 func periodicallyPrintBackendStats() {
 	for {
-		time.Sleep(180 * time.Second)
+		time.Sleep(120 * time.Second)
 		log.Println(">>>>>------------------------------------")
 		for _, b := range Backends {
 			stats := b.GetStats()
@@ -76,7 +77,6 @@ func periodicallyPrintBackendStats() {
 				log.Printf("    - ConnPool: %s\n", s)
 			}
 			log.Printf("\n")
-
 		}
 	}
 }

@@ -81,7 +81,7 @@ func (this TsdbClient) Call(items interface{}) (interface{}, error) {
 	return this.cli.Write(items.([]byte))
 }
 
-func (this *TsdbBackend) tsdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+func (this *TsdbBackend) tsdbConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) {
 	addr := p.Address
 	_, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {

@@ -45,7 +45,7 @@ func (this HeartbeatClient) Call(req interface{}) (interface{}, error) {
 	return resp, nil
 }
 
-func heartbeatConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+func heartbeatConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) {
 	connTimeout := time.Duration(p.ConnTimeout) * time.Millisecond
 	conn, err := net.DialTimeout("tcp", p.Address, connTimeout)
 

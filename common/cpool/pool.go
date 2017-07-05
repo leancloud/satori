@@ -2,7 +2,6 @@ package cpool
 
 import (
 	"fmt"
-	"io"
 	"sync"
 	"time"
 )
@@ -12,13 +11,6 @@ import (
 var ErrMaxConn = fmt.Errorf("maximum connections reached")
 
 //
-type NConn interface {
-	io.Closer
-	Name() string
-	Call(arg interface{}) (interface{}, error)
-	Closed() bool
-}
-
 type ConnPool struct {
 	sync.RWMutex
 
@@ -29,11 +21,11 @@ type ConnPool struct {
 	ConnTimeout int
 	CallTimeout int
 	Cnt         int64
-	New         func(name string, pool *ConnPool) (NConn, error)
+	New         func(name string, pool *ConnPool) (PoolClient, error)
 
 	active int
-	free   []NConn
-	all    map[string]NConn
+	free   []PoolClient
+	all    map[string]PoolClient
 }
 
 type ConnPoolStats struct {
@@ -54,7 +46,7 @@ func (this *ConnPoolStats) String() string {
 	)
 }
 
-func NewConnPool(name string, address string, maxConns int, maxIdle int, connTimeout int, callTimeout int, new func(string, *ConnPool) (NConn, error)) *ConnPool {
+func NewConnPool(name string, address string, maxConns int, maxIdle int, connTimeout int, callTimeout int, new func(string, *ConnPool) (PoolClient, error)) *ConnPool {
 	return &ConnPool{
 		Name:        name,
 		Address:     address,
@@ -64,7 +56,7 @@ func NewConnPool(name string, address string, maxConns int, maxIdle int, connTim
 		ConnTimeout: connTimeout,
 		Cnt:         0,
 		New:         new,
-		all:         make(map[string]NConn),
+		all:         make(map[string]PoolClient),
 	}
 }
 
@@ -82,7 +74,7 @@ func (this *ConnPool) Stats() *ConnPoolStats {
 
 }
 
-func (this *ConnPool) Fetch() (NConn, error) {
+func (this *ConnPool) Fetch() (PoolClient, error) {
 	this.Lock()
 	defer this.Unlock()
 
@@ -136,7 +128,7 @@ func (this *ConnPool) Call(arg interface{}) (interface{}, error) {
 	}
 }
 
-func (this *ConnPool) Release(conn NConn) {
+func (this *ConnPool) Release(conn PoolClient) {
 	this.Lock()
 	defer this.Unlock()
 
@@ -148,7 +140,7 @@ func (this *ConnPool) Release(conn NConn) {
 	}
 }
 
-func (this *ConnPool) ForceClose(conn NConn) {
+func (this *ConnPool) ForceClose(conn PoolClient) {
 	this.Lock()
 	defer this.Unlock()
 
@@ -173,12 +165,12 @@ func (this *ConnPool) Destroy() {
 	}
 
 	this.active = 0
-	this.free = []NConn{}
-	this.all = map[string]NConn{}
+	this.free = []PoolClient{}
+	this.all = map[string]PoolClient{}
 }
 
 // internal, concurrently unsafe
-func (this *ConnPool) newConn() (NConn, error) {
+func (this *ConnPool) newConn() (PoolClient, error) {
 	name := fmt.Sprintf("%s_%d_%d", this.Name, this.Cnt, time.Now().Unix())
 	conn, err := this.New(name, this)
 	if err != nil {
@@ -193,18 +185,18 @@ func (this *ConnPool) newConn() (NConn, error) {
 	return conn, nil
 }
 
-func (this *ConnPool) deleteConn(conn NConn) {
+func (this *ConnPool) deleteConn(conn PoolClient) {
 	if conn != nil {
 		conn.Close()
 	}
 	delete(this.all, conn.Name())
 }
 
-func (this *ConnPool) addFree(conn NConn) {
+func (this *ConnPool) addFree(conn PoolClient) {
 	this.free = append(this.free, conn)
 }
 
-func (this *ConnPool) fetchFree() NConn {
+func (this *ConnPool) fetchFree() PoolClient {
 	if len(this.free) == 0 {
 		return nil
 	}

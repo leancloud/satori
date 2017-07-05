@@ -49,7 +49,7 @@ func (this RiemannClient) Call(items interface{}) (interface{}, error) {
 	return nil, err
 }
 
-func (this *RiemannBackend) riemannConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+func (this *RiemannBackend) riemannConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) {
 	cfg := this.config
 	u := cfg.Url
 

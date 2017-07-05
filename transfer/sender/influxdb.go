@@ -92,7 +92,7 @@ func (this InfluxdbClient) Call(arg interface{}) (interface{}, error) {
 	return nil, this.cli.Write(bp)
 }
 
-func (this *InfluxdbBackend) influxdbConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+func (this *InfluxdbBackend) influxdbConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) {
 	cfg := this.config
 	u := cfg.Url
 

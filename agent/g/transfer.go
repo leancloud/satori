@@ -44,7 +44,7 @@ func (this TransferClient) Call(metrics interface{}) (interface{}, error) {
 	return resp, err
 }
 
-func transferConnect(name string, p *cpool.ConnPool) (cpool.NConn, error) {
+func transferConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) {
 	connTimeout := time.Duration(p.ConnTimeout) * time.Millisecond
 	conn, err := net.DialTimeout("tcp", p.Address, connTimeout)
 	if err != nil {
