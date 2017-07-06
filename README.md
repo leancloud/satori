@@ -173,7 +173,7 @@ git push  # 然后就生效了
 ## transfer：
 - 支持发送到 influxdb（使用了 hitripod 的补丁）
 - 支持发送到 riemann
-- 支持发送到 transfer（gateway 功能集成）(TODO)
+- 支持发送到 transfer（gateway 功能集成）
 - 不再支持发送到 graph 和 judge
 - 重构了发送端的代码，现在代码比之前容易维护了
 
@@ -210,7 +210,7 @@ git push  # 然后就生效了
 在 Satori 中移除了。报警规则通过 git 仓库管理。
 
 ## gateway:
-合并进了 transfer（TODO）
+合并进了 transfer
 
 ## hbs
 - 在 Satori 中叫做 master
