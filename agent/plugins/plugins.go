@@ -119,6 +119,13 @@ func (this *Plugin) RunOnce() {
 		return
 	}
 
+	safeClose := func(ch chan struct{}) {
+		defer func() { recover() }()
+		close(ch)
+	}
+
+	firstbyte := make(chan struct{})
+
 	go func() {
 		for {
 			s, err := stdout.ReadBytes('\n')
@@ -126,6 +133,7 @@ func (this *Plugin) RunOnce() {
 				return
 			}
 			var metrics []*model.MetricValue
+			safeClose(firstbyte)
 			err = json.Unmarshal(s, &metrics)
 			if err != nil {
 				log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, s)
@@ -152,6 +160,14 @@ func (this *Plugin) RunOnce() {
 
 	finished := make(chan error, 1)
 	go func() {
+		<-firstbyte
+		time.Sleep(1 * time.Second)
+		finished <- cmd.Wait()
+	}()
+
+	go func() {
+		time.Sleep(10 * time.Second)
+		safeClose(firstbyte)
 		finished <- cmd.Wait()
 	}()
 

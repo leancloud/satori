@@ -16,11 +16,8 @@ func main() {
 	cfg.Plugin.Enabled = true
 	cfg.Plugin.Subdir = "."
 	cfg.Plugin.CheckoutPath = "."
-	go func() {
-		for {
-			plugins.RunPlugins([]string{"test"}, []model.PluginParam{})
-			time.Sleep(time.Second * 60)
-		}
-	}()
-	select {}
+	for {
+		plugins.RunPlugins([]string{"test"}, []model.PluginParam{})
+		time.Sleep(time.Second * 60)
+	}
 }
