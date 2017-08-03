@@ -70,7 +70,7 @@ def cook_event(ev):
 def get_relevant_backends(ev):
     lvl = str(ev['level'])
     return [
-        partial(backend.from_string(conf['backend']), conf)
+        State.backends[conf['backend']]
         for conf in State.strategies.values()
         if lvl in str(conf['level'])
     ]
@@ -232,7 +232,7 @@ def send_alarm(ev):
     for u in ev['users']:
         for p in backends:
             try:
-                gevent.spawn(p, u, copy.deepcopy(ev))
+                gevent.spawn(p.send, u, copy.deepcopy(ev))
             except Exception:
                 log.exception('Error processing event')
 

@@ -17,11 +17,9 @@ class TestBackend(TestBase):
 
     def do_tezt_backend(self, name):
         import main
-        import backend
         from state import State
-        confs = {i['backend']: i for i in State.strategies.values()}
-        f = backend.from_string(name)
-        f(confs[name], user_example, main.cook_event(alarm_example))
+        f = State.backends[name](State.strategies[name])
+        f.send(user_example, main.cook_event(alarm_example))
 
     # def test_bearychat(self):
     #    return self.do_tezt_backend('bearychat')

@@ -10,6 +10,7 @@ install_requires = [
     'pyaml',
     'requests',
     'raven',
+    'python-telegram-bot'
 ]
 
 entry_points = {

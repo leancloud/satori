@@ -2,16 +2,17 @@
 # -- stdlib --
 # -- third party --
 # -- own --
-from backend.common import register_backend
+from backend.common import register_backend, Backend
 
 # -- code --
 
 
 @register_backend
-def debug(conf, user, event):
-    import pprint
-    print '>>>' + '=' * 77
-    pprint.pprint(user)
-    print '-' * 80
-    pprint.pprint(event)
-    print '<<<' + '=' * 77
+class DebugBackend(Backend):
+    def send(self, user, event):
+        import pprint
+        print '>>>' + '=' * 77
+        pprint.pprint(user)
+        print '-' * 80
+        pprint.pprint(event)
+        print '<<<' + '=' * 77

@@ -11,6 +11,9 @@ import smtplib
 # -- own --
 from backend.common import register_backend
 from utils import status2emoji
+from backend.common import register_backend, Backend
+
+# -- code --
 
 
 # -- code --
@@ -32,20 +35,21 @@ def send_mail(send_from, send_to, subject, text, files=[], server="localhost", u
 
 
 @register_backend
-def smtp(conf, user, event):
-    if not user['email']:
-        return
+class SMTPBackend(Backend):
+    def send(self, user, event):
+        if not user.get('email'):
+            return
 
-    subject = u'%s[P%s]%s' % (
-        status2emoji(event['status']),
-        event['level'],
-        event['title'],
-    )
+        subject = u'%s[P%s]%s' % (
+            status2emoji(event['status']),
+            event['level'],
+            event['title'],
+        )
 
-    send_mail(
-        conf['send_from'], user['email'],
-        subject, event['text'],
-        server=conf['server'],
-        username=conf['username'],
-        password=conf['password'],
-    )
+        send_mail(
+            self.conf['send_from'], user['email'],
+            subject, event['text'],
+            server=self.conf['server'],
+            username=self.conf['username'],
+            password=self.conf['password'],
+        )
