@@ -12,11 +12,12 @@ import (
 )
 
 type PluginConfig struct {
-	Enabled      bool   `json:"enabled"`
-	Git          string `json:"git"`
-	CheckoutPath string `json:"checkoutPath"`
-	Subdir       string `json:"subDir"`
-	LogDir       string `json:"logs"`
+	Enabled      bool     `json:"enabled"`
+	SigningKeys  []string `json:"signingKeys"`
+	Git          string   `json:"git"`
+	CheckoutPath string   `json:"checkoutPath"`
+	Subdir       string   `json:"subDir"`
+	LogDir       string   `json:"logs"`
 }
 
 type MasterConfig struct {

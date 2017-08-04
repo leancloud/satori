@@ -2,11 +2,16 @@ package plugins
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
+
+	"github.com/agl/ed25519"
 
 	"github.com/leancloud/satori/agent/g"
 	"github.com/leancloud/satori/common/model"
@@ -80,85 +85,180 @@ func UpdatePlugin(ver string) error {
 	}
 
 	// TODO: add to config
-	if time.Now().Unix()-lastPluginUpdate < 600 {
+	if time.Now().Unix()-lastPluginUpdate < 300 {
 		if debug {
 			log.Println("Previous update too recent, do nothing")
 		}
 		return nil
 	}
 
-	parentDir := file.Dir(cfg.CheckoutPath)
-	file.InsureDir(parentDir)
+	parentDir := path.Dir(cfg.CheckoutPath)
+
+	if !file.IsExist(parentDir) {
+		os.MkdirAll(parentDir, os.ModePerm)
+	}
 
 	if ver == "" {
 		ver = "origin/master"
 	}
 
+	if err := ensureGitRepo(cfg.CheckoutPath, cfg.Git); err != nil {
+		log.Println(err.Error())
+		reportFailure("git-fail", err.Error())
+		return err
+	}
+	if err := updateByFetch(cfg.CheckoutPath); err != nil {
+		log.Println(err.Error())
+		reportFailure("git-fail", err.Error())
+		return err
+	}
+	if len(cfg.SigningKeys) > 0 {
+		if err := verifySignature(cfg.CheckoutPath, ver, cfg.SigningKeys); err != nil {
+			reportFailure("git-fail", err.Error())
+			return err
+		}
+	} else {
+		log.Println("Signing keys not configured, signature verification skipped")
+	}
+
+	if err := checkoutCommit(cfg.CheckoutPath, ver); err != nil {
+		log.Println(err.Error())
+		reportFailure("git-fail", err.Error())
+		return err
+	}
+	log.Println("Update plugins complete")
+	return nil
+}
+
+func ensureGitRepo(path string, remote string) error {
 	var buf bytes.Buffer
 
-	if file.IsExist(cfg.CheckoutPath) {
-		// git fetch
-		log.Println("Begin update plugins by fetch")
-		updateInflight = true
-		defer func() { updateInflight = false }()
-		lastPluginUpdate = time.Now().Unix()
-
+	if !file.IsExist(path) {
+		log.Println("Plugin repo does not exist, creating one")
 		buf.Reset()
-		cmd := exec.Command("timeout", "120s", "git", "fetch")
-		cmd.Dir = cfg.CheckoutPath
+		cmd := exec.Command("git", "init", path)
 		cmd.Stdout = &buf
 		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
-			s := fmt.Sprintf("Update plugins by fetch error: %s", err)
-			log.Println(s)
-			reportFailure("git-fail", s+"\n"+buf.String())
-			return fmt.Errorf("git fetch in dir:%s fail. error: %s", cfg.CheckoutPath, err)
+			s := "Can't init plugin repo, aborting"
+			return fmt.Errorf("%s", s)
 		}
 
 		buf.Reset()
-		cmd = exec.Command("git", "reset", "--hard", ver)
-		cmd.Dir = cfg.CheckoutPath
+		cmd = exec.Command("git", "remote", "add", "origin", remote)
+		cmd.Dir = path
 		cmd.Stdout = &buf
 		cmd.Stderr = &buf
 		err = cmd.Run()
 		if err != nil {
-			s := fmt.Sprintf("git reset --hard failed: %s", err)
-			log.Println(s)
-			reportFailure("git-fail", s+"\n"+buf.String())
-			return fmt.Errorf("git reset --hard in dir:%s fail. error: %s", cfg.CheckoutPath, err)
+			os.RemoveAll(path)
+			s := "Can't set repo remote, aborting"
+			return fmt.Errorf("%s", s)
 		}
-		log.Println("Update plugins by fetch complete")
-	} else {
-		// git clone
-		log.Println("Begin update plugins by clone")
-		lastPluginUpdate = time.Now().Unix()
-		buf.Reset()
-		cmd := exec.Command("timeout", "120s", "git", "clone", cfg.Git, file.Basename(cfg.CheckoutPath))
-		cmd.Dir = parentDir
-		cmd.Stdout = &buf
-		cmd.Stderr = &buf
-		err := cmd.Run()
-		if err != nil {
-			s := fmt.Sprintf("Update plugins by clone error: %s", err)
-			log.Println(s)
-			reportFailure("git-fail", s+"\n"+buf.String())
-			return fmt.Errorf("git clone in dir:%s fail. error: %s", parentDir, err)
-		}
+	}
 
-		buf.Reset()
-		cmd = exec.Command("git", "reset", "--hard", ver)
-		cmd.Dir = cfg.CheckoutPath
-		cmd.Stdout = &buf
-		cmd.Stderr = &buf
-		err = cmd.Run()
-		if err != nil {
-			s := fmt.Sprintf("git reset --hard failed: %s", err)
-			log.Println(s)
-			reportFailure("git-fail", s+"\n"+buf.String())
-			return fmt.Errorf("git reset --hard in dir:%s fail. error: %s", cfg.CheckoutPath, err)
+	return nil
+}
+
+func updateByFetch(path string) error {
+	var buf bytes.Buffer
+
+	log.Println("Begin update plugins")
+	updateInflight = true
+	defer func() { updateInflight = false }()
+	lastPluginUpdate = time.Now().Unix()
+
+	buf.Reset()
+	cmd := exec.Command("timeout", "120s", "git", "fetch")
+	cmd.Dir = path
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	err := cmd.Run()
+	if err != nil {
+		s := fmt.Sprintf("Update plugins by fetch error: %s", err) + "\n" + buf.String()
+		return fmt.Errorf("%s", s)
+	}
+	return nil
+}
+
+func verifySignature(path string, ver string, validKeys []string) error {
+	var buf bytes.Buffer
+	var err error
+
+	cmd := exec.Command("git", "cat-file", "-p", ver)
+	cmd.Dir = path
+	cmd.Stdout = &buf
+	err = cmd.Run()
+	if err != nil {
+		s := "Can't get content of desired commit"
+		log.Println(s)
+		return fmt.Errorf("%s", s)
+	}
+	content := buf.String()
+
+	tree := ""
+	key := ""
+	sign := ""
+	for _, l := range strings.Split(content, "\n") {
+		if strings.HasPrefix(l, "tree ") {
+			tree = strings.TrimSpace(l[len("tree "):])
+			continue
 		}
-		log.Println("Update plugins by clone complete")
+		if strings.HasPrefix(l, "satori-sign ") {
+			s := strings.TrimSpace(l[len("satori-sign "):])
+			a := strings.Split(s, ":")
+			keyid := a[0]
+			for _, k := range validKeys {
+				if strings.HasPrefix(k, keyid) {
+					key = k
+					break
+				}
+			}
+			sign = a[1]
+			continue
+		}
+	}
+	if tree == "" {
+		return fmt.Errorf("Can't find tree hash")
+	} else if sign == "" {
+		return fmt.Errorf("Signature not found, failing")
+	} else if key == "" {
+		return fmt.Errorf("Signing key untrusted, failing")
+	}
+
+	var vkslice []byte
+	var vk [32]byte
+	if vkslice, err = base64.StdEncoding.DecodeString(key); err != nil {
+		return err
+	}
+	copy(vk[:], vkslice)
+
+	var signslice []byte
+	var s [64]byte
+	if signslice, err = base64.StdEncoding.DecodeString(sign); err != nil {
+		return err
+	}
+	copy(s[:], signslice)
+
+	if !ed25519.Verify(&vk, []byte(tree), &s) {
+		return fmt.Errorf("Signature invalid")
+	}
+
+	return nil
+}
+
+func checkoutCommit(path string, ver string) error {
+	var buf bytes.Buffer
+
+	cmd := exec.Command("git", "reset", "--hard", ver)
+	cmd.Dir = path
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	err := cmd.Run()
+	if err != nil {
+		s := fmt.Sprintf("git reset --hard failed: %s", err) + err.Error() + "\n" + buf.String()
+		return fmt.Errorf("%s", s)
 	}
 	return nil
 }
@@ -179,10 +279,8 @@ func ForceResetPlugin() error {
 		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
-			s := fmt.Sprintf("git reset --hard failed: %s", err)
-			log.Println(s)
-			reportFailure("git-fail", s+"\n"+buf.String())
-			return fmt.Errorf("git reset --hard in dir:%s fail. error: %s", dir, err)
+			s := fmt.Sprintf("git reset --hard failed: %s", err) + "\n" + buf.String()
+			return fmt.Errorf("%s", s)
 		}
 	}
 	return nil

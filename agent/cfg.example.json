@@ -5,6 +5,7 @@
     "ip": "",
     "plugin": {
         "enabled": false,
+        "signingKeys": [],
         "autoSync": true,
         "git": "http://satori:PASSWD@DOMAIN/plugin",
         "checkoutPath": "/var/lib/satori/plugin",
