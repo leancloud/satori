@@ -2,19 +2,15 @@
 from __future__ import absolute_import
 
 # -- stdlib --
-import json
-
 # -- third party --
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import CommandHandler, Updater
 import telegram
-import gevent
 
 # -- own --
-from backend.common import register_backend, Backend
-
-import time
+from backend.common import Backend, register_backend
 
 
+# -- code --
 @register_backend
 class TelegramBackend(Backend):
     def __init__(self, conf):
@@ -25,7 +21,7 @@ class TelegramBackend(Backend):
         def tg_handle_message_loop():
             self.updater = Updater(self.conf.get('api_token'))
 
-        # Get the dispatcher to register handlers
+            # Get the dispatcher to register handlers
             dp = self.updater.dispatcher
 
             # on different commands - answer in Telegram
@@ -51,7 +47,6 @@ class TelegramBackend(Backend):
             self.updater.start_polling()
 
         tg_handle_message_loop()
-        
 
     def shutdown(self):
         super(TelegramBackend, self).shutdown()
@@ -60,7 +55,7 @@ class TelegramBackend(Backend):
     def send(self, user, event):
         chat_id = user.get('tg_chat_id', '')
         if not chat_id:
-            return 
+            return
 
         msg = u'{} **[P{}]**\n{}\n'.format(
             u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
@@ -72,4 +67,3 @@ class TelegramBackend(Backend):
             chat_id, text=msg,
             parse_mode=telegram.ParseMode.MARKDOWN
         )
-
