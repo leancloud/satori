@@ -15,7 +15,8 @@ package g
 // 7.0.7: 增加了 /v1/ping ，用来检测 agent 存活
 // 7.0.8: 支持 long running 的插件
 // 7.0.9: 补全插件上报的事件中的 endpoint
+// 7.0.10: 新增插件签名功能，无签名的规则仓库不会主动切换过去。
 
 const (
-	VERSION = "7.0.9"
+	VERSION = "7.0.10"
 )
