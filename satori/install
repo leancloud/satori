@@ -39,8 +39,9 @@ function prepare-docker-images
         set -e
         for c in agent transfer master riemann-reloader; do
             echo :: - - Building $c...
-            go build -o /go/src/github.com/$c github.com/leancloud/satori/$c
-        done'
+            go build -o /go/src/github.com/$c github.com/leancloud/satori/$c &
+        done
+        wait'
 
     mkdir -p ./images/{transfer,master,riemann}/.build
     cp /tmp/go-github/transfer images/transfer/.build
