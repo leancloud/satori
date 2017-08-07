@@ -114,7 +114,8 @@ func UpdatePlugin(ver string) error {
 	}
 	if len(cfg.SigningKeys) > 0 {
 		if err := verifySignature(cfg.CheckoutPath, ver, cfg.SigningKeys); err != nil {
-			reportFailure("git-fail", err.Error())
+			log.Println(err.Error())
+			reportFailure("signature-fail", err.Error())
 			return err
 		}
 	} else {
@@ -141,8 +142,7 @@ func ensureGitRepo(path string, remote string) error {
 		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
-			s := "Can't init plugin repo, aborting"
-			return fmt.Errorf("%s", s)
+			return fmt.Errorf("Can't init plugin repo: %s\n%s", err, buf.String())
 		}
 
 		buf.Reset()
@@ -153,8 +153,7 @@ func ensureGitRepo(path string, remote string) error {
 		err = cmd.Run()
 		if err != nil {
 			os.RemoveAll(path)
-			s := "Can't set repo remote, aborting"
-			return fmt.Errorf("%s", s)
+			return fmt.Errorf("Can't set repo remote, aborting: %s", err)
 		}
 	}
 
@@ -176,8 +175,7 @@ func updateByFetch(path string) error {
 	cmd.Stderr = &buf
 	err := cmd.Run()
 	if err != nil {
-		s := fmt.Sprintf("Update plugins by fetch error: %s", err) + "\n" + buf.String()
-		return fmt.Errorf("%s", s)
+		return fmt.Errorf("Update plugins by fetch error: %s\n%s", err, buf.String())
 	}
 	return nil
 }
@@ -191,9 +189,7 @@ func verifySignature(path string, ver string, validKeys []string) error {
 	cmd.Stdout = &buf
 	err = cmd.Run()
 	if err != nil {
-		s := "Can't get content of desired commit"
-		log.Println(s)
-		return fmt.Errorf("%s", s)
+		return fmt.Errorf("Can't get content of desired commit: %s\n%s", err, buf.String())
 	}
 	content := buf.String()
 
@@ -222,9 +218,9 @@ func verifySignature(path string, ver string, validKeys []string) error {
 	if tree == "" {
 		return fmt.Errorf("Can't find tree hash")
 	} else if sign == "" {
-		return fmt.Errorf("Signature not found, failing")
+		return fmt.Errorf("Signature not found")
 	} else if key == "" {
-		return fmt.Errorf("Signing key untrusted, failing")
+		return fmt.Errorf("Signing key untrusted")
 	}
 
 	var vkslice []byte
@@ -257,8 +253,7 @@ func checkoutCommit(path string, ver string) error {
 	cmd.Stderr = &buf
 	err := cmd.Run()
 	if err != nil {
-		s := fmt.Sprintf("git reset --hard failed: %s", err) + err.Error() + "\n" + buf.String()
-		return fmt.Errorf("%s", s)
+		return fmt.Errorf("git reset --hard failed: %s\n%s", err, buf.String())
 	}
 	return nil
 }
@@ -279,8 +274,7 @@ func ForceResetPlugin() error {
 		cmd.Stderr = &buf
 		err := cmd.Run()
 		if err != nil {
-			s := fmt.Sprintf("git reset --hard failed: %s", err) + "\n" + buf.String()
-			return fmt.Errorf("%s", s)
+			return fmt.Errorf("git reset --hard failed: %s\n%s", err, buf.String())
 		}
 	}
 	return nil
