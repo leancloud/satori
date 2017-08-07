@@ -17,5 +17,6 @@ class State(object):
         'users',
         'strategies',
         'alarms',
+        'backends',
         'userconf',
     ]

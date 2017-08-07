@@ -3,11 +3,12 @@
 # -- stdlib --
 # -- third party --
 # -- own --
-from backend.common import register_backend
+from backend.common import register_backend, Backend
 
 # -- code --
 
 
 @register_backend
-def noop(conf, user, event):
+class NoopBackend(Backend):
     pass
+

@@ -13,6 +13,8 @@ import yaml
 
 # -- own --
 from state import State
+import backend
+
 
 
 # -- code --
@@ -24,6 +26,7 @@ def read_config(path):
     users = {}
     strategies = {}
     others = {}
+    backends = {}
 
     base = os.path.join(path, 'alarm')
     for fn in os.listdir(base):
@@ -52,7 +55,7 @@ def read_config(path):
             conf.pop('strategies', 0)
 
         others.update(conf)
-
+        
     for k, v in users.iteritems():
         v['id'] = k
 
@@ -60,7 +63,18 @@ def read_config(path):
 
 
 def refresh():
+    try:
+        [bk.shutdown() for bk in State.backends.values()]
+    except AttributeError:
+        pass
     State.teams, State.users, State.strategies, State.userconf = read_config(State.config['rules'])
+
+    backends = {}
+    for strategy in State.strategies.values():
+        backends[strategy['backend']] = backend.from_string(
+            strategy['backend']
+        )(strategy)
+    State.backends = backends
 
 
 def watch_loop():
