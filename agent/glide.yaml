@@ -1,7 +1,0 @@
-package: github.com/leancloud/satori/agent
-import:
-- package: github.com/toolkits/file
-- package: github.com/toolkits/net
-- package: github.com/toolkits/nux
-- package: github.com/toolkits/sys
-- package: github.com/agl/ed25519

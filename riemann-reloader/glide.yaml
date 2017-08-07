@@ -1,3 +1,0 @@
-package: github.com/leancloud/satori/riemann-reloader
-import:
-- package: github.com/amir/raidman

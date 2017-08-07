@@ -1,0 +1,21 @@
+package: github.com/leancloud/satori
+import:
+- package: github.com/agl/ed25519
+- package: github.com/amir/raidman
+- package: github.com/garyburd/redigo
+  subpackages:
+  - redis
+- package: github.com/influxdata/influxdb
+  subpackages:
+  - client/v2
+- package: github.com/toolkits/concurrent
+  subpackages:
+  - semaphore
+- package: github.com/toolkits/container
+  subpackages:
+  - list
+- package: github.com/toolkits/file
+- package: github.com/toolkits/net
+- package: github.com/toolkits/nux
+- package: github.com/toolkits/proc
+- package: github.com/toolkits/sys
