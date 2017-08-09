@@ -214,7 +214,7 @@ func verifySignature(path string, ver string, validKeys []string) error {
 			keyid := a[0]
 			for _, k := range validKeys {
 				if strings.HasPrefix(k, keyid) {
-					key = k
+					key = strings.Fields(k)[0]
 					break
 				}
 			}
