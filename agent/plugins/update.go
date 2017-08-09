@@ -2,17 +2,22 @@ package plugins
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/agl/ed25519"
 
+	"github.com/kardianos/osext"
 	"github.com/leancloud/satori/agent/g"
 	"github.com/leancloud/satori/common/model"
 	"github.com/toolkits/file"
@@ -78,18 +83,20 @@ func UpdatePlugin(ver string) error {
 	}
 
 	if updateInflight {
+		s := "Previous update inflight, do nothing"
 		if debug {
-			log.Println("Previous update inflight, do nothing")
+			log.Println(s)
 		}
-		return nil
+		return fmt.Errorf(s)
 	}
 
 	// TODO: add to config
 	if time.Now().Unix()-lastPluginUpdate < 300 {
+		s := "Previous update too recent, do nothing"
 		if debug {
-			log.Println("Previous update too recent, do nothing")
+			log.Println(s)
 		}
-		return nil
+		return fmt.Errorf(s)
 	}
 
 	parentDir := path.Dir(cfg.CheckoutPath)
@@ -278,4 +285,80 @@ func ForceResetPlugin() error {
 		}
 	}
 	return nil
+}
+
+func TrySelfUpdate() error {
+	debug := g.Config().Debug
+	cfg := g.Config()
+	if !cfg.SelfUpdate {
+		return nil
+	}
+
+	h := sha256.New()
+	var err error
+	selfPath, err := osext.Executable()
+	if err != nil {
+		return err
+	}
+
+	newPath := path.Join(cfg.Plugin.CheckoutPath, "satori-agent")
+	if !file.IsExist(newPath) {
+		if debug {
+			log.Println("SelfUpdate: Can't find new binary on path:", newPath)
+		}
+		return nil
+	}
+
+	h.Reset()
+	self, err := os.Open(selfPath)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(h, self); err != nil {
+		return err
+	}
+	self.Close()
+	selfHash := h.Sum(nil)
+
+	h.Reset()
+	new, err := os.Open(newPath)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(h, new); err != nil {
+		return err
+	}
+	new.Close()
+	newHash := h.Sum(nil)
+
+	if bytes.Equal(selfHash, newHash) {
+		return nil
+	}
+
+	script := fmt.Sprintf(
+		"SELF=\"%s\"\nRENAME=\"%s\"\nNEW=\"%s\"\n",
+		selfPath, selfPath+"."+hex.EncodeToString(selfHash), newPath,
+	)
+
+	script += `
+	set -e
+	if [ ! -f "$NEW" ]; then
+		exit 1
+	fi
+	if [ -f "$RENAME" ]; then
+		rm -f $RENAME
+	fi
+	mv $SELF $RENAME
+	cp -a $NEW $SELF
+	`
+
+	cmd := exec.Command("bash", "-c", script)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	log.Println("SelfUpdate triggered, restarting")
+	syscall.Exec(selfPath, os.Args, os.Environ())
+
+	return fmt.Errorf("Can't do exec!")
 }

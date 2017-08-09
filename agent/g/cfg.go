@@ -44,17 +44,18 @@ type CollectorConfig struct {
 }
 
 type GlobalConfig struct {
-	Debug     bool              `json:"debug"`
-	Hostname  string            `json:"hostname"`
-	IP        string            `json:"ip"`
-	Plugin    *PluginConfig     `json:"plugin"`
-	Master    *MasterConfig     `json:"master"`
-	Transfer  *TransferConfig   `json:"transfer"`
-	Http      *HttpConfig       `json:"http"`
-	Collector *CollectorConfig  `json:"collector"`
-	Ignore    [][3]string       `json:"ignore"`
-	AddTags   map[string]string `json:"addTags"`
-	NoBuiltin bool              `json:"noBuiltin"`
+	Debug      bool              `json:"debug"`
+	Hostname   string            `json:"hostname"`
+	IP         string            `json:"ip"`
+	Plugin     *PluginConfig     `json:"plugin"`
+	Master     *MasterConfig     `json:"master"`
+	Transfer   *TransferConfig   `json:"transfer"`
+	Http       *HttpConfig       `json:"http"`
+	Collector  *CollectorConfig  `json:"collector"`
+	Ignore     [][3]string       `json:"ignore"`
+	AddTags    map[string]string `json:"addTags"`
+	NoBuiltin  bool              `json:"noBuiltin"`
+	SelfUpdate bool              `json:"selfUpdate"`
 }
 
 var (
