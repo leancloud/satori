@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -120,7 +121,22 @@ func UpdatePlugin(ver string) error {
 		return err
 	}
 	if len(cfg.SigningKeys) > 0 {
-		if err := verifySignature(cfg.CheckoutPath, ver, cfg.SigningKeys); err != nil {
+		keys := cfg.SigningKeys
+		if cfg.AltSigningKeysFile != "" {
+			altKeys, err := getAltSigningKeys(cfg.CheckoutPath, ver, cfg.AltSigningKeysFile, cfg.SigningKeys)
+			if err != nil {
+				log.Println("Failed to get alternative signing keys: " + err.Error())
+				reportFailure("alt-key-fail", err.Error())
+			} else {
+				if debug {
+					for _, k := range altKeys {
+						log.Printf("Got alt key: [%s]\n", k)
+					}
+				}
+				keys = append(altKeys, cfg.SigningKeys...)
+			}
+		}
+		if err := verifySignature(cfg.CheckoutPath, ver, keys); err != nil {
 			log.Println(err.Error())
 			reportFailure("signature-fail", err.Error())
 			return err
@@ -187,12 +203,12 @@ func updateByFetch(path string) error {
 	return nil
 }
 
-func verifySignature(path string, ver string, validKeys []string) error {
+func verifySignature(checkoutPath string, head string, validKeys []string) error {
 	var buf bytes.Buffer
 	var err error
 
-	cmd := exec.Command("git", "cat-file", "-p", ver)
-	cmd.Dir = path
+	cmd := exec.Command("git", "cat-file", "-p", head)
+	cmd.Dir = checkoutPath
 	cmd.Stdout = &buf
 	err = cmd.Run()
 	if err != nil {
@@ -251,11 +267,49 @@ func verifySignature(path string, ver string, validKeys []string) error {
 	return nil
 }
 
-func checkoutCommit(path string, ver string) error {
+func getAltSigningKeys(checkoutPath string, head string, keyFile string, validKeys []string) ([]string, error) {
+	fullPath := path.Join(checkoutPath, keyFile)
+	if !file.IsExist(fullPath) {
+		return nil, fmt.Errorf("keyFile %s does not exist", fullPath)
+	}
+
+	var buf bytes.Buffer
+	var err error
+
+	cmd := exec.Command("git", "rev-list", "-1", head, keyFile)
+	cmd.Dir = checkoutPath
+	cmd.Stdout = &buf
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("Can't get most recent commit hash of key file: %s\n%s", err, buf.String())
+	}
+	mostRecentHash := strings.TrimSpace(buf.String())
+	if err = verifySignature(checkoutPath, mostRecentHash, validKeys); err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(fullPath)
+	if err != nil {
+		return nil, err
+	}
+
+	lst := make([]string, 0, 5)
+	for _, l := range strings.Split(string(content), "\n") {
+		l = strings.TrimSpace(l)
+		if strings.HasPrefix(l, "#") || l == "" {
+			continue
+		}
+		lst = append(lst, l)
+	}
+
+	return lst, nil
+}
+
+func checkoutCommit(checkoutPath string, head string) error {
 	var buf bytes.Buffer
 
-	cmd := exec.Command("git", "reset", "--hard", ver)
-	cmd.Dir = path
+	cmd := exec.Command("git", "reset", "--hard", head)
+	cmd.Dir = checkoutPath
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	err := cmd.Run()

@@ -6,6 +6,7 @@
     "plugin": {
         "enabled": false,
         "signingKeys": [],
+        "altSigningKeysFile": "authorized_keys",
         "autoSync": true,
         "git": "http://satori:PASSWD@DOMAIN/plugin",
         "checkoutPath": "/var/lib/satori/plugin",
