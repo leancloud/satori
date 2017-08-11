@@ -17,7 +17,8 @@ package g
 // 7.0.9: 补全插件上报的事件中的 endpoint
 // 7.0.10: 新增插件签名功能，无签名的规则仓库不会主动切换过去。
 // 7.0.11: 新增 agent 自更新功能
+// 7.0.12: 增加 alternative key file 功能，管理签名 key 更方便了
 
 const (
-	VERSION = "7.0.11"
+	VERSION = "7.0.12"
 )
