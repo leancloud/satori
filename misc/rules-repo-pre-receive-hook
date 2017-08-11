@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # pre-receive hook for signature enforcing
 # Copy this file to /path/to/rules-repo-on-server/.git/hooks/pre-receive
@@ -24,5 +25,6 @@ for l in sys.stdin.read().split('\n'):
     if not re.findall(r'^satori-sign [A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$', commit, flags=re.MULTILINE):
         print "-----------------------------"
         print "You must sign branch", ref
+        print "Take a look at the `sign` tool in rules repo"
         print "-----------------------------"
         sys.exit(1)
