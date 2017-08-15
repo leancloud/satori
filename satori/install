@@ -199,12 +199,12 @@ function setup-bitbar-plugin
 
 function generate-agent-config
 {
-    echo :: Generate agent config ../agent-cfg.json
+    echo :: Generate agent config ../agent-cfg.yaml
     pushd .. >/dev/null
-    cp agent/cfg.example.json agent-cfg.json
-    sed -i "s|INTERNAL_DOMAIN|$INTERNAL_DOMAIN|g" agent-cfg.json
-    sed -i "s|DOMAIN|$DOMAIN|g" agent-cfg.json
-    sed -i "s|PASSWD|$BASIC_AUTH_PASSWD|g" agent-cfg.json
+    cp agent/cfg.example.yaml agent-cfg.yaml
+    sed -i "s|INTERNAL_DOMAIN|$INTERNAL_DOMAIN|g" agent-cfg.yaml
+    sed -i "s|DOMAIN|$DOMAIN|g" agent-cfg.yaml
+    sed -i "s|PASSWD|$BASIC_AUTH_PASSWD|g" agent-cfg.yaml
     popd >/dev/null
 }
 

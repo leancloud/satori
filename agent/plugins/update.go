@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -121,9 +123,12 @@ func UpdatePlugin(ver string) error {
 		return err
 	}
 	if len(cfg.SigningKeys) > 0 {
-		keys := cfg.SigningKeys
+		keys := []string{}
+		for _, k := range cfg.SigningKeys {
+			keys = append(keys, k.Key)
+		}
 		if cfg.AuthorizedKeys != "" {
-			altKeys, err := getAuthorizedKeys(cfg.CheckoutPath, ver, cfg.AuthorizedKeys, cfg.SigningKeys)
+			altKeys, err := getAuthorizedKeys(cfg.CheckoutPath, ver, cfg.AuthorizedKeys, keys)
 			if err != nil {
 				log.Println("Failed to get alternative signing keys: " + err.Error())
 				reportFailure("alt-key-fail", err.Error())
@@ -133,7 +138,7 @@ func UpdatePlugin(ver string) error {
 						log.Printf("Got alt key: [%s]\n", k)
 					}
 				}
-				keys = append(altKeys, cfg.SigningKeys...)
+				keys = append(altKeys, keys...)
 			}
 		}
 		if err := verifySignature(cfg.CheckoutPath, ver, keys); err != nil {
@@ -366,6 +371,10 @@ func TryUpdate() error {
 		return fmt.Errorf("Can't parse update conf: %s", err.Error())
 	}
 
+	if uconf.Sha256 == "" || uconf.Url == "" {
+		return fmt.Errorf("Update conf incomplete, do nothing:")
+	}
+
 	newHash, err := hex.DecodeString(uconf.Sha256)
 	if err != nil {
 		return fmt.Errorf("Can't parse sha256: %s", err.Error())
@@ -375,9 +384,9 @@ func TryUpdate() error {
 		return nil
 	}
 
-	newPath := g.BinaryPath + "." + uconf.Sha256
+	newPath := g.BinaryPath + "." + strconv.FormatInt(rand.Int63(), 10)
 	if file.IsExist(newPath) {
-		os.RemoveAll(newPath)
+		os.Remove(newPath)
 	}
 
 	req, err := grab.NewRequest(newPath, uconf.Url)
@@ -405,7 +414,8 @@ func TryUpdate() error {
 		rm -f $RENAME
 	fi
 	mv $SELF $RENAME
-	cp -a $NEW $SELF
+	mv $NEW $SELF
+	chmod 0755 $SELF
 	`
 
 	cmd := exec.Command("bash", "-c", script)

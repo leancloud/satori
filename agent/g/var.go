@@ -16,7 +16,8 @@ var (
 )
 
 func init() {
-	BinaryPath, err := osext.Executable()
+	var err error
+	BinaryPath, err = osext.Executable()
 	if err != nil {
 		panic(fmt.Errorf("Can't get binary path: %s", err.Error()))
 	}

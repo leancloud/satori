@@ -30,15 +30,14 @@ func filterMetrics(metrics []*model.MetricValue) []*model.MetricValue {
 metricsLoop:
 	for _, mv := range metrics {
 		for _, item := range ignore {
-			metricRe, tagKeyRe, tagRe := item[0], item[1], item[2]
-			if !cachedMatch(metricRe, mv.Metric) {
+			if !cachedMatch(item.Metric, mv.Metric) {
 				continue
 			}
 
 			for k, v := range mv.Tags {
-				if cachedMatch(tagKeyRe, k) && cachedMatch(tagRe, v) {
+				if cachedMatch(item.Tag, k) && cachedMatch(item.TagValue, v) {
 					if debug {
-						log.Println("=> Filtered metric", mv.Metric, "/", mv.Tags, "by rule ", metricRe, " :: ", tagKeyRe, " :: ", tagRe)
+						log.Println("=> Filtered metric", mv.Metric, "/", mv.Tags, "by rule ", item.Metric, " :: ", item.Tag, " :: ", item.TagValue)
 					}
 					continue metricsLoop
 				}

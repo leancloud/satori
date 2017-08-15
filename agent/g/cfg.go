@@ -12,30 +12,34 @@ import (
 )
 
 type GlobalConfig struct {
-	Debug    bool   `yaml:"debug"`
-	Hostname string `yaml:"hostname"`
-	IP       string `yaml:"ip"`
-	Plugin   *struct {
-		Enabled        bool     `yaml:"enabled"`
-		SigningKeys    []string `yaml:"signingKeys"`
-		AuthorizedKeys string   `yaml:"authorizedKeys"`
-		Update         string   `yaml:"update"`
-		Git            string   `yaml:"git"`
-		CheckoutPath   string   `yaml:"checkoutPath"`
-		Subdir         string   `yaml:"subDir"`
-		LogDir         string   `yaml:"logs"`
-	} `yaml:"plugin"`
-
+	Debug     bool     `yaml:"debug"`
+	Hostname  string   `yaml:"hostname"`
+	IP        string   `yaml:"ip"`
 	Master    string   `yaml:"master"`
 	Transfer  []string `yaml:"transfer"`
 	Http      string   `yaml:"http"`
-	Collector *struct {
+	NoBuiltin bool     `yaml:"noBuiltin"`
+	Plugin    struct {
+		Enabled     bool `yaml:"enabled"`
+		SigningKeys []struct {
+			Key string `yaml:"key"`
+		} `yaml:"signingKeys"`
+		AuthorizedKeys string `yaml:"authorizedKeys"`
+		Update         string `yaml:"update"`
+		Git            string `yaml:"git"`
+		CheckoutPath   string `yaml:"checkoutPath"`
+		Subdir         string `yaml:"subDir"`
+		LogDir         string `yaml:"logs"`
+	} `yaml:"plugin"`
+	Ignore []struct {
+		Metric   string `yaml:"metric"`
+		Tag      string `yaml:"tag"`
+		TagValue string `yaml:"tagValue"`
+	} `yaml:"ignore"`
+	Collector struct {
 		IfacePrefix []string `yaml:"ifacePrefix"`
 	} `yaml:"collector"`
-
-	Ignore    [][3]string       `yaml:"ignore"`
-	AddTags   map[string]string `yaml:"addTags"`
-	NoBuiltin bool              `yaml:"noBuiltin"`
+	AddTags map[string]string `yaml:"addTags"`
 }
 
 var (
@@ -107,9 +111,9 @@ func ParseConfig(cfg string) {
 	}
 
 	for _, item := range c.Ignore {
-		for _, v := range item {
-			regexp.MustCompile(v)
-		}
+		regexp.MustCompile(item.Metric)
+		regexp.MustCompile(item.Tag)
+		regexp.MustCompile(item.TagValue)
 	}
 
 	lock.Lock()
