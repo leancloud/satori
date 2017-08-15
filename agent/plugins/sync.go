@@ -18,7 +18,10 @@ func SyncConfig(pluginVer string, pluginDirs []string, pluginMetrics []model.Plu
 			}
 			err := UpdatePlugin(pluginVer)
 			if err == nil {
-				TrySelfUpdate()
+				err := TryUpdate()
+				if debug {
+					log.Println("TryUpdate: %s", err)
+				}
 			}
 		}
 	}

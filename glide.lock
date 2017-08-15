@@ -1,5 +1,5 @@
-hash: 05a140334a952378dea38a436688722bbb10a8adbb2b130ee852fadd4c27aeac
-updated: 2017-08-07T18:14:18.311695341+08:00
+hash: 24d595a67896ea0af4e75ddbf0f26dffa9ff2ef058ab89882e7862258ca0517d
+updated: 2017-08-14T17:19:16.076622473+08:00
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -9,6 +9,8 @@ imports:
   version: 1ccc43bfb9c93cb401a4025e49c64ba71e5e668b
   subpackages:
   - proto
+- name: github.com/cavaliercoder/grab
+  version: e2cf8055a943781c5f6424590b0495cd59f616f0
 - name: github.com/garyburd/redigo
   version: 9e66b83d15a259978be267d0b61838c42c3904e3
   subpackages:
@@ -52,4 +54,6 @@ imports:
   version: f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f
   subpackages:
   - proxy
+- name: gopkg.in/yaml.v2
+  version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
 testImports: []

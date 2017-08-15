@@ -19,3 +19,6 @@ import:
 - package: github.com/toolkits/nux
 - package: github.com/toolkits/proc
 - package: github.com/toolkits/sys
+- package: gopkg.in/yaml.v2
+- package: github.com/cavaliercoder/grab
+  version: ^2.0.0

@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,8 +16,9 @@ import (
 	"time"
 
 	"github.com/agl/ed25519"
+	"github.com/cavaliercoder/grab"
+	"gopkg.in/yaml.v2"
 
-	"github.com/kardianos/osext"
 	"github.com/leancloud/satori/agent/g"
 	"github.com/leancloud/satori/common/model"
 	"github.com/toolkits/file"
@@ -122,8 +122,8 @@ func UpdatePlugin(ver string) error {
 	}
 	if len(cfg.SigningKeys) > 0 {
 		keys := cfg.SigningKeys
-		if cfg.AltSigningKeysFile != "" {
-			altKeys, err := getAltSigningKeys(cfg.CheckoutPath, ver, cfg.AltSigningKeysFile, cfg.SigningKeys)
+		if cfg.AuthorizedKeys != "" {
+			altKeys, err := getAuthorizedKeys(cfg.CheckoutPath, ver, cfg.AuthorizedKeys, cfg.SigningKeys)
 			if err != nil {
 				log.Println("Failed to get alternative signing keys: " + err.Error())
 				reportFailure("alt-key-fail", err.Error())
@@ -220,7 +220,7 @@ func verifySignature(checkoutPath string, head string, validKeys []string) error
 	key := ""
 	sign := ""
 	for _, l := range strings.Split(content, "\n") {
-		if strings.HasPrefix(l, "tree ") {
+		if tree == "" && strings.HasPrefix(l, "tree ") {
 			tree = strings.TrimSpace(l[len("tree "):])
 			continue
 		}
@@ -267,7 +267,7 @@ func verifySignature(checkoutPath string, head string, validKeys []string) error
 	return nil
 }
 
-func getAltSigningKeys(checkoutPath string, head string, keyFile string, validKeys []string) ([]string, error) {
+func getAuthorizedKeys(checkoutPath string, head string, keyFile string, validKeys []string) ([]string, error) {
 	fullPath := path.Join(checkoutPath, keyFile)
 	if !file.IsExist(fullPath) {
 		return nil, fmt.Errorf("keyFile %s does not exist", fullPath)
@@ -341,57 +341,55 @@ func ForceResetPlugin() error {
 	return nil
 }
 
-func TrySelfUpdate() error {
-	debug := g.Config().Debug
-	cfg := g.Config()
-	if !cfg.SelfUpdate {
+func TryUpdate() error {
+	cfg := g.Config().Plugin
+	if cfg.Update == "" {
 		return nil
 	}
 
-	h := sha256.New()
-	var err error
-	selfPath, err := osext.Executable()
+	uconfPath := path.Join(cfg.CheckoutPath, cfg.Update)
+	uconfString, err := ioutil.ReadFile(uconfPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("Can't read update conf file %s: %s", uconfPath, err.Error())
 	}
 
-	newPath := path.Join(cfg.Plugin.CheckoutPath, "satori-agent")
-	if !file.IsExist(newPath) {
-		if debug {
-			log.Println("SelfUpdate: Can't find new binary on path:", newPath)
-		}
+	var uconf struct {
+		Sha256 string `yaml:"sha256"`
+		Url    string `yaml:"url"`
+	}
+
+	if err = yaml.UnmarshalStrict(uconfString, &uconf); err != nil {
+		return fmt.Errorf("Can't parse update conf: %s", err.Error())
+	}
+
+	newHash, err := hex.DecodeString(uconf.Sha256)
+	if err != nil {
+		return fmt.Errorf("Can't parse sha256: %s", err.Error())
+	}
+
+	if bytes.Equal(g.BinaryHash, newHash) {
 		return nil
 	}
 
-	h.Reset()
-	self, err := os.Open(selfPath)
-	if err != nil {
-		return err
+	newPath := g.BinaryPath + "." + uconf.Sha256
+	if file.IsExist(newPath) {
+		os.RemoveAll(newPath)
 	}
-	if _, err := io.Copy(h, self); err != nil {
-		return err
-	}
-	self.Close()
-	selfHash := h.Sum(nil)
 
-	h.Reset()
-	new, err := os.Open(newPath)
+	req, err := grab.NewRequest(newPath, uconf.Url)
 	if err != nil {
-		return err
+		return fmt.Errorf("Can't create download request: %s", err.Error())
 	}
-	if _, err := io.Copy(h, new); err != nil {
-		return err
-	}
-	new.Close()
-	newHash := h.Sum(nil)
-
-	if bytes.Equal(selfHash, newHash) {
-		return nil
+	req.SetChecksum(sha256.New(), newHash, true)
+	cli := grab.NewClient()
+	resp := cli.Do(req)
+	if err = resp.Err(); err != nil {
+		return fmt.Errorf("Can't download satori-agent: %s", err.Error())
 	}
 
 	script := fmt.Sprintf(
 		"SELF=\"%s\"\nRENAME=\"%s\"\nNEW=\"%s\"\n",
-		selfPath, selfPath+"."+hex.EncodeToString(selfHash), newPath,
+		g.BinaryPath, g.BinaryPath+"."+hex.EncodeToString(g.BinaryHash), newPath,
 	)
 
 	script += `
@@ -411,8 +409,8 @@ func TrySelfUpdate() error {
 		return err
 	}
 
-	log.Println("SelfUpdate triggered, restarting")
-	syscall.Exec(selfPath, os.Args, os.Environ())
+	log.Println("Update triggered, restarting")
+	syscall.Exec(g.BinaryPath, os.Args, os.Environ())
 
 	return fmt.Errorf("Can't do exec!")
 }

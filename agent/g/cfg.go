@@ -12,13 +12,14 @@ import (
 )
 
 type PluginConfig struct {
-	Enabled            bool     `json:"enabled"`
-	SigningKeys        []string `json:"signingKeys"`
-	AltSigningKeysFile string   `json:"altSigningKeysFile"`
-	Git                string   `json:"git"`
-	CheckoutPath       string   `json:"checkoutPath"`
-	Subdir             string   `json:"subDir"`
-	LogDir             string   `json:"logs"`
+	Enabled        bool     `json:"enabled"`
+	SigningKeys    []string `json:"signingKeys"`
+	AuthorizedKeys string   `json:"authorizedKeys"`
+	Update         string   `json:"update"`
+	Git            string   `json:"git"`
+	CheckoutPath   string   `json:"checkoutPath"`
+	Subdir         string   `json:"subDir"`
+	LogDir         string   `json:"logs"`
 }
 
 type MasterConfig struct {
@@ -45,18 +46,17 @@ type CollectorConfig struct {
 }
 
 type GlobalConfig struct {
-	Debug      bool              `json:"debug"`
-	Hostname   string            `json:"hostname"`
-	IP         string            `json:"ip"`
-	Plugin     *PluginConfig     `json:"plugin"`
-	Master     *MasterConfig     `json:"master"`
-	Transfer   *TransferConfig   `json:"transfer"`
-	Http       *HttpConfig       `json:"http"`
-	Collector  *CollectorConfig  `json:"collector"`
-	Ignore     [][3]string       `json:"ignore"`
-	AddTags    map[string]string `json:"addTags"`
-	NoBuiltin  bool              `json:"noBuiltin"`
-	SelfUpdate bool              `json:"selfUpdate"`
+	Debug     bool              `json:"debug"`
+	Hostname  string            `json:"hostname"`
+	IP        string            `json:"ip"`
+	Plugin    *PluginConfig     `json:"plugin"`
+	Master    *MasterConfig     `json:"master"`
+	Transfer  *TransferConfig   `json:"transfer"`
+	Http      *HttpConfig       `json:"http"`
+	Collector *CollectorConfig  `json:"collector"`
+	Ignore    [][3]string       `json:"ignore"`
+	AddTags   map[string]string `json:"addTags"`
+	NoBuiltin bool              `json:"noBuiltin"`
 }
 
 var (
