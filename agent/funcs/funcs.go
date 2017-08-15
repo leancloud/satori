@@ -1,7 +1,6 @@
 package funcs
 
 import (
-	"github.com/leancloud/satori/agent/g"
 	"github.com/leancloud/satori/common/model"
 )
 
@@ -13,7 +12,6 @@ type FuncsAndInterval struct {
 var Mappers []FuncsAndInterval
 
 func BuildMappers() {
-	interval := g.Config().Transfer.Interval
 	Mappers = []FuncsAndInterval{
 		FuncsAndInterval{
 			Fs: []func() []*model.MetricValue{
@@ -31,7 +29,7 @@ func BuildMappers() {
 				DeviceMetrics,
 				SocketStatSummaryMetrics,
 			},
-			Interval: interval,
+			Interval: 60,
 		},
 	}
 }

@@ -48,11 +48,7 @@ func AutoRender(w http.ResponseWriter, data interface{}, err error) {
 }
 
 func Start() {
-	if !g.Config().Http.Enabled {
-		return
-	}
-
-	addr := g.Config().Http.Listen
+	addr := g.Config().Http
 	if addr == "" {
 		return
 	}

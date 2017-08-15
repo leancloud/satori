@@ -10,7 +10,7 @@ import (
 )
 
 func StartCollect() {
-	if len(g.Config().Transfer.Addrs) == 0 {
+	if len(g.Config().Transfer) == 0 {
 		log.Fatalln("Transfer not configured!")
 	}
 

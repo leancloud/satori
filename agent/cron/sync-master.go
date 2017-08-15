@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/leancloud/satori/agent/g"
@@ -61,19 +63,35 @@ func heartbeatConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) 
 }
 
 func SyncWithMaster() {
-	cfg := g.Config().Master
 	debug := g.Config().Debug
-
-	if !cfg.Enabled || cfg.Addr == "" {
-		log.Println("Heartbeat not configured, plugins and certain metrics are not usable.")
-		return
+	s := g.Config().Master
+	if s == "" {
+		log.Println("Master not configured, plugins and certain metrics are not usable.")
 	}
+	u, err := url.Parse(s)
+	if err != nil {
+		log.Fatalln("Error parsing master url:", err.Error())
+	}
+	q := u.Query()
+
+	getInt := func(f string, def int) int {
+		var v string
+		if v = q.Get(f); v == "" {
+			return def
+		}
+		if intv, err := strconv.ParseInt(v, 10, 32); err == nil {
+			return int(intv)
+		} else {
+			return def
+		}
+	}
+	timeout := getInt("timeout", 5000)
+	interval := time.Duration(getInt("interval", 60)) * time.Second
 
 	cli := cpool.NewConnPool(
-		"master", cfg.Addr, 5, 3, cfg.Timeout, cfg.Timeout, heartbeatConnect,
+		"master", u.Host, 5, 3, timeout, timeout, heartbeatConnect,
 	)
 
-	interval := time.Duration(cfg.Interval) * time.Second
 	for {
 		hostname, err := g.Hostname()
 		if err != nil {

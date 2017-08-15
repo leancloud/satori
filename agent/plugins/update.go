@@ -293,13 +293,17 @@ func getAuthorizedKeys(checkoutPath string, head string, keyFile string, validKe
 		return nil, err
 	}
 
+	parsed := make([]struct {
+		Key string `yaml:"key"`
+	}, 0, 5)
+
+	if err = yaml.Unmarshal(content, &parsed); err != nil {
+		return nil, err
+	}
+
 	lst := make([]string, 0, 5)
-	for _, l := range strings.Split(string(content), "\n") {
-		l = strings.TrimSpace(l)
-		if strings.HasPrefix(l, "#") || l == "" {
-			continue
-		}
-		lst = append(lst, l)
+	for _, l := range parsed {
+		lst = append(lst, l.Key)
 	}
 
 	return lst, nil

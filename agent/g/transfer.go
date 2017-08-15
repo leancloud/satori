@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
+	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -59,7 +61,7 @@ func transferConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) {
 }
 
 var (
-	transferClients map[string]*cpool.ConnPool = map[string]*cpool.ConnPool{}
+	transferClients []*cpool.ConnPool = []*cpool.ConnPool{}
 
 	metricsBufferLock *sync.RWMutex        = new(sync.RWMutex)
 	metricsBuffer     []*model.MetricValue = make([]*model.MetricValue, 0, 5)
@@ -76,14 +78,12 @@ func sendMetrics() {
 	metricsBuffer = make([]*model.MetricValue, 0, 5)
 	metricsBufferLock.Unlock()
 
-	addrs := Config().Transfer.Addrs
-
 	for c := 0; c < 3; c++ {
-		for _, i := range rand.Perm(len(addrs)) {
-			cli := transferClients[addrs[i]]
+		for _, i := range rand.Perm(len(transferClients)) {
+			cli := transferClients[i]
 			_, err := cli.Call(send)
 			if err != nil {
-				log.Println("sendMetrics fail", addrs[i], err)
+				log.Println("sendMetrics fail", cli.Address, err)
 				continue
 			}
 			return
@@ -95,10 +95,22 @@ func sendMetrics() {
 func SendToTransferProc() {
 	rand.Seed(time.Now().UnixNano())
 	cfg := Config().Transfer
-	for _, addr := range cfg.Addrs {
-		transferClients[addr] = cpool.NewConnPool(
-			"transfer", addr, 5, 3, cfg.Timeout, cfg.Timeout, transferConnect,
-		)
+	for _, s := range cfg {
+		u, err := url.Parse(s)
+		if err != nil {
+			log.Printf("Error parsing %s: %s\n", s, err.Error())
+			continue
+		}
+		args := u.Query()
+		var timeout int
+		if ts := args.Get("timeout"); ts != "" {
+			timeout, _ = strconv.Atoi(ts)
+		} else {
+			timeout = 3000
+		}
+		transferClients = append(transferClients, cpool.NewConnPool(
+			"transfer", u.Host, 5, 3, timeout, timeout, transferConnect,
+		))
 	}
 
 	for {

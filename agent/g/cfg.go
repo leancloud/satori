@@ -1,7 +1,6 @@
 package g
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"regexp"
@@ -9,54 +8,34 @@ import (
 
 	"github.com/toolkits/file"
 	"github.com/toolkits/net"
+	"gopkg.in/yaml.v2"
 )
 
-type PluginConfig struct {
-	Enabled        bool     `json:"enabled"`
-	SigningKeys    []string `json:"signingKeys"`
-	AuthorizedKeys string   `json:"authorizedKeys"`
-	Update         string   `json:"update"`
-	Git            string   `json:"git"`
-	CheckoutPath   string   `json:"checkoutPath"`
-	Subdir         string   `json:"subDir"`
-	LogDir         string   `json:"logs"`
-}
-
-type MasterConfig struct {
-	Enabled  bool   `json:"enabled"`
-	Addr     string `json:"addr"`
-	Interval int    `json:"interval"`
-	Timeout  int    `json:"timeout"`
-}
-
-type TransferConfig struct {
-	Enabled  bool     `json:"enabled"`
-	Addrs    []string `json:"addrs"`
-	Interval int      `json:"interval"`
-	Timeout  int      `json:"timeout"`
-}
-
-type HttpConfig struct {
-	Enabled bool   `json:"enabled"`
-	Listen  string `json:"listen"`
-}
-
-type CollectorConfig struct {
-	IfacePrefix []string `json:"ifacePrefix"`
-}
-
 type GlobalConfig struct {
-	Debug     bool              `json:"debug"`
-	Hostname  string            `json:"hostname"`
-	IP        string            `json:"ip"`
-	Plugin    *PluginConfig     `json:"plugin"`
-	Master    *MasterConfig     `json:"master"`
-	Transfer  *TransferConfig   `json:"transfer"`
-	Http      *HttpConfig       `json:"http"`
-	Collector *CollectorConfig  `json:"collector"`
-	Ignore    [][3]string       `json:"ignore"`
-	AddTags   map[string]string `json:"addTags"`
-	NoBuiltin bool              `json:"noBuiltin"`
+	Debug    bool   `yaml:"debug"`
+	Hostname string `yaml:"hostname"`
+	IP       string `yaml:"ip"`
+	Plugin   *struct {
+		Enabled        bool     `yaml:"enabled"`
+		SigningKeys    []string `yaml:"signingKeys"`
+		AuthorizedKeys string   `yaml:"authorizedKeys"`
+		Update         string   `yaml:"update"`
+		Git            string   `yaml:"git"`
+		CheckoutPath   string   `yaml:"checkoutPath"`
+		Subdir         string   `yaml:"subDir"`
+		LogDir         string   `yaml:"logs"`
+	} `yaml:"plugin"`
+
+	Master    string   `yaml:"master"`
+	Transfer  []string `yaml:"transfer"`
+	Http      string   `yaml:"http"`
+	Collector *struct {
+		IfacePrefix []string `yaml:"ifacePrefix"`
+	} `yaml:"collector"`
+
+	Ignore    [][3]string       `yaml:"ignore"`
+	AddTags   map[string]string `yaml:"addTags"`
+	NoBuiltin bool              `yaml:"noBuiltin"`
 }
 
 var (
@@ -111,7 +90,7 @@ func ParseConfig(cfg string) {
 	}
 
 	if !file.IsExist(cfg) {
-		log.Fatalln("config file:", cfg, "is not existent. maybe you need `mv cfg.example.json cfg.json`")
+		log.Fatalln("config file:", cfg, "is not existent. maybe you need `mv cfg.example.yaml cfg.yaml`")
 	}
 
 	ConfigFile = cfg
@@ -122,7 +101,7 @@ func ParseConfig(cfg string) {
 	}
 
 	var c GlobalConfig
-	err = json.Unmarshal([]byte(configContent), &c)
+	err = yaml.Unmarshal([]byte(configContent), &c)
 	if err != nil {
 		log.Fatalln("parse config file:", cfg, "fail:", err)
 	}
