@@ -19,7 +19,8 @@ package g
 // 7.0.11: 新增 agent 自更新功能
 // 7.0.12: 增加 alternative key file 功能，管理签名 key 更方便了
 // 7.0.13: 自更新的 binary 放到仓库外，配置文件格式修改（YAML)
+// 7.0.14: 修复一个严重的bug
 
 const (
-	VERSION = "7.0.13"
+	VERSION = "7.0.14"
 )
