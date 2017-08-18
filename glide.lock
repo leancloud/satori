@@ -1,5 +1,5 @@
 hash: 24d595a67896ea0af4e75ddbf0f26dffa9ff2ef058ab89882e7862258ca0517d
-updated: 2017-08-14T17:19:16.076622473+08:00
+updated: 2017-08-18T11:59:47.450704364+08:00
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -11,11 +11,21 @@ imports:
   - proto
 - name: github.com/cavaliercoder/grab
   version: e2cf8055a943781c5f6424590b0495cd59f616f0
+- name: github.com/containerd/cgroups
+  version: b1bf0a28a13d0d096ffd7c1ec6fdea87da8032e4
+- name: github.com/coreos/go-systemd
+  version: d2196463941895ee908e13531a23a39feb9e1243
+  subpackages:
+  - dbus
+- name: github.com/docker/go-units
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/garyburd/redigo
   version: 9e66b83d15a259978be267d0b61838c42c3904e3
   subpackages:
   - internal
   - redis
+- name: github.com/godbus/dbus
+  version: bd29ed602e2cf4207ebcabcd530259169e4289ba
 - name: github.com/golang/protobuf
   version: 748d386b5c1ea99658fd69fe9f03991ce86a90c1
   subpackages:
@@ -28,6 +38,10 @@ imports:
   - pkg/escape
 - name: github.com/kardianos/osext
   version: ae77be60afb1dcacde03767a8c37337fad28ac14
+- name: github.com/opencontainers/runtime-spec
+  version: 49c255ef7fc78a0acf3e1f711229e6b34902780a
+  subpackages:
+  - specs-go
 - name: github.com/toolkits/concurrent
   version: a4371d70e3e308db0d5f90c2b1f5efaa84add725
   subpackages:
@@ -54,6 +68,10 @@ imports:
   version: f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f
   subpackages:
   - proxy
+- name: golang.org/x/sys
+  version: 43e60d72a8e2bd92ee98319ba9a384a0e9837c08
+  subpackages:
+  - unix
 - name: gopkg.in/yaml.v2
   version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
 testImports: []
