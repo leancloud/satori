@@ -19,16 +19,16 @@ func StartCollect() {
 		return
 	}
 
-	go collectCpuDisks()
+	go collectCPUDisks()
 	for _, v := range funcs.Mappers {
 		go collect(int64(v.Interval), v.Fs)
 	}
 }
 
-func collectCpuDisks() {
+func collectCPUDisks() {
 	for {
-		funcs.UpdateCpuStat()
-		funcs.UpdateDiskStats()
+		_ = funcs.UpdateCpuStat()
+		_ = funcs.UpdateDiskStats()
 		time.Sleep(time.Second)
 	}
 }
@@ -57,7 +57,7 @@ func collect(sec int64, fns []func() []*model.MetricValue) {
 			}
 
 			if debug {
-				log.Println(" -> collect ", len(items), " metrics\n")
+				log.Println(" -> collect ", len(items), " metrics")
 			}
 			mvs = append(mvs, items...)
 		}

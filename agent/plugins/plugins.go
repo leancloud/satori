@@ -36,35 +36,35 @@ type Plugin struct {
 	killSwitch chan struct{}
 }
 
-func (this *Plugin) Run() {
+func (p *Plugin) Run() {
 	debug := g.Config().Debug
 	if debug {
-		log.Printf("Starting plugin scheduler for %s/%d/%s", this.FilePath, this.Step, this.Params)
+		log.Printf("Starting plugin scheduler for %s/%d/%s", p.FilePath, p.Step, p.Params)
 	}
 
-	this.Kill()
-	this.killSwitch = make(chan struct{})
+	p.Kill()
+	p.killSwitch = make(chan struct{})
 
-	dur := this.Step
+	dur := p.Step
 	if dur <= 0 {
 		dur = 1
 	}
 
 	ticker := time.NewTicker(time.Duration(dur) * time.Second)
 	go func() {
-		s := this.killSwitch
+		s := p.killSwitch
 		for {
 			<-ticker.C
 			if closed(s) {
 				return
-			} else {
-				this.RunOnce()
 			}
+
+			p.RunOnce()
 		}
 	}()
 }
 
-func (this *Plugin) reportFailure(subject string, desc string) {
+func (p *Plugin) reportFailure(subject string, desc string) {
 	hostname, _ := g.Hostname()
 	now := time.Now().Unix()
 	m := []*model.MetricValue{
@@ -75,7 +75,7 @@ func (this *Plugin) reportFailure(subject string, desc string) {
 			Step:      1,
 			Timestamp: now,
 			Tags: map[string]string{
-				"file": this.FilePath,
+				"file": p.FilePath,
 			},
 			Desc: desc,
 		},
@@ -83,9 +83,9 @@ func (this *Plugin) reportFailure(subject string, desc string) {
 	g.SendToTransfer(m)
 }
 
-func (this *Plugin) RunOnce() {
+func (p *Plugin) RunOnce() {
 	cfg := g.Config().Plugin
-	fpath := filepath.Join(cfg.CheckoutPath, cfg.Subdir, this.FilePath)
+	fpath := filepath.Join(cfg.CheckoutPath, cfg.Subdir, p.FilePath)
 
 	if !file.IsExist(fpath) {
 		log.Println("no such plugin:", fpath)
@@ -98,11 +98,11 @@ func (this *Plugin) RunOnce() {
 	}
 
 	cmd := exec.Command(fpath)
-	if this.Params != nil {
+	if p.Params != nil {
 		var stdin bytes.Buffer
-		s, err := json.Marshal(this.Params)
+		s, err := json.Marshal(p.Params)
 		if err != nil {
-			log.Println("Error marshalling params for metric plugin: %s", this.FilePath)
+			log.Println("Error marshalling params for metric plugin: %s", p.FilePath)
 			return
 		}
 		stdin.Write(s)
@@ -116,7 +116,7 @@ func (this *Plugin) RunOnce() {
 
 	if err != nil {
 		log.Println("[ERROR] exec plugin", fpath, "fail. error:", err)
-		this.reportFailure("error", err.Error())
+		p.reportFailure("error", err.Error())
 		return
 	}
 
@@ -130,7 +130,7 @@ func (this *Plugin) RunOnce() {
 			err = json.Unmarshal(s, &metrics)
 			if err != nil {
 				log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, s)
-				this.reportFailure("bad-format", err.Error()+"\n\n"+string(s))
+				p.reportFailure("bad-format", err.Error()+"\n\n"+string(s))
 				stderrPipe.Close()
 				stdoutPipe.Close()
 				go func() {
@@ -147,7 +147,7 @@ func (this *Plugin) RunOnce() {
 	go func() {
 		s, _ := ioutil.ReadAll(stderr)
 		if len(s) > 0 {
-			this.reportFailure("error", string(s))
+			p.reportFailure("error", string(s))
 		}
 	}()
 
@@ -157,15 +157,15 @@ func (this *Plugin) RunOnce() {
 	}()
 
 	var timeout <-chan time.Time
-	if this.Step > 0 {
-		t := this.Step*1000 - 500
+	if p.Step > 0 {
+		t := p.Step*1000 - 500
 		timeout = time.After(time.Duration(t) * time.Millisecond)
 	} else {
 		// Long running plugin
 		timeout = make(chan time.Time)
 	}
 
-	killSwitch := this.killSwitch
+	killSwitch := p.killSwitch
 
 	select {
 	case <-finished:
@@ -173,20 +173,20 @@ func (this *Plugin) RunOnce() {
 	case <-timeout:
 		cmd.Process.Kill()
 		log.Println("[INFO] Plugin timed out, terminating: ", fpath)
-		this.reportFailure("timeout", "")
+		p.reportFailure("timeout", "")
 	case <-killSwitch:
 		cmd.Process.Kill()
 		log.Println("[INFO] Plugin was asked to terminate: ", fpath)
 	}
 }
 
-func (this *Plugin) Kill() {
-	if this.killSwitch != nil {
+func (p *Plugin) Kill() {
+	if p.killSwitch != nil {
 		debug := g.Config().Debug
 		if debug {
-			log.Printf("Stopping plugin scheduler for %s/%d/%s", this.FilePath, this.Step, this.Params)
+			log.Printf("Stopping plugin scheduler for %s/%d/%s", p.FilePath, p.Step, p.Params)
 		}
-		close(this.killSwitch)
+		close(p.killSwitch)
 	}
 }
 
@@ -250,8 +250,8 @@ func getMetricPlugins(metrics []model.PluginParam, L *[]*Plugin) {
 
 	g := make(map[Group][]model.PluginParam)
 	for _, p := range metrics {
-		var metric string = ""
-		var step int = -1
+		var metric string
+		step := -1
 
 		if m, ok := p["_metric"]; ok {
 			if s, ok := m.(string); ok {
