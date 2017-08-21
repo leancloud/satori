@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/cgroups"
 	"github.com/toolkits/file"
 
 	"github.com/leancloud/satori/agent/g"
@@ -308,5 +307,4 @@ func RunPlugins(dirs []string, metrics []model.PluginParam) {
 	for _, p := range L {
 		p.Run()
 	}
-	cgroups.Foo()
 }

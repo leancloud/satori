@@ -48,7 +48,7 @@ func AutoRender(w http.ResponseWriter, data interface{}, err error) {
 }
 
 func Start() {
-	addr := g.Config().Http
+	addr := g.Config().HTTP
 	if addr == "" {
 		return
 	}

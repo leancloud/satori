@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/leancloud/satori/agent/cgroups"
 	"github.com/leancloud/satori/agent/cron"
 	"github.com/leancloud/satori/agent/funcs"
 	"github.com/leancloud/satori/agent/g"
@@ -33,11 +34,20 @@ func main() {
 
 	funcs.BuildMappers()
 
+	cg := g.Config().Cgroups
+	if cg != nil {
+		if err := cgroups.JailMe("satori", cg.CPU, cg.Memory); err != nil {
+			fmt.Println("Can't setup cgroups:", err)
+			if cg.Panic {
+				panic(err)
+			}
+		}
+	}
+
 	go cron.SyncWithMaster()
 	go cron.StartCollect()
 	go g.SendToTransferProc()
 	go http.Start()
 
 	select {}
-
 }

@@ -17,9 +17,14 @@ type GlobalConfig struct {
 	IP        string   `yaml:"ip"`
 	Master    string   `yaml:"master"`
 	Transfer  []string `yaml:"transfer"`
-	Http      string   `yaml:"http"`
+	HTTP      string   `yaml:"http"`
 	NoBuiltin bool     `yaml:"noBuiltin"`
-	Plugin    struct {
+	Cgroups   *struct {
+		Memory int64   `yaml:"mem"`
+		CPU    float32 `yaml:"cpu"`
+		Panic  bool    `yaml:"panicOnFailure"`
+	} `yaml:"cgroups"`
+	Plugin struct {
 		Enabled     bool `yaml:"enabled"`
 		SigningKeys []struct {
 			Key string `yaml:"key"`
@@ -36,7 +41,7 @@ type GlobalConfig struct {
 		Tag      string `yaml:"tag"`
 		TagValue string `yaml:"tagValue"`
 	} `yaml:"ignore"`
-	Collector struct {
+	Collector *struct {
 		IfacePrefix []string `yaml:"ifacePrefix"`
 	} `yaml:"collector"`
 	AddTags map[string]string `yaml:"addTags"`

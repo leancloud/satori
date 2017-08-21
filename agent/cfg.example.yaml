@@ -12,6 +12,17 @@ noBuiltin: false
 # if this is empty or omitted. Defaults to empty.
 ip: ''
 
+# Constraint resource usage of satori-agent and its plugins
+# Omit this to disable.
+cgroups:
+  # CPU usage in percentage
+  cpu: 50.0
+  # Memory usage in MiB
+  mem: 256
+  # Panic if failed to setup cgroups
+  # Defaults to false
+  panicOnFailure: false
+
 plugin:
   # Enable plugin.
   # Plugins are simple scripts invoked by satori-agent to
