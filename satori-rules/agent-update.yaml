@@ -1,0 +1,5 @@
+# This file is used for satori-agent auto update
+# You MUST provide sha256 of new binary
+
+# sha256: 48da47d7718f36fb388da2b7260975eceec389ef249231239a0d2ebaca830d71
+# url: http://update.com/your-new-agent
