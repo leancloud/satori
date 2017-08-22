@@ -13,9 +13,7 @@ func SyncConfig(pluginVer string, pluginDirs []string, pluginMetrics []model.Plu
 	if pluginVer != "" {
 		v, _ := GetCurrentPluginVersion()
 		if pluginVer != v {
-			if debug {
-				log.Printf("Plugin version old[%s] != new[%s], update.", v, pluginVer)
-			}
+			log.Printf("Plugin version old[%s] != new[%s], update.", v, pluginVer)
 			err := UpdatePlugin(pluginVer)
 			if err == nil {
 				err := TryUpdate()

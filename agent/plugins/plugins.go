@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os/exec"
@@ -19,6 +21,11 @@ import (
 	"github.com/leancloud/satori/common/model"
 )
 
+func safeClose(c chan struct{}) {
+	defer func() { _ = recover() }()
+	close(c)
+}
+
 func closed(c chan struct{}) bool {
 	select {
 	case <-c:
@@ -33,6 +40,12 @@ type Plugin struct {
 	Step     int
 	Params   []model.PluginParam
 
+	proc       *exec.Cmd
+	stdout     *bufio.Reader
+	stdoutPipe io.ReadCloser
+	stderr     *bufio.Reader
+	stderrPipe io.ReadCloser
+	finished   chan struct{}
 	killSwitch chan struct{}
 }
 
@@ -43,7 +56,6 @@ func (p *Plugin) Run() {
 	}
 
 	p.Kill()
-	p.killSwitch = make(chan struct{})
 
 	dur := p.Step
 	if dur <= 0 {
@@ -83,18 +95,60 @@ func (p *Plugin) reportFailure(subject string, desc string) {
 	g.SendToTransfer(m)
 }
 
-func (p *Plugin) RunOnce() {
+func (p *Plugin) setupPipes() {
+	p.stdoutPipe, _ = p.proc.StdoutPipe()
+	p.stdout = bufio.NewReader(p.stdoutPipe)
+	p.stderrPipe, _ = p.proc.StderrPipe()
+	p.stderr = bufio.NewReader(p.stderrPipe)
+	p.finished = make(chan struct{})
+}
+
+func (p *Plugin) teardownPipes() {
+	if p.stdout != nil {
+		_ = p.stdoutPipe.Close()
+		p.stdoutPipe = nil
+		p.stdout = nil
+	}
+	if p.stderr != nil {
+		_ = p.stderrPipe.Close()
+		p.stderrPipe = nil
+		p.stderr = nil
+	}
+}
+
+func (p *Plugin) sendStdout() {
+	for {
+		s, err := p.stdout.ReadBytes('\n')
+		if err != nil {
+			p.teardownPipes()
+			safeClose(p.finished)
+			return
+		}
+		var metrics []*model.MetricValue
+		err = json.Unmarshal(s, &metrics)
+		if err != nil {
+			log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", p.FilePath, err, s)
+			p.reportFailure("bad-format", err.Error()+"\n\n"+string(s))
+			p.teardownPipes()
+			safeClose(p.finished)
+			return
+		}
+		g.SendToTransfer(metrics)
+	}
+}
+
+func (p *Plugin) sendStderr() {
+	s, _ := ioutil.ReadAll(p.stderr)
+	if len(s) > 0 {
+		p.reportFailure("error", string(s))
+	}
+}
+
+func (p *Plugin) setupCommand() error {
 	cfg := g.Config().Plugin
 	fpath := filepath.Join(cfg.CheckoutPath, cfg.Subdir, p.FilePath)
-
 	if !file.IsExist(fpath) {
-		log.Println("no such plugin:", fpath)
-		return
-	}
-
-	debug := g.Config().Debug
-	if debug {
-		log.Println(fpath, "running...")
+		return fmt.Errorf("No such plugin: %s", p.FilePath)
 	}
 
 	cmd := exec.Command(fpath)
@@ -102,82 +156,76 @@ func (p *Plugin) RunOnce() {
 		var stdin bytes.Buffer
 		s, err := json.Marshal(p.Params)
 		if err != nil {
-			log.Println("Error marshalling params for metric plugin: %s", p.FilePath)
-			return
+			return fmt.Errorf("Error marshalling params for metric plugin: %s, %s", p.FilePath, err)
 		}
 		stdin.Write(s)
 		cmd.Stdin = &stdin
 	}
-	stdoutPipe, _ := cmd.StdoutPipe()
-	stdout := bufio.NewReader(stdoutPipe)
-	stderrPipe, _ := cmd.StderrPipe()
-	stderr := bufio.NewReader(stderrPipe)
-	err := cmd.Start()
+	p.proc = cmd
+	p.killSwitch = make(chan struct{})
+	return nil
+}
 
-	if err != nil {
-		log.Println("[ERROR] exec plugin", fpath, "fail. error:", err)
+func (p *Plugin) terminateCommand() {
+	debug := g.Config().Debug
+	if p.proc != nil {
+		cmd := p.proc
+		p.proc = nil
+		p.teardownPipes()
+		if err := cmd.Process.Kill(); err != nil && debug {
+			log.Printf("Error killing proc: %s\n", err)
+		}
+		_ = cmd.Wait()
+	}
+}
+
+func (p *Plugin) makeTimeoutChan() <-chan time.Time {
+	if p.Step > 0 {
+		// Periodically called plugin
+		t := p.Step*1000 - 500
+		return time.After(time.Duration(t) * time.Millisecond)
+	}
+
+	// Long running plugin
+	return make(chan time.Time)
+}
+
+func (p *Plugin) RunOnce() {
+	debug := g.Config().Debug
+
+	if err := p.setupCommand(); err != nil {
+		log.Printf("Can't setup plugin %s command: %s\n", p.FilePath, err)
+		p.reportFailure("error", err.Error())
+		return
+	}
+	p.setupPipes()
+	if err := p.proc.Start(); err != nil {
+		log.Printf("Can't start plugin %s process: %s\n", p.FilePath, err)
 		p.reportFailure("error", err.Error())
 		return
 	}
 
-	go func() {
-		for {
-			s, err := stdout.ReadBytes('\n')
-			if err != nil {
-				return
-			}
-			var metrics []*model.MetricValue
-			err = json.Unmarshal(s, &metrics)
-			if err != nil {
-				log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, s)
-				p.reportFailure("bad-format", err.Error()+"\n\n"+string(s))
-				stderrPipe.Close()
-				stdoutPipe.Close()
-				go func() {
-					proc := cmd.Process
-					time.Sleep(time.Second * 5)
-					proc.Kill()
-				}()
-				return
-			}
-			g.SendToTransfer(metrics)
-		}
-	}()
-
-	go func() {
-		s, _ := ioutil.ReadAll(stderr)
-		if len(s) > 0 {
-			p.reportFailure("error", string(s))
-		}
-	}()
-
-	finished := make(chan error, 1)
-	go func() {
-		finished <- cmd.Wait()
-	}()
-
-	var timeout <-chan time.Time
-	if p.Step > 0 {
-		t := p.Step*1000 - 500
-		timeout = time.After(time.Duration(t) * time.Millisecond)
-	} else {
-		// Long running plugin
-		timeout = make(chan time.Time)
+	if debug {
+		log.Println(p.FilePath, "running...")
 	}
 
+	go p.sendStdout()
+	go p.sendStderr()
+
+	timeout := p.makeTimeoutChan()
 	killSwitch := p.killSwitch
+	finished := p.finished
 
 	select {
 	case <-finished:
 		break
 	case <-timeout:
-		cmd.Process.Kill()
-		log.Println("[INFO] Plugin timed out, terminating: ", fpath)
+		log.Println("[INFO] Plugin timed out, terminating: ", p.FilePath)
 		p.reportFailure("timeout", "")
 	case <-killSwitch:
-		cmd.Process.Kill()
-		log.Println("[INFO] Plugin was asked to terminate: ", fpath)
+		log.Println("[INFO] Plugin was asked to terminate: ", p.FilePath)
 	}
+	p.terminateCommand()
 }
 
 func (p *Plugin) Kill() {
