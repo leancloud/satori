@@ -11,7 +11,9 @@ import (
 
 func addHandlers() {
 	http.HandleFunc("/state", func(w http.ResponseWriter, r *http.Request) {
+		state.StateLock.RLock()
 		s, err := json.Marshal(state.State)
+		state.StateLock.RUnlock()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
