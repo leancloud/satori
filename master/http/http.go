@@ -25,7 +25,7 @@ func addHandlers() {
 }
 
 func Start() {
-	listen := g.Config().Http
+	listen := g.Config().HTTP
 	if listen == "" {
 		return
 	}

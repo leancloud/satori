@@ -1,7 +1,0 @@
-{
-    "debug": true,
-    "redis": "redis://redis:6379",
-    "listen": ":6040",
-    "http": ":6041",
-    "purgeSeconds": 259200
-}

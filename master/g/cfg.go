@@ -1,19 +1,20 @@
 package g
 
 import (
-	"encoding/json"
-	"github.com/toolkits/file"
 	"log"
 	"sync"
+
+	"github.com/toolkits/file"
+	"gopkg.in/yaml.v2"
 )
 
 type GlobalConfig struct {
-	Debug        bool   `json:"debug"`
-	Redis        string `json:"redis"`
-	Listen       string `json:"listen"`
-	Http         string `json:"http"`
-	Transfer     string `json:"transfer"`
-	PurgeSeconds int64  `json:"purgeSeconds"`
+	Debug        bool   `yaml:"debug"`
+	Redis        string `yaml:"redis"`
+	Listen       string `yaml:"listen"`
+	HTTP         string `yaml:"http"`
+	Transfer     string `yaml:"transfer"`
+	PurgeSeconds int64  `yaml:"purgeSeconds"`
 }
 
 var (
@@ -45,7 +46,7 @@ func ParseConfig(cfg string) {
 	}
 
 	var c GlobalConfig
-	err = json.Unmarshal([]byte(configContent), &c)
+	err = yaml.Unmarshal([]byte(configContent), &c)
 	if err != nil {
 		log.Fatalln("parse config file:", cfg, "fail:", err)
 	}
