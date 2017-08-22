@@ -21,7 +21,7 @@ cgroups:
   mem: 256
   # Panic if failed to setup cgroups
   # Defaults to false
-  panicOnFailure: false
+  enforce: false
 
 plugin:
   # Enable plugin.

@@ -38,7 +38,7 @@ func main() {
 	if cg != nil {
 		if err := cgroups.JailMe("satori", cg.CPU, cg.Memory); err != nil {
 			fmt.Println("Can't setup cgroups:", err)
-			if cg.Panic {
+			if cg.Enforce {
 				panic(err)
 			}
 		}

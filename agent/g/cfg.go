@@ -20,9 +20,9 @@ type GlobalConfig struct {
 	HTTP      string   `yaml:"http"`
 	NoBuiltin bool     `yaml:"noBuiltin"`
 	Cgroups   *struct {
-		Memory int64   `yaml:"mem"`
-		CPU    float32 `yaml:"cpu"`
-		Panic  bool    `yaml:"panicOnFailure"`
+		Memory  int64   `yaml:"mem"`
+		CPU     float32 `yaml:"cpu"`
+		Enforce bool    `yaml:"enforce"`
 	} `yaml:"cgroups"`
 	Plugin struct {
 		Enabled     bool `yaml:"enabled"`
