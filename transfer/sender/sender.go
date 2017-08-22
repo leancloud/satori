@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-// 默认参数
-var (
-	MinStep int //最小上报周期,单位sec
-)
-
 var Backends = make([]Backend, 0, 5)
 
 var BackendConstructors = []func(cfg *BackendConfig) Backend{
@@ -25,11 +20,6 @@ var BackendConstructors = []func(cfg *BackendConfig) Backend{
 // 初始化数据发送服务, 在main函数中调用
 func Start() {
 	// 初始化默认参数
-	MinStep = g.Config().MinStep
-	if MinStep < 1 {
-		MinStep = 30 //默认30s
-	}
-
 	for _, s := range g.Config().Backends {
 		cfg := parseBackendUrl(s)
 		for _, f := range BackendConstructors {
