@@ -1,0 +1,16 @@
+---
+# Output debug log
+debug: true
+
+# Redis address to receive riemann info
+redis: "redis://redis:6379"
+
+# Listen port
+listen: ":6040"
+
+# HTTP interface listen port
+http: ":6041"
+
+# Automatically remove inactive nodes after specified seconds
+# Set to 0 to disable
+purgeSeconds: 259200

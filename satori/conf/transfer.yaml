@@ -1,0 +1,13 @@
+---
+# Output debug log
+debug: true
+
+# Listen address and port
+listen: "0.0.0.0:8433"
+
+# Forward events to
+backends:
+  - "influxdb+http://root@localhost:8086/influx?batch=50"
+  - "riemann+tcp://localhost:5555/?batch=20"
+  # - "tsdb://localhost:8088/?batch=200"
+  # - "transfer://localhost:8434/?batch=20&connTimeout=1000&callTimeout=5000&maxConn=32&maxIdle=32&retry=3"

@@ -5,4 +5,4 @@ MAINTAINER bwang@leancloud.rocks
 ENV TERM xterm
 ADD .build /app
 EXPOSE 8433
-CMD exec /app/transfer -c /conf/transfer.json
+CMD exec /app/transfer -c /conf/transfer.yaml
