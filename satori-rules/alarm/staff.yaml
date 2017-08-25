@@ -1,0 +1,30 @@
+# 请按照自己的需求添加
+# groups 就是规则中的的报警组
+
+groups:
+  operation:
+    - proton
+    - phone_ops
+    - bearychat_ops
+    - pagerduty_ops
+
+users:
+  phone_ops:
+    name: "运维手机"
+    # phone: 18888888888
+    threshold: 1
+
+  proton:
+    name: "Proton"
+    email: bwang@leancloud.rocks
+    # phone: 1888888888
+    wechat: proton
+
+  bearychat_ops:
+    name: "运维 BearyChat 机器人"
+    bearychat: "https://hook.bearychat.com/=bw52Y/incoming/[PUT_YOUR_URL_HERE]"
+
+  pagerduty_ops:
+    name: "运维 PagerDuty"
+    pagerduty: "PUT_YOUR_KEY_HERE"
+    onealert: "PUT_YOUR_KEY_HERE"

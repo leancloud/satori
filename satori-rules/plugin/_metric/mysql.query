@@ -1,0 +1,143 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# 参数：
+# {
+#     "host":     "localhost",
+#     "port":     3389,
+#     "database": "foo",
+#     "user":     "foo",
+#     "password": "bar",
+#     "name":     "some-business-metric",
+#     "sql":      "SELECT COUNT(*) FROM foo",  # 必须返回 scalar
+#     "json-file": "/etc/mysql-mon.conf",      # 可选，从这个配置中读取参数
+# }
+
+from __future__ import absolute_import
+
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
+
+# -- stdlib --
+import itertools
+import json
+import socket
+import time
+
+# -- third party --
+import pymysql
+
+
+# -- own --
+# -- code --
+class Piper(object):
+    def __init__(self, f):
+        self.f = f
+
+    def __ror__(self, arg):
+        return self.f(arg)
+
+    @classmethod
+    def make(cls, f):
+        return cls(f)
+
+
+@Piper.make
+def mapping(c):
+    assert len(c.description) == 2
+    return dict(c)
+
+
+@Piper.make
+def one(c):
+    colnames = zip(*c.description)[0]
+    row = c.fetchone()
+    if not row:
+        return None
+
+    return dict(zip(itertools.cycle(colnames), row))
+
+
+@Piper.make
+def lower_keys(d):
+    return {k.lower(): v for k, v in d.iteritems()}
+
+
+@Piper.make
+def scalar(c):
+    row = c.fetchone()
+    if not row:
+        return None
+
+    return row[0]
+
+
+endpoint = socket.gethostname()
+ts = int(time.time())
+args = json.loads(sys.stdin.read())
+
+rst = []
+
+
+def norm(v):
+    if isinstance(v, (int, float)):
+        return v
+
+    if isinstance(v, basestring):
+        if v.lower() in ('off', 'false'):
+            return 0
+        elif v.lower() in ('on', 'true'):
+            return 1
+        elif v.isdigit():
+            return float(v)
+        else:
+            return None
+
+    return None
+
+
+for arg in args:
+    try:
+        assert arg.pop('_metric', '') == 'mysql.query'
+        if 'json-file' in arg:
+            try:
+                arg1 = json.loads(open(arg['json-file']).read())
+            except IOError:
+                continue
+
+            arg1.update(arg)
+            arg = arg1
+
+        if arg['host'] not in ('localhost', '127.0.0.1'):
+            host = arg['host']
+        else:
+            host = endpoint
+
+        name = arg.pop('name')
+        sql = arg.pop('sql')
+        arg.pop('json-file', '')
+        arg.pop('_step', '')
+
+        conn = pymysql.connect(**arg)
+
+        with conn.cursor() as c:
+            c.execute(sql)
+            v = c | scalar
+
+        conn.close()
+
+        v is not None and rst.append({
+            'metric': 'mysql.query.' + name,
+            'endpoint': host,
+            'timestamp': ts,
+            'step': 30,
+            'value': float(v),
+        })
+
+    except Exception:
+        import traceback
+        traceback.print_exc()
+
+print json.dumps(rst)

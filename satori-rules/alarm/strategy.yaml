@@ -1,0 +1,57 @@
+# 报警策略
+# level 代表处理的优先级
+# backend 对应着发送的逻辑，在 alarm 代码中能看到
+# 剩下的参数是提供给 backend 用的
+#
+strategies:
+  # phonecall:
+  #   backend: nexmo_tts
+  #   level: '0'
+  #   api_key: PUT_YOUR_KEY_HERE
+  #   api_secret: PUT_YOUR_KEY_HERE
+  #   voice: female
+  #   lg: zh-cn
+  #   repeat: 3
+  #   prefix: ''
+
+  # sms:
+  #   backend: yunpian_sms
+  #   # 1 for ops-phone
+  #   # 2 for individuals' phones
+  #   level: '012'
+  #   signature: '报警'
+  #   api_key: PUT_YOUR_KEY_HERE
+
+  # wechat:
+  #   backend: wechat_qy
+  #   level: '0123'
+  #   corpid: PUT_YOUR_KEY_HERE
+  #   secret: PUT_YOUR_KEY_HERE
+  #   agentid: 6
+
+  # pagerduty:
+  #   backend: pagerduty
+  #   level: '0123'
+
+  # onealert:
+  #   backend: onealert
+  #   level: '0123'
+
+  # mail:
+  #   backend: smtp
+  #   # omit 0123 since pagerduty has email noti
+  #   level: '4'
+  #   server: smtp.mailgun.org
+  #   send_from: PUT_YOUR_KEY_HERE
+  #   username: PUT_YOUR_KEY_HERE
+  #   password: PUT_YOUR_KEY_HERE
+
+  # bearychat:
+  #   backend: bearychat
+  #   level: '012345'
+
+  indicator:
+    # do nothing, just consume the queue.
+    # BitBar plugin will poll api
+    backend: noop
+    level: '0123456'

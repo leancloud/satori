@@ -1,0 +1,85 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- stdlib --
+import json
+import os
+import re
+import socket
+import subprocess
+import sys
+import time
+
+# -- third party --
+# -- own --
+
+# -- code --
+endpoint = socket.gethostname()
+ts = int(time.time())
+
+requested = json.loads(sys.stdin.read())
+# [{"_metric": "proc.java.heap", "cmdline": "/usr/bin/foo", "name": "fooo"}]
+
+
+pid2user = {}
+for d in os.listdir('/tmp'):
+    if not d.startswith('hsperfdata_'):
+        continue
+
+    for pid in os.listdir(os.path.join('/tmp', d)):
+        if not pid.isdigit():
+            continue
+
+        pid2user[pid] = d.split('_', 1)[1]
+
+cmdlines = []
+
+for pid, user in pid2user.iteritems():
+    try:
+        l = open("/proc/%s/cmdline" % pid).read().replace('\0', ' ').strip()
+        l and cmdlines.append((pid, l))
+    except:
+        pass
+
+metrics = []
+
+jstats = {}
+
+for p in requested:
+    assert p["_metric"] == "proc.java.heap"
+    assert 'cmdline' in p
+    assert 'name' in p
+    step = int(p["_step"])
+
+    try:
+        r = re.compile(p['cmdline'])
+    except:
+        continue
+
+    for pid, l in cmdlines:
+        if r.findall(l):
+            if pid not in jstats:
+                jstats[pid] = subprocess.Popen('sudo -Eu %s jstat -gccause %s | tail -n 1' % (pid2user[pid], pid), shell=True, stdout=subprocess.PIPE)
+
+            metrics.append({
+                "metric": "proc.java.heap",
+                "endpoint": endpoint,
+                "timestamp": ts,
+                "step": step,
+                "tags": {
+                    "name": p['name'],
+                    "pid": str(pid),
+                },
+                "value": pid,
+            })
+
+
+for k in jstats:
+    jstats[k] = float(jstats[k].stdout.read().strip().split()[3])
+
+
+for m in metrics:
+    m['value'] = jstats[m['value']]
+
+print json.dumps(metrics)

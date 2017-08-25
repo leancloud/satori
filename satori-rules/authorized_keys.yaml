@@ -1,0 +1,23 @@
+# Keys added to this file will be trusted too
+# Format(in yaml):
+# - key: <public key1>
+# - key: <public key2>
+# Metadata can be added arbitrarily
+#
+# Commits with this file modified must be signed with
+# keys specified in `plugin.signingKeys`, otherwise
+# this file will not be honored
+
+- owner: reimu
+  custom_data: whatever
+  key: RYzIU5vEK3e4asrN0KrPpNdvjBRQq+3Mva5z27ba9sw=
+- owner: marisa
+  key: 6h0llzeOAcOsn4A5vGzEkp/icjQhGddYzRzbOUh1PL0=
+- owner: satori
+  key: RYzIU5vEK3e4asrN0KrPpNdvjBRQq+3Mva5z27ba9sw=
+- owner: koishi
+  key: 6h0llzeOAcOsn4A5vGzEkp/icjQhGddYzRzbOUh1PL0=
+- owner: yuyuko
+  key: RYzIU5vEK3e4asrN0KrPpNdvjBRQq+3Mva5z27ba9sw=
+- owner: youmu
+  key: 6h0llzeOAcOsn4A5vGzEkp/icjQhGddYzRzbOUh1PL0=

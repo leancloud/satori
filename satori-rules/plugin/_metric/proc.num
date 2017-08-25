@@ -1,0 +1,72 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- stdlib --
+import json
+import os
+import re
+import socket
+import sys
+import time
+
+# -- third party --
+# -- own --
+
+# -- code --
+endpoint = socket.gethostname()
+ts = int(time.time())
+
+requested = json.loads(sys.stdin.read())
+# [{"_metric": "proc.num", "cmdline": "foo!"}]
+
+pids = [i for i in os.listdir('/proc') if i.isdigit()]
+
+names = []
+cmdlines = []
+
+for i in pids:
+    try:
+        l = open("/proc/%s/status" % i).readline()
+        names.append(l.split(":", 1)[1].strip())
+    except:
+        pass
+
+    try:
+        l = open("/proc/%s/cmdline" % i).read().replace('\0', ' ').strip()
+        l and cmdlines.append(l)
+    except:
+        pass
+
+metrics = []
+
+for p in requested:
+    assert p["_metric"] == "proc.num"
+    step = int(p["_step"])
+    if 'cmdline' in p:
+        try:
+            r = re.compile(p['cmdline'])
+        except:
+            continue
+
+        n = sum(bool(r.findall(i)) for i in cmdlines)
+        if 'name' in p:
+            tags = {'name': p['name']}
+        else:
+            tags = {'cmdline': p['cmdline']}
+    elif 'name' in p:
+        n = names.count(p['name'])
+        tags = {'name': p['name']}
+    else:
+        continue
+
+    metrics.append({
+        "metric": "proc.num",
+        "endpoint": endpoint,
+        "timestamp": ts,
+        "step": step,
+        "tags": tags,
+        "value": n,
+    })
+
+print json.dumps(metrics)

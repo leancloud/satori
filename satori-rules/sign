@@ -1,0 +1,124 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- stdlib --
+import argparse
+import os
+import re
+import subprocess
+import types
+import zlib
+
+# -- third party --
+# -- own --
+
+# -- code --
+djbec = types.ModuleType('djbec')
+exec zlib.decompress('''
+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
+'''.decode('base64')) in djbec.__dict__
+
+parser = argparse.ArgumentParser('satori-sign')
+parser.add_argument('--generate', action='store_true', help="Generate a signing key and store it.")
+parser.add_argument('--get-public', action='store_true', help="Get corresponding public key of signing key, which satori-agent will accept.")
+parser.add_argument('--key-file', default="~/.satori-signkey", help="Specify signing key path.")
+options = parser.parse_args()
+
+expanded_key_file = os.path.expanduser(options.key_file)
+
+
+def b64(s):
+    return s.encode('base64').replace('\n', '').strip()
+
+
+def generate():
+    sk = os.urandom(32)
+
+    with open(expanded_key_file, 'w') as f:
+        f.write(b64(sk))
+
+    print("Your key is generated and stored in %s" % options.key_file)
+
+    vk = djbec.publickey(sk)
+
+    print("Your public key is %s" % b64(vk))
+
+
+def get_key():
+    with open(expanded_key_file) as f:
+        sk = f.read().decode('base64')
+
+    vk = djbec.publickey(sk)
+    return sk, vk
+    print b64(vk)
+
+
+def print_public():
+    sk, vk = get_key()
+    print b64(vk)
+
+
+def sign():
+    proc = subprocess.Popen('git cat-file -p HEAD', shell=True, stdout=subprocess.PIPE)
+    commit = proc.stdout.read()
+    ret = proc.wait()
+    if ret != 0:
+        print "Can't get git commit info, aborting."
+        return
+
+    meta, msg = commit.split('\n\n', 1)
+    t, treehash = meta.split()[:2]
+
+    if t != 'tree':
+        print "Meh!"
+        return
+
+    sk, vk = get_key()
+    sig = b64(djbec.signature(treehash, sk, vk))
+    line = 'satori-sign %s:%s' % (vk.encode('base64')[:6], sig)
+
+    msg = re.sub(r'^satori-sign [A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$', '', msg, flags=re.MULTILINE)
+    msg = msg.strip() + '\n\n' + line
+
+    proc = subprocess.Popen('git commit --amend -F -', shell=True, stdin=subprocess.PIPE)
+    proc.stdin.write(msg)
+    proc.stdin.close()
+    proc.wait()
+
+
+if options.generate:
+    generate()
+elif options.get_public:
+    print_public()
+else:
+    sign()
