@@ -24,5 +24,5 @@ package g
 // 7.0.16: 小 bug 修复
 
 const (
-	VERSION = "7.0.16"
+	VERSION = "7.0.16.2"
 )

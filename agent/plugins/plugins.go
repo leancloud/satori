@@ -63,8 +63,10 @@ func (p *Plugin) Run() {
 	}
 
 	ticker := time.NewTicker(time.Duration(dur) * time.Second)
+
 	go func() {
-		s := p.killSwitch
+		s := make(chan struct{})
+		p.killSwitch = s
 		for {
 			<-ticker.C
 			if closed(s) {
@@ -162,7 +164,6 @@ func (p *Plugin) setupCommand() error {
 		cmd.Stdin = &stdin
 	}
 	p.proc = cmd
-	p.killSwitch = make(chan struct{})
 	return nil
 }
 
@@ -212,17 +213,13 @@ func (p *Plugin) RunOnce() {
 	go p.sendStdout()
 	go p.sendStderr()
 
-	timeout := p.makeTimeoutChan()
-	killSwitch := p.killSwitch
-	finished := p.finished
-
 	select {
-	case <-finished:
+	case <-p.finished:
 		break
-	case <-timeout:
+	case <-p.makeTimeoutChan():
 		log.Println("[INFO] Plugin timed out, terminating: ", p.FilePath)
 		p.reportFailure("timeout", "")
-	case <-killSwitch:
+	case <-p.killSwitch:
 		log.Println("[INFO] Plugin was asked to terminate: ", p.FilePath)
 	}
 	p.terminateCommand()

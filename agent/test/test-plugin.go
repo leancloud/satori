@@ -10,7 +10,7 @@ import (
 //  func RunPlugins(dirs []string, metrics []model.PluginParam) {
 
 func main() {
-	g.ParseConfig("cfg.example.json")
+	g.ParseConfig("cfg.example.yaml")
 	cfg := g.Config()
 	cfg.Debug = true
 	cfg.Plugin.Enabled = true
@@ -19,7 +19,7 @@ func main() {
 	go func() {
 		for {
 			plugins.RunPlugins([]string{"test"}, []model.PluginParam{})
-			time.Sleep(time.Second * 60)
+			time.Sleep(time.Second * 2)
 		}
 	}()
 	select {}
