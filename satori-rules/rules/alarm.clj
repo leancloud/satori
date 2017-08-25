@@ -5,11 +5,11 @@
             [clojure.data.json :as json])
   (:use riemann.streams
         riemann.config
+        [riemann.test :only [tests io tap]]
+        [clojure.walk :only [postwalk macroexpand-all]]
         [riemann.common :only [event]]
         [riemann.time :only [unix-time]])
   (:import riemann.codec.Event))
-
-(def the-index (index))
 
 (defn- evid [ev outstanding-tags m]
   (let [f #(let [v (% m)] (if (fn? v) (v ev) v))]
@@ -62,8 +62,9 @@
                      :expected (or (f :expected) "-")
                      :actual (:metric ev)
                      :groups (f :groups)}]
-        (car/wcar conn
-          (car/rpush (str "satori-events:" (f :level)) (json/write-str alarmev)))))))
+        (io
+          (car/wcar conn
+            (car/rpush (str "satori-events:" (f :level)) (json/write-str alarmev))))))))
 
 (defn- cond-rewrite
   "重写条件， '(> 3.0) --> '#(> (:metric %) 3.0)"
@@ -169,6 +170,12 @@
     (->> (map #(/ (- r %) (min r %)) m)
          (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
 
+(defn avgpdiff
+  "计算最后一个点相比于之前的点的平均值的变化率"
+  [& m]
+  (let [avg (/ (apply + (- (last m)) m) (- (count m) 1))]
+    (/ (- (last m) avg) (min avg (last m)))))
+
 
 (defn feed-dog
   "喂狗。如果 ttl 之内没有再次喂狗，就会触发 watchdog 报警，配合 watchdog 流使用。"
@@ -177,7 +184,7 @@
 
   ([ttl outstanding-tags]
     (smap #(event {:service (evid % outstanding-tags {}), :metric %})
-      (with {:host ".satori.watchdog.bark", :ttl ttl} the-index))))
+      (with {:host ".satori.watchdog.bark", :ttl ttl} (index)))))
 
 
 (defn watchdog
@@ -189,10 +196,10 @@
       (where (and (host ".satori.watchdog.bark")
                   (expired? event))
         (smap #(into % {:state nil, :time (unix-time)})
-          the-index
+          (index)
           (smap #(into % {:host ".satori.watchdog.calm"
                           :ttl (* (:ttl %) 2)})
-            the-index))
+            (index)))
 
         (smap :metric
           (with {:state :problem}
@@ -237,3 +244,124 @@
                 nil)))
           (when rst
             (call-rescue rst children)))))))
+
+(defn slot-window*
+  [slot-fn fields children]
+  (let [valid (set (vals fields))
+        invert (cset/map-invert fields)
+        current (ref {})
+        remaining (ref (set (vals fields)))]
+    (fn stream [event]
+      (let [evkey (slot-fn event)]
+        (as-> nil rst
+          (when (valid evkey)
+            (dosync
+              (alter current assoc (invert evkey) event)
+              (alter remaining disj evkey)
+              (if (empty? @remaining)
+                (let [r @current]
+                  (ref-set current {})
+                  (ref-set remaining valid)
+                  r)
+                nil)))
+          (when rst
+            (call-rescue rst children)))))))
+
+(def ^{:private true, :dynamic true} *slot-window-slots*)
+
+(defmacro slot-window
+  "收集指定的几个事件并打包向下传递。事件的特征由 slot-fn 提取，并与 fields 中的
+  的定义匹配，如果 fields 中的所有条件匹配的事件都收集到了，则打包向下传递并开始下一轮收集。
+  与 group-window 相反，group-window 收集一组同质的事件，slot-window 用于收集一组异质的事件。
+  当 slot-window 遇到重复的事件但是还没有满足向下传递的条件时，新的事件会替换掉缓存住的已有事件。
+
+  常用于收集同一个资源不同的 metric 用于复杂的判定。
+
+  比如有一个服务，同时收集了错误请求量和总量，希望按照错误数量在一定之上后按照错误率报警
+
+  (slot-window :service {:error \"app.req.error\"
+                         :count \"app.req.count\"}
+
+    ; 此时会有形如 {:error {:service \"app.req.error\", ...},
+    ;               :count {:service \"app.req.count\", ...}} 的事件传递下来
+
+    ; 用 error 事件做模板，并构造出想要的 event
+    (slot-coalesce :error {:service \"app.req.error_rate\"
+                           :metric (if (> error 100) (/ error count) -1)}
+      (set-state (> 0.5)
+        (runs :state 5
+          (should-alarm-every 120
+            (! {...
+                ...}))))))
+  "
+  [slot-fn fields & children]
+  (binding [*slot-window-slots* fields]
+    `(slot-window* ~slot-fn ~fields ~(macroexpand-all (vec children)))))
+
+
+(defn- ev-rewrite-slot
+  [varname form fields]
+  (let [vars (->> fields (keys) (map name) (map symbol) (set))
+        evvars (->> fields
+                    (keys)
+                    (map #(vector (symbol (str "ev:" (name %))) (keyword %)))
+                    (into {}))]
+    (postwalk (fn [node]
+      (if (symbol? node)
+        (cond
+          (vars node) `(:metric (~(keyword node) ~varname))
+          (evvars node) (list (evvars node) varname)
+          (= node 'event) varname
+          :else node)
+        node)) form)))
+
+(defmacro slot-coalesce
+  "对 slot-window 的结果进行计算，并构造出单一的 event。
+  具体用法可以看 slot-window 的帮助
+
+  template: event 模板，指定一个在 slot-window 中定义的 slot
+  ev': 对 event 模板修改的部分。表达式中可以直接用如下的约定引用 slot 中的值：
+    ; 假设: (slot-window :service {:some-counter1 \"app.some_counter\"} ...)
+    some-counter1 ; :some-counter1 的 metric 值
+    ev:some-counter1 ; :some-counter1 的整个 event
+    event ; slot-window 整个传递下来的 {:some-counter1 ...}
+  "
+  [template ev' & children]
+  (if (bound? #'*slot-window-slots*)
+    `(smap (fn [~'event]
+      (conj (~template ~'event) ~(ev-rewrite-slot 'event ev' *slot-window-slots*)))
+      ~@children)
+    (throw (Exception. "Could not find slot-window stream!"))))
+
+
+; ------------------------------------------------------------------
+(tests
+  (deftest slot-window-test
+    (let [s (alarm/slot-window :service {:foo "bar" :baz "quux"} (tap :slot-window))
+          rst (inject! [s] [{:host "meh" :service "bar" :metric 10},
+                            {:host "meh" :service "quux" :metric 20},
+                            {:host "meh" :service "bar" :metric 30},
+                            {:host "meh" :service "irrelevant" :metric 35},
+                            {:host "meh" :service "bar" :metric 40},
+                            {:host "meh" :service "quux" :metric 50},
+                            {:host "meh" :service "quux" :metric 60},
+                            {:host "meh" :service "bar" :metric 70},
+                            {:host "meh" :service "bar" :metric 80}])]
+      (is (= [{:foo {:host "meh" :service "bar" :metric 10}
+               :baz {:host "meh" :service "quux" :metric 20}},
+              {:foo {:host "meh" :service "bar" :metric 40}
+               :baz {:host "meh" :service "quux" :metric 50}},
+              {:foo {:host "meh" :service "bar" :metric 70}
+               :baz {:host "meh" :service "quux" :metric 60}}] (:slot-window rst)))))
+
+  (deftest slot-coalesce-test
+    (let [s (alarm/slot-window :service {:ev1 "metric.ev1" :ev2 "metric.ev2"}
+              (alarm/slot-coalesce :ev1 {:service "metric.final"
+                                         :metric [ev1 ev2
+                                                  (:metric ev:ev1) (:metric ev:ev2)
+                                                  (:metric (:ev1 event)) (:metric (:ev2 event))]}
+                (tap :slot-coalesce-test)))
+          rst (inject! [s] [{:host "meh" :service "metric.ev1" :metric 10},
+                            {:host "meh" :service "metric.ev2" :metric 20}])]
+      (is (= [{:host "meh" :service "metric.final" :metric [10 20 10 20 10 20]}]
+             (:slot-coalesce-test rst))))))
