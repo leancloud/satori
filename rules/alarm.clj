@@ -285,9 +285,9 @@
     ; 此时会有形如 {:error {:service \"app.req.error\", ...},
     ;               :count {:service \"app.req.count\", ...}} 的事件传递下来
 
-    ; 用 error 事件做模板，并构造出想要的 event
-    (slot-coalesce :error {:service \"app.req.error_rate\"
-                           :metric (if (> error 100) (/ error count) -1)}
+    ; 构造出想要的 event
+    (slot-coalesce {:service \"app.req.error_rate\"
+                    :metric (if (> error 100) (/ error count) -1)}
       (set-state (> 0.5)
         (runs :state 5
           (should-alarm-every 120
@@ -319,17 +319,18 @@
   "对 slot-window 的结果进行计算，并构造出单一的 event。
   具体用法可以看 slot-window 的帮助
 
-  template: event 模板，指定一个在 slot-window 中定义的 slot
-  ev': 对 event 模板修改的部分。表达式中可以直接用如下的约定引用 slot 中的值：
+  ev': 构造出的新 event 模板。表达式中可以直接用如下的约定引用 slot 中的值：
     ; 假设: (slot-window :service {:some-counter1 \"app.some_counter\"} ...)
     some-counter1 ; :some-counter1 的 metric 值
     ev:some-counter1 ; :some-counter1 的整个 event
     event ; slot-window 整个传递下来的 {:some-counter1 ...}
   "
-  [template ev' & children]
+  [ev' & children]
   (if (bound? #'*slot-window-slots*)
-    `(smap (fn [~'event]
-      (conj (~template ~'event) ~(ev-rewrite-slot 'event ev' *slot-window-slots*)))
+    `(smap
+      (fn [~'event]
+        (conj (select-keys (first (vals ~'event)) [:host :time])
+              ~(ev-rewrite-slot 'event ev' *slot-window-slots*)))
       ~@children)
     (throw (Exception. "Could not find slot-window stream!"))))
 
@@ -356,10 +357,10 @@
 
   (deftest slot-coalesce-test
     (let [s (alarm/slot-window :service {:ev1 "metric.ev1" :ev2 "metric.ev2"}
-              (alarm/slot-coalesce :ev1 {:service "metric.final"
-                                         :metric [ev1 ev2
-                                                  (:metric ev:ev1) (:metric ev:ev2)
-                                                  (:metric (:ev1 event)) (:metric (:ev2 event))]}
+              (alarm/slot-coalesce {:service "metric.final"
+                                    :metric [ev1 ev2
+                                             (:metric ev:ev1) (:metric ev:ev2)
+                                             (:metric (:ev1 event)) (:metric (:ev2 event))]}
                 (tap :slot-coalesce-test)))
           rst (inject! [s] [{:host "meh" :service "metric.ev1" :metric 10},
                             {:host "meh" :service "metric.ev2" :metric 20}])]
