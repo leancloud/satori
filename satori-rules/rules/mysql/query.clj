@@ -38,10 +38,8 @@
     (where (service #"^mysql\.query\..*-user-count$")
       (slot-window :service {:total "mysql.query.total-user-count",
                              :bad   "mysql.query.bad-user-count"}
-        (slot-coalesce :total {:service "app.sms.bad-user-percent",
-                               :metric (if (> bad 5) (/ bad total) -1)
-                               :bad-users bad
-                               :total-users total}
+        (slot-coalesce {:service "app.sms.bad-user-percent",
+                        :metric (if (> bad 5) (/ bad total) -1)}
           (set-state (> 0.5)
             (runs 2 :state
               (should-alarm-every 300
