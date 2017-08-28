@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - agent: Self update mechanism
 - agent: Support long running plugins
 - rules: New `slot-window` stream for combined condition judging
+- alarm: Telegram backend
 
 ### Changed
 - agent: Configuration format switched from json to yaml, with format tunes
