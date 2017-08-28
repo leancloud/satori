@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - agent: Use cgroups to restrict resource consumption
 - agent: Self update mechanism
 - agent: Support long running plugins
+- rules: New `slot-window` stream for combined condition judging
 
 ### Changed
 - agent: Configuration format switched from json to yaml, with format tunes
