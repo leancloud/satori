@@ -25,7 +25,7 @@
          :user "user_for_monitor"
          :password "Secret!IMeanIt!"
          :database "awesome_app"
-         :sql "SELECT count(*) FROM user"})))
+         :sql "SELECT count(*) FROM user"}))
 
     (where (service "mysql.query.bad-user-count")
       (set-state (> 50)
@@ -33,7 +33,7 @@
           (should-alarm-every 300
             (! {:note "坏用户太多了！"
                 :level 3
-                :groups [:operation]}))))
+                :groups [:operation]})))))
 
     (where (service #"^mysql\.query\..*-user-count$")
       (slot-window :service {:total "mysql.query.total-user-count",
