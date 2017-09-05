@@ -152,7 +152,7 @@ func IOStatsMetrics() (L []*model.MetricValue) {
 		L = append(L, VT("disk.io.read_bytes", float64(delta_rsec)*512.0, tags))
 		L = append(L, VT("disk.io.write_bytes", float64(delta_wsec)*512.0, tags))
 		L = append(L, VT("disk.io.avgrq_sz", avgrq_sz, tags))
-		L = append(L, VT("disk.io.avgqu-sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
+		L = append(L, VT("disk.io.avgqu_sz", float64(IODelta(device, IOMsecWeightedTotal))/1000.0, tags))
 		L = append(L, VT("disk.io.await", await, tags))
 		L = append(L, VT("disk.io.svctm", svctm, tags))
 		tmp := float64(use) * 100.0 / float64(duration)
@@ -160,54 +160,6 @@ func IOStatsMetrics() (L []*model.MetricValue) {
 			tmp = 100.0
 		}
 		L = append(L, VT("disk.io.util", tmp, tags))
-	}
-
-	return
-}
-
-func IOStatsForPage() (L [][]string) {
-	dsLock.RLock()
-	defer dsLock.RUnlock()
-
-	for device, _ := range diskStatsMap {
-		if !ShouldHandleDevice(device) {
-			continue
-		}
-
-		rio := IODelta(device, IOReadRequests)
-		wio := IODelta(device, IOWriteRequests)
-
-		delta_rsec := IODelta(device, IOReadSectors)
-		delta_wsec := IODelta(device, IOWriteSectors)
-
-		ruse := IODelta(device, IOMsecRead)
-		wuse := IODelta(device, IOMsecWrite)
-		use := IODelta(device, IOMsecTotal)
-		n_io := rio + wio
-		avgrq_sz := 0.0
-		await := 0.0
-		svctm := 0.0
-		if n_io != 0 {
-			avgrq_sz = float64(delta_rsec+delta_wsec) / float64(n_io)
-			await = float64(ruse+wuse) / float64(n_io)
-			svctm = float64(use) / float64(n_io)
-		}
-
-		item := []string{
-			device,
-			fmt.Sprintf("%d", IODelta(device, IOReadMerged)),
-			fmt.Sprintf("%d", IODelta(device, IOWriteMerged)),
-			fmt.Sprintf("%d", rio),
-			fmt.Sprintf("%d", wio),
-			fmt.Sprintf("%.2f", float64(delta_rsec)/2.0),
-			fmt.Sprintf("%.2f", float64(delta_wsec)/2.0),
-			fmt.Sprintf("%.2f", avgrq_sz),                                             // avgrq-sz: delta(rsect+wsect)/delta(rio+wio)
-			fmt.Sprintf("%.2f", float64(IODelta(device, IOMsecWeightedTotal))/1000.0), // avgqu-sz: delta(aveq)/s/1000
-			fmt.Sprintf("%.2f", await),                                                // await: delta(ruse+wuse)/delta(rio+wio)
-			fmt.Sprintf("%.2f", svctm),                                                // svctm: delta(use)/delta(rio+wio)
-			fmt.Sprintf("%.2f%%", float64(use)/10.0),                                  // %util: delta(use)/s/1000 * 100%
-		}
-		L = append(L, item)
 	}
 
 	return

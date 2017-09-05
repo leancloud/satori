@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 ### Changed
+- agent: Fixed a crash when running plugin
+- agent: Fixed a misnamed metric
 
 ## [1.0.0] - 2017-08-22
 ### Added

@@ -120,6 +120,9 @@ func (p *Plugin) teardownPipes() {
 
 func (p *Plugin) sendStdout() {
 	for {
+		if p.stdout == nil {
+			return
+		}
 		s, err := p.stdout.ReadBytes('\n')
 		if err != nil {
 			p.teardownPipes()
@@ -140,9 +143,11 @@ func (p *Plugin) sendStdout() {
 }
 
 func (p *Plugin) sendStderr() {
-	s, _ := ioutil.ReadAll(p.stderr)
-	if len(s) > 0 {
-		p.reportFailure("error", string(s))
+	if p.stderr != nil {
+		s, _ := ioutil.ReadAll(p.stderr)
+		if len(s) > 0 {
+			p.reportFailure("error", string(s))
+		}
 	}
 }
 
