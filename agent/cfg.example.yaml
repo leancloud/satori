@@ -27,7 +27,7 @@ plugin:
   # Enable plugin.
   # Plugins are simple scripts invoked by satori-agent to
   # retrieve metrics, please read documents for full explaination.
-  enabled: false
+  enabled: true
 
   # Trusted *PUBLIC KEYS* for signing rules repository.
   # satori-agent will not checkout commits without signature
