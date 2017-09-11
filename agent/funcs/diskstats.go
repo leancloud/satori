@@ -1,7 +1,6 @@
 package funcs
 
 import (
-	"fmt"
 	"github.com/leancloud/satori/common/model"
 	"github.com/toolkits/nux"
 	"log"
@@ -121,7 +120,7 @@ func IOStatsMetrics() (L []*model.MetricValue) {
 	dsLock.RLock()
 	defer dsLock.RUnlock()
 
-	for device, _ := range diskStatsMap {
+	for device := range diskStatsMap {
 		if !ShouldHandleDevice(device) {
 			continue
 		}
