@@ -12,7 +12,6 @@ monkey.patch_all()
 # -- stdlib --
 import json
 import re
-import socket
 import sys
 import time
 
@@ -23,7 +22,6 @@ import requests
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -46,7 +44,6 @@ pool = Pool(20)
 
 def fetch(req):
     assert req["_metric"] == "url.check"
-    step    = req["_step"]
     name    = req["name"]
     url     = req["url"]
     method  = req.get('method', 'get').lower()
@@ -89,23 +86,17 @@ def fetch(req):
         metrics = [
             {
                 "metric": "url.check.time",
-                "endpoint": endpoint,
                 "timestamp": ts,
-                "step": step,
                 "tags": {"name": name},
                 "value": req_time,
             }, {
                 "metric": "url.check.status",
-                "endpoint": endpoint,
                 "timestamp": ts,
-                "step": step,
                 "tags": {"name": name},
                 "value": status,
             }, {
                 "metric": "url.check.content-length",
-                "endpoint": endpoint,
                 "timestamp": ts,
-                "step": step,
                 "tags": {"name": name},
                 "value": content_length,
             },
@@ -114,9 +105,7 @@ def fetch(req):
         for k, v in match.items():
             metrics.append({
                 "metric": "url.check.match.%s" % k,
-                "endpoint": endpoint,
                 "timestamp": ts,
-                "step": step,
                 "tags": {"name": name},
                 "value": len(re.findall(v, content)),
             })

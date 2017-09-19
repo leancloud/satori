@@ -13,7 +13,6 @@ monkey.patch_all()
 import json
 import os
 import re
-import socket
 import sys
 import time
 
@@ -23,7 +22,6 @@ import gevent
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 requested = json.loads(sys.stdin.read())
 # [{"_metric": "proc.cpu", "name": "redis", "cmdline": "foo!", "interval": 5}]
 
@@ -74,9 +72,7 @@ def monitor(name, cmdline, interval):
             for usage in monitor_pid(pid, interval):
                 print json.dumps([{
                     "metric": "proc.cpu",
-                    "endpoint": endpoint,
                     "timestamp": int(time.time()),
-                    "step": interval,
                     "tags": {"name": name},
                     "value": usage,
                 }])

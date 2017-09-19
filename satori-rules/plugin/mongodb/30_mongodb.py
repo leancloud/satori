@@ -6,7 +6,6 @@ import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 
 # -- stdlib --
-import socket
 import json
 import time
 import pymongo
@@ -15,7 +14,6 @@ import pymongo
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 cli = pymongo.MongoClient('localhost', 27018, connectTimeoutMS=1000)
@@ -26,9 +24,7 @@ try:
 except Exception:
     print json.dumps({
         'metric': 'mongodb.collect_success',
-        'endpoint': endpoint,
         'timestamp': ts,
-        'step': 30,
         'value': 0,
     })
     sys.exit(1)
@@ -117,9 +113,7 @@ for m in metrics:
 
     rst.append({
         'metric': 'mongodb.%s' % k,
-        'endpoint': endpoint,
         'timestamp': ts,
-        'step': 30,
         'value': conv(k, v),
     })
 

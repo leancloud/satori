@@ -7,7 +7,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 
 # -- stdlib --
 import json
-import socket
 import time
 
 # -- third party --
@@ -16,7 +15,6 @@ import requests
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 raw = {}
@@ -106,9 +104,7 @@ result = []
 for k, v in raw.iteritems():
     result.append({
         "metric": "mesos.%s" % k.replace('/', '.'),
-        "endpoint": endpoint,
         "timestamp": ts,
-        "step": 30,
         "value": v,
     })
 

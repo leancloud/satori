@@ -3,7 +3,6 @@
 
 # -- stdlib --
 import json
-import socket
 import re
 import telnetlib
 import time
@@ -14,7 +13,6 @@ import time
 # -- code --
 QUEUE_METRIC = re.compile(r'^queue_(.*?)_(items|bytes|total_items|logsize|expired_items|mem_items|mem_bytes|age|discarded|waiters|open_transactions|transactions|canceled_transactions|total_flushes|journal_rewrites|journal_rotations|creates|deletes|expires)$')
 
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 ports = [22133]
@@ -56,9 +54,7 @@ for port in ports:
 
         rst.append({
             'metric': metric,
-            'endpoint': endpoint,
             'timestamp': ts,
-            'step': 60,
             'value': v,
             'tags': t,
         })

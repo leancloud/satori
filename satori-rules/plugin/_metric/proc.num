@@ -6,7 +6,6 @@ from __future__ import absolute_import
 import json
 import os
 import re
-import socket
 import sys
 import time
 
@@ -14,7 +13,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -42,7 +40,6 @@ metrics = []
 
 for p in requested:
     assert p["_metric"] == "proc.num"
-    step = int(p["_step"])
     if 'cmdline' in p:
         try:
             r = re.compile(p['cmdline'])
@@ -62,9 +59,7 @@ for p in requested:
 
     metrics.append({
         "metric": "proc.num",
-        "endpoint": endpoint,
         "timestamp": ts,
-        "step": step,
         "tags": tags,
         "value": n,
     })

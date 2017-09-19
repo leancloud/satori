@@ -11,7 +11,6 @@ monkey.patch_all()
 
 # -- stdlib --
 import json
-import socket
 import sys
 import time
 
@@ -22,14 +21,12 @@ import requests
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
 
 [{
     "_metric": "tsdb.query",
-    "_step": 60,
     "name": "leanengine.log_collect_check_point",
     "server": "tsdb2:4242",
     "endpoint": "foo",  # optional
@@ -60,10 +57,8 @@ EXPR_WHITELIST = [
 
 def fetch(req):
     assert req["_metric"] == "tsdb.query"
-    step = req["_step"]
     name = req["name"]
     server = req["server"]
-    ep = req.get("endpoint", endpoint)
 
     try:
         req1 = dict(req)
@@ -87,9 +82,7 @@ def fetch(req):
 
         return {
             "metric": "tsdb.query.%s" % name,
-            "endpoint": ep,
             "timestamp": ts,
-            "step": step,
             "tags": {"server": server},
             "value": rst,
         }

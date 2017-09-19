@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 # -- stdlib --
 import json
-import socket
 import subprocess
 import sys
 import time
@@ -13,7 +12,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(
@@ -34,9 +32,7 @@ for r in requested:
 
     metrics.append({
         "metric": "net.port.listen",
-        "endpoint": endpoint,
         "timestamp": ts,
-        "step": 30,
         "tags": {
             "port": str(port),
             "name": r.get('name', 'default'),

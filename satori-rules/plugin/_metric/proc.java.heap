@@ -6,7 +6,6 @@ from __future__ import absolute_import
 import json
 import os
 import re
-import socket
 import subprocess
 import sys
 import time
@@ -15,7 +14,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -64,9 +62,7 @@ for p in requested:
 
             metrics.append({
                 "metric": "proc.java.heap",
-                "endpoint": endpoint,
                 "timestamp": ts,
-                "step": step,
                 "tags": {
                     "name": p['name'],
                     "pid": str(pid),

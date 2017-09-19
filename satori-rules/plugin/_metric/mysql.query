@@ -132,7 +132,6 @@ for arg in args:
             'metric': 'mysql.query.' + name,
             'endpoint': host,
             'timestamp': ts,
-            'step': 30,
             'value': float(v),
         })
 

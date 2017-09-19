@@ -4,7 +4,6 @@
 # -- stdlib --
 from collections import Counter
 import json
-import socket
 import sys
 import time
 import urllib2
@@ -13,14 +12,11 @@ import urllib2
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 result = [{
     "metric": "nginx.collect_success",
-    "endpoint": endpoint,
     "timestamp": ts,
-    "step": 30,
     "value": 1,
 }]
 
@@ -40,25 +36,19 @@ for u in total.keys():
     result.extend([
         {
             "metric": "nginx.upstream.total",
-            "endpoint": endpoint,
             "timestamp": ts,
-            "step": 30,
             "value": total[u],
             "tags": {"upstream": u},
         },
         {
             "metric": "nginx.upstream.healthy",
-            "endpoint": endpoint,
             "timestamp": ts,
-            "step": 30,
             "value": healthy[u],
             "tags": {"upstream": u},
         },
         {
             "metric": "nginx.upstream.healthy.ratio",
-            "endpoint": endpoint,
             "timestamp": ts,
-            "step": 30,
             "value": 1.0 * healthy[u] / total[u],
             "tags": {"upstream": u},
         },
