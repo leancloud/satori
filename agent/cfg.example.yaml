@@ -41,9 +41,10 @@ plugin:
   # Metadata can be added arbitrarily
   #
   # Defaults to [] (disabled)
-  signingKeys:
-    - owner: You
-      key: NotAVaildKeyGetOneKeyBySignToolInRulesRepo==
+  signingKeys: []
+  # signingKeys:
+    # - owner: You
+    #   key: NotAVaildKeyGetOneKeyBySignToolInRulesRepo==
     # - owner: youmu
     #   key: RYzIU5vEK3e4asrN0KrPpNdvjBRQq+3Mva5z27ba9sw=
     # - owner: yuyuko
