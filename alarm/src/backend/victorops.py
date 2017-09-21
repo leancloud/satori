@@ -15,14 +15,10 @@ from backend.common import register_backend, Backend
 @register_backend
 class VictorOpsBackend(Backend):
     def send(self, user, event):
-        api_key = self.conf.get('api_key')
-
         if 'victorops' not in user:
             return
 
-        url = user['victorops_url']
-        if not url:
-            return
+        url = user['victorops']
 
         resp = requests.post(
             url,
