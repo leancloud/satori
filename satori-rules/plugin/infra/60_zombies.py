@@ -12,6 +12,7 @@ import time
 # -- own --
 
 # -- code --
+endpoint = socket.gethostname()
 ts = int(time.time())
 
 
@@ -27,11 +28,15 @@ states = ''.join([get_state(i) for i in l])
 
 rst = [{
     'metric': 'proc.zombies',
+    'endpoint': endpoint,
     'timestamp': ts,
+    'step': 60,
     'value': states.count('Z'),
 }, {
     'metric': 'proc.uninterruptables',
+    'endpoint': endpoint,
     'timestamp': ts,
+    'step': 60,
     'value': states.count('D'),
 }]
 

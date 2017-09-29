@@ -130,5 +130,6 @@ print json.dumps([{
     'metric': k,
     'endpoint': endpoint,
     'timestamp': ts,
+    'step': 30,
     'value': v,
 } for k, v in rst if v is not None])

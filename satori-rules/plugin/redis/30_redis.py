@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 # -- stdlib --
 import json
 import re
+import socket
 import subprocess
 import time
 
@@ -19,6 +20,7 @@ import redis
 # -- own --
 
 # -- code --
+endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(['/bin/bash', '-c', "ps axo cmd | grep 'redis-server '"], stdout=subprocess.PIPE)
@@ -59,7 +61,9 @@ for p in ports:
         info = r.info()
         rst.extend([{
             'metric': 'redis.%s' % k,
+            'endpoint': endpoint,
             'timestamp': ts,
+            'step': 30,
             'value': info[k],
             'tags': {'port': str(p)},
         } for k in interested if k in info])

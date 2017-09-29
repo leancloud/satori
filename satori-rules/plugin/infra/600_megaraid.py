@@ -4,6 +4,7 @@
 # -- stdlib --
 import json
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -12,6 +13,7 @@ import time
 # -- own --
 
 # -- code --
+endpoint = socket.gethostname()
 ts = int(time.time())
 
 p = subprocess.Popen("which megacli", shell=True, stdout=subprocess.PIPE)
@@ -35,6 +37,8 @@ total_err = int(p.stdout.read())
 
 print json.dumps([{
     "metric": "megaraid.offline",
+    "endpoint": endpoint,
     "timestamp": ts,
+    "step": 600,
     "value": total_err,
 }])

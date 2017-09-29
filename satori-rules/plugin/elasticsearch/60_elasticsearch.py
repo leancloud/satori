@@ -3,6 +3,7 @@
 
 # -- stdlib --
 import json
+import socket
 import time
 import urllib2
 
@@ -10,6 +11,7 @@ import urllib2
 # -- own --
 
 # -- code --
+endpoint = socket.gethostname()
 ts = int(time.time())
 
 indices = urllib2.urlopen('http://127.0.0.1:9200/_cat/indices').read()
@@ -40,7 +42,9 @@ for i in indices:
 
 result = [{
     "metric": "es.%s" % k,
+    "endpoint": endpoint,
     "timestamp": ts,
+    "step": 60,
     "value": v,
 } for k, v in metrics]
 

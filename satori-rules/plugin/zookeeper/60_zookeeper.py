@@ -11,6 +11,7 @@ import time
 # -- own --
 
 # -- code --
+endpoint = socket.gethostname()
 ts = int(time.time())
 
 cmdline = ' | '.join([
@@ -69,7 +70,9 @@ for port in ports:
         v = eval(value_type)(raw.get('zk_' + m))
         rst.append({
             'metric': 'zookeeper.%s' % m,
+            'endpoint': endpoint,
             'timestamp': ts,
+            'step': 60,
             'value': v,
             'tags': {'port': str(port)},
         })

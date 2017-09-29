@@ -2,10 +2,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+# -- prioritized --
+import sys
+import os.path
+# sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 
 # -- stdlib --
 import json
 import re
+import socket
 import subprocess
 import time
 
@@ -14,6 +19,7 @@ import time
 # -- own --
 
 # -- code --
+endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(['/usr/sbin/unbound-control', 'stats'], stdout=subprocess.PIPE)
@@ -32,8 +38,11 @@ rst = {
 print json.dumps([
     {
         "metric": "unbound.{}".format(k),
+        "endpoint": endpoint,
         "timestamp": ts,
+        "step": 30,
         "value": int(v),
+        "tags": {"server": endpoint},
     }
     for k, v in rst.items()
 ])
