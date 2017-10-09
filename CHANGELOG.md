@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Documentation
+
 ### Changed
 - transfer: Fix default configuration error
 - agent: Fixed a crash when running plugin
