@@ -19,15 +19,27 @@ class VictorOpsBackend(Backend):
             return
 
         url = user['victorops']
+        routing_key = event['related_groups'][0]
+
+        # status: PROBLEM OK EVENT FLAPPING TIMEWAIT ACK
+        if event['status'] in ('PROBLEM', 'EVENT'):
+            msg_type = 'CRITICAL'
+        elif event['status'] in ( 'OK', 'TIMEWAIT'):
+            msg_type = 'RECOVERY'
+        elif event['status'] in ( 'ACK' ):
+            msg_type = 'ACK'
+        else:
+            msg_type = 'INFO'
 
         resp = requests.post(
-            url,
+            url + '/' + routing_key,
             headers={'Content-Type': 'application/json'},
             timeout=10,
             data=json.dumps({
                 'entity_id': event['title'],
                 'entity_display_name': event['title'],
-                'message_type': 'CRITICAL' if event['status'] in ('PROBLEM', 'EVENT') else 'RECOVERY',
+                'priority': event['level'],
+                'message_type': msg_type,
                 'state_message': event['text'],
             }),
         )
