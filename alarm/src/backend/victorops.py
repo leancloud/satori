@@ -21,15 +21,14 @@ class VictorOpsBackend(Backend):
         url = user['victorops']
         routing_key = event['related_groups'][0]
 
-        #PROBLEM OK EVENT FLAPPING TIMEWAIT ACK
-        if event['status'] in ('PROBLEM', 'EVENT', 'FLAPPING'):
+        # status: PROBLEM OK EVENT FLAPPING TIMEWAIT ACK
+        if event['status'] in ('PROBLEM', 'EVENT'):
             msg_type = 'CRITICAL'
         elif event['status'] in ( 'OK', 'TIMEWAIT'):
             msg_type = 'RECOVERY'
-        else:
+        elif event['status'] in ( 'ACK' ):
             msg_type = 'ACK'
-        # for leancloud only
-        if event['level'] == 5:
+        else:
             msg_type = 'INFO'
 
         resp = requests.post(
@@ -39,6 +38,7 @@ class VictorOpsBackend(Backend):
             data=json.dumps({
                 'entity_id': event['title'],
                 'entity_display_name': event['title'],
+                'priority': event['level'],
                 'message_type': msg_type,
                 'state_message': event['text'],
             }),
