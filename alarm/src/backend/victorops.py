@@ -19,14 +19,17 @@ class VictorOpsBackend(Backend):
             return
 
         url = user['victorops']
-        routing_key = event['related_groups'][0]
+        try:
+            routing_key = event['groups'][0]
+        except:
+            routing_key = 'default'
 
         # status: PROBLEM OK EVENT FLAPPING TIMEWAIT ACK
         if event['status'] in ('PROBLEM', 'EVENT'):
             msg_type = 'CRITICAL'
         elif event['status'] in ( 'OK', 'TIMEWAIT'):
             msg_type = 'RECOVERY'
-        elif event['status'] in ( 'ACK' ):
+        elif event['status'] == 'ACK':
             msg_type = 'ACK'
         else:
             msg_type = 'INFO'
