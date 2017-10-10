@@ -393,6 +393,10 @@ function finish
     echo ":: Satori is installed."
     echo ":: Config: $CONF_DIR"
     echo ":: Rules repo: $RULES_REPO ($RULES_REPO_SSH)"
+    echo ":: Your initial Web interface credentials:"
+    echo "     Username: satori"
+    echo "     Password: $BASIC_AUTH_PASSWD"
+    echo
     echo ":: When upgrading, please run:"
     echo "     $ git pull"
     echo "     $ ./install rebuild"
