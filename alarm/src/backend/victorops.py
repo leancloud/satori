@@ -47,4 +47,4 @@ class VictorOpsBackend(Backend):
             }),
         )
         if not resp.ok:
-            raise Exception(resp.json())
+            raise Exception(resp.text)
