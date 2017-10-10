@@ -10,6 +10,9 @@ Satori 是一个由 LeanCloud 维护的监控系统。
 ![Events](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/events.png)
 ![BitBar](https://raw.githubusercontent.com/leancloud/satori/master/doc/images/bitbar.png)
 
+# 文档
+完整文档麻烦看[这里](http://satori-monitoring.rtfd.io)。
+
 # 交流
 如果你有什么建议，欢迎在 issue 里面说一下。
 也有 QQ 群可以参与讨论：554765935
@@ -222,9 +225,3 @@ Satori 中去除，直接在规则仓库中编辑用户信息。
 
 ## fe
 完全重写，采用了纯前端的方案（frontend 文件夹）。
-
-# 其他文档
-- [添加规则](doc/01-add-rule.md)
-- [配置报警](doc/02-config-alarm.md)
-- [添加插件](doc/03-add-plugin.md)
-- [常见问题](doc/04-faq.md)
