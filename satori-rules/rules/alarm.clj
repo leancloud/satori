@@ -131,10 +131,11 @@
       (throw (Exception. "aggregate must accept list of events")))
 
     (when (> (count evts) 0)
-      (let [m (mapv :metric evts), v (f m)]
-        (call-rescue
-          (into (last evts) {:metric v, :description (string/join "\n" (map #(str (:host %) "=" (:metric %)) evts))})
-          children)))))
+      (let [m (mapv :metric evts), v (f m)
+            s (string/join "\n" (map #(str (:host %) "=" (:metric %)) evts))
+            s (if (> (count s) 3000) (subs s 0 3000) s)
+            aggregated (into (last evts) {:metric v, :description s})]
+        (call-rescue aggregated children)))))
 
 (defn aggregate [f & children]
   (apply aggregate* (fn [m] (apply f m)) children))
@@ -365,4 +366,10 @@
           rst (inject! [s] [{:host "meh" :service "metric.ev1" :metric 10},
                             {:host "meh" :service "metric.ev2" :metric 20}])]
       (is (= [{:host "meh" :service "metric.final" :metric [10 20 10 20 10 20]}]
-             (:slot-coalesce-test rst))))))
+             (:slot-coalesce-test rst)))))
+
+  (deftest aggregate-test
+    (let [s (alarm/aggregate + (tap :aggregate-test))
+          rst (inject! [s] [[{:host "meh" :service "bar" :metric 10},
+                            {:host "meh" :service "bar" :metric 80}]])]
+      (is (= 90 (get-in rst [:aggregate-test 0 :metric]))))))
