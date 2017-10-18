@@ -22,7 +22,8 @@ package g
 // 7.0.14: 修复一个严重的bug
 // 7.0.15: 增加 cgroups 限制
 // 7.0.16: 小 bug 修复
+// 7.0.17: noBuiltin 为 true 时也上报 agent.alive
 
 const (
-	VERSION = "7.0.16.2"
+	VERSION = "7.0.17"
 )
