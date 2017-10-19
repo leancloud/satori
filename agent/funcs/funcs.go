@@ -16,11 +16,11 @@ var Mappers []FuncsAndInterval
 
 func BuildMappers() {
 	if g.Config().NoBuiltin {
-		log.Println("No builtin specified, enable only `agent.alive`")
+		log.Println("Container mode specified, disable built-in metrics except `agent.container-alive`")
 		Mappers = []FuncsAndInterval{
 			FuncsAndInterval{
 				Fs: []func() []*model.MetricValue{
-					AgentMetrics,
+					ContainerAliveMetrics,
 				},
 				Interval: 60,
 			},
