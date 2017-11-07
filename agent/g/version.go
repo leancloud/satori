@@ -24,7 +24,8 @@ package g
 // 7.0.16: 小 bug 修复
 // 7.0.17: noBuiltin 为 true 时上报 agent.container-alive
 // 7.0.18: 修复了新部署的 agent 无法找到 authorized_keys 的问题
+// 7.0.19: TcpExt 的收集转移到了插件中
 
 const (
-	VERSION = "7.0.18"
+	VERSION = "7.0.19"
 )

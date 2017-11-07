@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - transfer: Fix default configuration error
 - agent: Fixed a crash when running plugin
 - agent: Fixed a misnamed metric
+- agent: Fixed bug which newly deployed agent not honoring authorized_keys
+- agent: Move TcpExt collecting to plugin
 
 ## [1.0.0] - 2017-08-22
 ### Added

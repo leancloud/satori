@@ -37,7 +37,6 @@ func BuildMappers() {
 					MemMetrics,
 					DiskIOMetrics,
 					IOStatsMetrics,
-					NetstatMetrics,
 					UdpMetrics,
 
 					DeviceMetrics,
