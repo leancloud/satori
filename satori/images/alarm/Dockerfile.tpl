@@ -13,7 +13,7 @@ RUN mkdir /alarm/src
 ADD .build/buildout.cfg .build/setup.py .build/docker/use-china-mirror .build/docker/get-pip.py /alarm/
 RUN [ -z "USE_MIRROR" ] || /alarm/use-china-mirror
 RUN python /alarm/get-pip.py
-RUN pip install --upgrade pip zc.buildout setuptools
+RUN pip install --upgrade pip zc.buildout setuptools==38.1.0
 RUN cd /alarm && buildout
 
 ADD .build/src /alarm/src
