@@ -24,7 +24,7 @@ setup(
     name="satori-alarm",
     version="1.0.0",
     url='https://leancloud.cn',
-    license='Propritary',
+    license='Apache',
     description='Satori alarm module',
     author='proton',
     packages=find_packages('src'),
