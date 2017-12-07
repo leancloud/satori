@@ -3,9 +3,6 @@
 from __future__ import absolute_import
 
 # -- prioritized --
-import sys
-import os.path
-# sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 
 # -- stdlib --
 import json
@@ -42,7 +39,6 @@ print json.dumps([
         "timestamp": ts,
         "step": 30,
         "value": int(v),
-        "tags": {"server": endpoint},
     }
     for k, v in rst.items()
 ])

@@ -91,6 +91,16 @@
                   :expected 30
                   :groups host->group}))))))
 
+    (where (service "cpu.steal")
+      (by :host
+        (set-state-gapped (> 30) (< 5)
+          (runs 2 :state
+            (should-alarm-every 900
+              (! {:note "CPU 被偷了！"
+                  :level 5
+                  :expected 0
+                  :groups host->group}))))))
+
     ; Ping
     ; 这里需要看 Ping 插件。Ping 插件是从 PuppetDB 中取机器列表的，请根据自己的需求修改。
     (where (host "hosts" "which" "perform" "ping")
@@ -103,6 +113,18 @@
             (should-alarm-every 120
               (! {:note "Ping 不通了！"
                   :level 1
+                  :expected 1
+                  :outstanding-tags [:region]
+                  :groups host->group}))))))
+
+    (where (and (service "agent.ping")
+                (not (host "forum")))
+      (by :host
+        (set-state (< 1)
+          (runs 3 :state
+            (should-alarm-every 120
+              (! {:note "Satori Agent 不响应了！"
+                  :level 5
                   :expected 1
                   :outstanding-tags [:region]
                   :groups host->group}))))))

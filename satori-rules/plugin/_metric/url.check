@@ -54,6 +54,7 @@ def fetch(req):
     params  = req.get("params", {})
     headers = req.get("headers", {})
     match   = req.get("match", {})
+    verify  = req.get("verify", True)
     assert isinstance(params, dict)
     assert isinstance(headers, dict)
     assert isinstance(match, dict)
@@ -63,6 +64,7 @@ def fetch(req):
             'params': params,
             'headers': headers,
             'timeout': timeout,
+            'verify': verify,
             'allow_redirects': True,
         }
 
