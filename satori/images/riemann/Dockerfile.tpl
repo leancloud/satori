@@ -1,6 +1,6 @@
 # FROM USE_MIRRORopenjdk:8
 FROM USE_MIRRORjava:8
-MAINTAINER bwang@leancloud.rocks
+MAINTAINER feisuzhu@163.com
 
 ENV TERM xterm
 WORKDIR /tmp
