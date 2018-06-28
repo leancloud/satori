@@ -145,6 +145,8 @@ function prepare-rules-repo
     pushd $RULES_REPO >/dev/null
     rm -rf doc/images
     git init
+    git config user.email satori-monitoring@thb.io
+    git config user.name Satori
     git add -A :/
     git commit -m 'Initial Satori rules repo'
     git config receive.denyCurrentBranch ignore
