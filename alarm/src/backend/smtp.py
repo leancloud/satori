@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 # -- stdlib --
 from email.MIMEMultipart import MIMEMultipart
@@ -9,15 +9,12 @@ import smtplib
 
 # -- third party --
 # -- own --
-from backend.common import register_backend
+from backend.common import Backend, register_backend
 from utils import status2emoji
-from backend.common import register_backend, Backend
-
-# -- code --
 
 
 # -- code --
-def send_mail(send_from, send_to, subject, text, files=[], server="localhost", username=None, password=None):
+def send_mail(send_from, send_to, subject, text, files=[], server="localhost", ssl=False, username=None, password=None):
     msg = MIMEMultipart('alternative')
     msg.set_charset('utf-8')
     msg['From'] = send_from
@@ -27,7 +24,10 @@ def send_mail(send_from, send_to, subject, text, files=[], server="localhost", u
     part = MIMEText(text)
     part.set_charset('utf-8')
     msg.attach(part)
-    smtp = smtplib.SMTP(server)
+    if ssl:
+        smtp = smtplib.SMTP_SSL(server)
+    else:
+        smtp = smtplib.SMTP(server)
     if username:
         smtp.login(username, password)
     smtp.sendmail(send_from, send_to, msg.as_string())
@@ -50,6 +50,7 @@ class SMTPBackend(Backend):
             self.conf['send_from'], user['email'],
             subject, event['text'],
             server=self.conf['server'],
+            ssl=self.conf.get('ssl', False),
             username=self.conf['username'],
             password=self.conf['password'],
         )

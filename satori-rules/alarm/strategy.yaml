@@ -42,6 +42,7 @@ strategies:
   #   # omit 0123 since pagerduty has email noti
   #   level: '4'
   #   server: smtp.mailgun.org
+  #   ssl: false
   #   send_from: PUT_YOUR_KEY_HERE
   #   username: PUT_YOUR_KEY_HERE
   #   password: PUT_YOUR_KEY_HERE
