@@ -28,10 +28,10 @@ for port in ports:
         lines = lines.split('\r\n')
         assert lines[-1] == 'END'
         conn.close()
-    except:
+    except Exception:
         continue
 
-    stats = dict([i.split()[1:] for i in lines[:-1]])
+    stats = dict([i.split(' ', 2)[1:] for i in lines[:-1]])
     [stats.pop(i, '') for i in ('pid', 'uptime', 'version', 'libevent', 'time')]
     stats = {k: float(v) for k, v in stats.items()}
 

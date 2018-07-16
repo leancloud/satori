@@ -7,7 +7,7 @@ import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 from gevent import monkey
-monkey.patch_all()
+monkey.patch_all(thread=False)
 
 # -- stdlib --
 import json
@@ -22,7 +22,6 @@ import requests
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -63,7 +62,7 @@ def fetch(req):
     step = req["_step"]
     name = req["name"]
     server = req["server"]
-    ep = req.get("endpoint", endpoint)
+    ep = req.get("endpoint", None)
 
     try:
         req1 = dict(req)

@@ -6,6 +6,7 @@ import json
 import socket
 import subprocess
 import time
+import re
 
 # -- third party --
 # -- own --
@@ -14,18 +15,15 @@ import time
 endpoint = socket.gethostname()
 ts = int(time.time())
 
-cmdline = ' | '.join([
-    'pgrep -f QuorumPeerMain',
-    'xargs',
-    'sed "s/ /|/g"',
-    'xargs -I{} bash -c \'(sudo netstat -tulnp | grep -E "{}")\'',
-    "awk '{print $4}'",
-    "awk -F: '{print $NF}'",
-])
+proc = subprocess.Popen(['/usr/bin/pgrep', '-f', 'QuorumPeerMain'], stdout=subprocess.PIPE)
+pids = map(int, proc.stdout.read().strip().split())
+cfgs = [open('/proc/%s/cmdline' % i).read().strip().split('\x00')[-2] for i in pids]
+ports = []
 
-proc = subprocess.Popen(['/bin/bash', '-c', cmdline], stdout=subprocess.PIPE)
-ports = map(int, proc.stdout.read().strip().split())
-ports = [p for p in ports if p < 3000]
+for cfg in cfgs:
+    ports.extend(re.findall(r'^ *clientPort=(\d+)$', open(cfg).read(), re.MULTILINE))
+
+ports = map(int, ports)
 
 rst = []
 
@@ -48,19 +46,16 @@ metrics = [
 ]
 
 for port in ports:
-    try:
-        s = socket.socket()
-        s.connect(('0.0.0.0', port))
-        s.sendall('mntr\r\n')
-        data = []
-        while True:
-            d = s.recv(2048)
-            if not d:
-                break
-            data.append(d)
-        s.close()
-    except:
-        continue
+    s = socket.socket()
+    s.connect(('0.0.0.0', port))
+    s.sendall('mntr\r\n')
+    data = []
+    while True:
+        d = s.recv(2048)
+        if not d:
+            break
+        data.append(d)
+    s.close()
 
     raw = ''.join(data).strip().split('\n')
     raw = {k: v for k, v in [i.split()[:2] for i in raw]}

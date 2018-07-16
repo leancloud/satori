@@ -7,7 +7,31 @@
 ; host->group 这个函数在 hostgroup.clj 里，模仿 Open-Falcon 的 HostGroup 机制
 (def infra-common-rules
   (sdo
-    (plugin-dir "infra")
+    (where (service "agent.alive")
+      ; HACK: satori-agent in containers will not
+      ;       report builtin metrics,
+      ;       by doing this these config will not assign to agents in containers.
+      (plugin-dir "infra")
+      (plugin-metric "proc.num" 30 {:cmdline "^/usr/sbin/ntpd " :name "proc-ntpd"}))
+
+    (where (and (service "proc.num")
+                (= (:name event) "proc-ntpd"))
+      (by :host
+        (set-state (< 1)
+          (should-alarm-every 120
+            (! {:note "NTP 进程不在了"
+                :level 5
+                :expected 1.0
+                :groups [:operation]})))))
+
+    (where (service "mem.swaponfile")
+      (by :host
+        (set-state (> 0)
+          (should-alarm-every 550
+            (! {:note "有基于文件的 swap"
+                :level 5
+                :expected 0
+                :groups [:operation]})))))
 
     ; agent 上报
     #_(where (service "agent.alive")
@@ -50,9 +74,9 @@
     (where (service "df.bytes.used.percent")
       (by [:host :mount]
         (set-state-gapped (> 90) (< 85)
-          (should-alarm-every 7200
+          (should-alarm-every (* 5 3600)
             (! {:note "磁盘90%"
-                :level 3
+                :level 5
                 :expected 85
                 :groups host->group})))
         (set-state-gapped (> 98) (< 95)

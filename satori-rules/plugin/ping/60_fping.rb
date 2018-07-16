@@ -3,6 +3,17 @@
 require 'net/http'
 require 'json'
 require 'open3'
+require 'openssl'
+
+def command?( name )
+  `which #{name}`
+  $?.success?
+end
+
+if not ( command?("timeout") and command?("fping") )
+  STDERR << "Missing command timeout or fping, exit\n"
+  exit 1
+end
 
 # STDERR.puts Time.now.strftime('%F_%T')
 
@@ -19,9 +30,17 @@ SSL_OPTIONS = {
 }
 
 http = Net::HTTP.start( 'puppet', 9081, SSL_OPTIONS)
-response = http.request Net::HTTP::Get.new  '/v3/facts?query=%5B%22%3D%22%2C%20%22name%22%2C%20%22hostname%22%5D'
+
+response = nil
+urls = ['/v3/facts', '/pdb/query/v4/facts' ].collect { |prefix| prefix + '?query=["=", "name", "hostname"]' }
+urls.each do | url |
+  response = http.request Net::HTTP::Get.new  URI.encode( url )
+  break if not response.is_a?( Net::HTTPNotFound)
+  #STDERR.puts "Met 404, try next url\n"
+end
+
 hosts = JSON.parse( response.body ).collect{ |host| host['value'] }
-# STDERR.puts "ping hosts count: #{hosts.count}"
+# STDERR.puts "ping hosts count: #{hosts.count} : #{hosts.join(',')}\n"
 
 o, _ = Open3.capture2e("/usr/bin/timeout -k 3 --preserve-status 40s /usr/bin/fping  -c 10 -r 0 -i 10 -q -s -t 50", :stdin_data => hosts.join("\n"))
 

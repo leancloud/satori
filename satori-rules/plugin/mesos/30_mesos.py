@@ -23,7 +23,11 @@ raw = {}
 
 # master
 try:
-    ip = open('/etc/mesos-master/ip').read().strip()
+    try:
+        ip = open('/etc/mesos-master/ip').read().strip()
+    except Exception:
+        ip = '127.0.0.1'
+
     info = requests.get('http://%s:5050/metrics/snapshot' % ip, timeout=3).json()
     raw.update(info)
     raw['master/collect_success'] = 1
@@ -32,7 +36,10 @@ except Exception:
 
 # slave
 try:
-    ip = open('/etc/mesos-slave/ip').read().strip()
+    try:
+        ip = open('/etc/mesos-slave/ip').read().strip()
+    except Exception:
+        ip = '127.0.0.1'
     info = requests.get('http://%s:5051/metrics/snapshot' % ip, timeout=3).json()
     raw.update(info)
     raw['slave/collect_success'] = 1

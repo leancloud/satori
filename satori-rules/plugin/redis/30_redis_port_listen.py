@@ -18,7 +18,7 @@ import subprocess
 # -- code --
 NET_PORT_LISTEN = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../_metric/net.port.listen')
 
-proc = subprocess.Popen(['/bin/bash', '-c', "cat /etc/redis-*.conf | grep '^port ' | grep -Po '\d+'"], stdout=subprocess.PIPE)
+proc = subprocess.Popen(['/bin/bash', '-c', "cat /etc/redis-*.conf /etc/redis.conf /etc/redis/redis.conf 2>/dev/null | grep '^port ' | grep -Po '\d+'"], stdout=subprocess.PIPE)
 ports = map(int, proc.stdout.read().split())
 
 if not ports:

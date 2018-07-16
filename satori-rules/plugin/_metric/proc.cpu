@@ -6,14 +6,11 @@ from __future__ import absolute_import
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
-from gevent import monkey
-monkey.patch_all()
 
 # -- stdlib --
 import json
 import os
 import re
-import socket
 import sys
 import time
 
@@ -23,7 +20,6 @@ import gevent
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 requested = json.loads(sys.stdin.read())
 # [{"_metric": "proc.cpu", "name": "redis", "cmdline": "foo!", "interval": 5}]
 
@@ -32,14 +28,14 @@ names = []
 cmdlines = []
 
 
-def find_pid(cmdline):
+def find_pid(pattern):
     pids = [i for i in os.listdir('/proc') if i.isdigit()]
     for i in pids:
         try:
-            l = open("/proc/%s/cmdline" % i).read().replace('\0', ' ').strip()
-            if re.findall(cmdline, l):
+            args = open("/proc/%s/cmdline" % i).read().replace('\0', ' ').strip()
+            if re.findall(pattern, args):
                 return int(i)
-        except:
+        except Exception:
             pass
 
     return None
@@ -74,7 +70,6 @@ def monitor(name, cmdline, interval):
             for usage in monitor_pid(pid, interval):
                 print json.dumps([{
                     "metric": "proc.cpu",
-                    "endpoint": endpoint,
                     "timestamp": int(time.time()),
                     "step": interval,
                     "tags": {"name": name},
@@ -93,4 +88,4 @@ for p in requested:
     assert 'name' in p
     gevent.spawn(monitor, p['name'], p['cmdline'], p['interval'])
 
-gevent.get_hub().join()
+gevent.hub.get_hub().join()

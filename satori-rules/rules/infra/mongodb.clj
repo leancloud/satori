@@ -8,6 +8,15 @@
     (plugin-dir "mongodb")
     (plugin-metric "net.port.listen" 30 {:port 27018})
 
+    (where (and (service "net.port.listen")
+                #(= (:port %) 27018))
+      (by :host
+        (set-state (< 1)
+          (should-alarm-every 120
+            (! {:note "MongoDB 27018 端口不监听了！"
+                :level 1
+                :groups [:operation]})))))
+
     (where (service "mongodb.repl.ismaster")
       (by :host
         (changed :metric {:pairs? true}
@@ -20,7 +29,7 @@
             (where (= metric [1 0])
               (! {:note "切换成 SECONDARY 了"
                   :event? true
-                  :level 1
+                  :level 3
                   :groups [:operation :api]}))))))
 
     (where (service "mongodb.connections.available")
