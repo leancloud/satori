@@ -65,7 +65,7 @@ def lower_keys(d):
     return {k.lower(): v for k, v in d.iteritems()}
 
 
-endpoint = socket.gethostname()
+endpoint = None
 ts = int(time.time())
 
 {

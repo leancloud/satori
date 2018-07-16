@@ -13,7 +13,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(
@@ -34,7 +33,6 @@ for r in requested:
 
     metrics.append({
         "metric": "net.port.listen",
-        "endpoint": endpoint,
         "timestamp": ts,
         "step": 30,
         "tags": {

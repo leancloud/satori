@@ -15,7 +15,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 FIELDS = [
@@ -112,7 +111,6 @@ for entry in resp.strip().split('\n'):
 
         rst.append({
             "metric": "haproxy.%s" % n,
-            "endpoint": endpoint,
             "timestamp": ts,
             "step": 30,
             "value": v,
@@ -124,7 +122,6 @@ for entry in resp.strip().split('\n'):
     if 'slim' in d and sv == 'FRONTEND':
         rst.append({
             "metric": "haproxy.sratio",
-            "endpoint": endpoint,
             "timestamp": ts,
             "step": 30,
             "value": d['scur'] / d['slim'],

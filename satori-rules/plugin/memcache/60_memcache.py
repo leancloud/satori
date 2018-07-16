@@ -12,7 +12,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(['/bin/bash', '-c', r'''ps -ef |grep memcached|grep -v grep |sed -n 's/.* *-p *\([0-9]\{1,5\}\).*/\1/p' '''], stdout=subprocess.PIPE)
@@ -52,7 +51,6 @@ for port in ports:
 
     rst.extend([{
         'metric': 'memcached.%s' % k,
-        'endpoint': endpoint,
         'timestamp': ts,
         'step': 60,
         'value': v,

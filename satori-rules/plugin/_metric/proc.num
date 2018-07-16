@@ -14,7 +14,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -29,13 +28,13 @@ for i in pids:
     try:
         l = open("/proc/%s/status" % i).readline()
         names.append(l.split(":", 1)[1].strip())
-    except:
+    except Exception:
         pass
 
     try:
         l = open("/proc/%s/cmdline" % i).read().replace('\0', ' ').strip()
         l and cmdlines.append(l)
-    except:
+    except Exception:
         pass
 
 metrics = []
@@ -62,7 +61,6 @@ for p in requested:
 
     metrics.append({
         "metric": "proc.num",
-        "endpoint": endpoint,
         "timestamp": ts,
         "step": step,
         "tags": tags,

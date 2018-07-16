@@ -20,7 +20,6 @@ import redis
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(['/bin/bash', '-c', "ps axo cmd | grep 'redis-server '"], stdout=subprocess.PIPE)
@@ -66,7 +65,6 @@ for p in ports:
         info.update(config)
         rst.extend([{
             'metric': 'redis.%s' % k,
-            'endpoint': endpoint,
             'timestamp': ts,
             'step': 30,
             'value': float(info[k]),
