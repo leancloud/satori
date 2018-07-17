@@ -1,10 +1,9 @@
-# FROM USE_MIRRORopenjdk:8
-FROM USE_MIRRORjava:8
+FROM USE_MIRRORopenjdk:8-slim
 MAINTAINER feisuzhu@163.com
 
 ENV TERM xterm
 WORKDIR /tmp
-RUN [ -z "USE_MIRROR" ] || (wget http://mirrors.163.com/.help/sources.list.jessie -O /etc/apt/sources.list && rm -rf /etc/apt/sources.list.d/jessie-backports.list)
+RUN [ -z "USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 RUN apt-get update && apt-get -y install git supervisor
 EXPOSE 5555
 ADD app /app

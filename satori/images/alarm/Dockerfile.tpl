@@ -1,5 +1,4 @@
-# FROM USE_MIRRORopenjdk:8
-FROM USE_MIRRORjava:8
+FROM USE_MIRRORopenjdk:8-slim
 MAINTAINER feisuzhu@163.com
 
 ENV TERM xterm
@@ -7,7 +6,7 @@ WORKDIR /alarm
 RUN echo "Asia/Shanghai" | tee /etc/timezone
 RUN dpkg-reconfigure --frontend noninteractive tzdata
 RUN adduser ubuntu
-RUN [ -z "USE_MIRROR" ] || (wget http://mirrors.163.com/.help/sources.list.jessie -O /etc/apt/sources.list && rm -rf /etc/apt/sources.list.d/jessie-backports.list)
+RUN [ -z "USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y curl python git
 RUN mkdir /alarm/src
 ADD .build/Pipfile .build/Pipfile.lock .build/docker/use-china-mirror .build/docker/get-pip.py /alarm/

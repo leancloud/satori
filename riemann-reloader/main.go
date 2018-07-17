@@ -87,7 +87,7 @@ func main() {
 			Run("/satori-conf", "supervisorctl", "start", "riemann")
 			time.Sleep(time.Second * 20)
 		} else {
-			Run("/satori-conf", "kill", "-SIGHUP", pid)
+			Run("/satori-conf", "supervisorctl", "signal", "hup", "riemann")
 		}
 
 		/*
@@ -124,6 +124,7 @@ func main() {
 				i++
 				continue
 			}
+			errord = false
 			if err != nil {
 				panic(err)
 			}
