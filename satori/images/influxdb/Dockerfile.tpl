@@ -2,9 +2,16 @@ FROM USE_MIRRORopenjdk:8-slim
 MAINTAINER feisuzhu@163.com
 
 ENV TERM xterm
+RUN echo "Asia/Shanghai" | tee /etc/timezone
+RUN dpkg-reconfigure --frontend noninteractive tzdata
+RUN adduser ubuntu
+RUN [ -z "USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
+RUN apt-get update && apt-get install -y curl nginx fcgiwrap supervisor git python redis-server
+
 WORKDIR /tmp
-ADD http://lc-b5mumjc6.cn-n1.lcfile.com/034fa6024b475236060f.deb influxdb-1.6.0.deb
-RUN dpkg -i influxdb-1.6.0.deb
+RUN curl http://lc-b5mumjc6.cn-n1.lcfile.com/034fa6024b475236060f.deb -o influxdb-1.6.0.deb && \
+    dpkg -i influxdb-1.6.0.deb && \
+    rm influxdb-1.6.0.deb
 
 # Admin server WebUI
 EXPOSE 8083
