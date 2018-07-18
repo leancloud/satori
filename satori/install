@@ -340,6 +340,13 @@ function go-live
     sudo $(which docker-compose) up -d
 }
 
+function ask-for-updating-containers
+{
+    if whiptail --title Satori --yesno "Do you want to restart Satori containers now?" 8 60; then
+        go-live
+    fi
+}
+
 function ask-for-variables
 {
     USE_MIRROR=""
@@ -414,6 +421,7 @@ if [ "$1" == "rebuild" ]; then
         exit 1
     fi
     prepare-docker-images
+    ask-for-updating-containers
 
 elif [ "$1" = "-f" -a -f "$2" ]; then
     echo :: Performing batch install
