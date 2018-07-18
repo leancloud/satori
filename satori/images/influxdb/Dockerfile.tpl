@@ -3,9 +3,8 @@ MAINTAINER feisuzhu@163.com
 
 ENV TERM xterm
 WORKDIR /tmp
-
-ADD influxdb_1.2.4_amd64.deb influxdb.deb
-RUN dpkg -i influxdb.deb
+ADD http://lc-b5mumjc6.cn-n1.lcfile.com/034fa6024b475236060f.deb influxdb-1.6.0.deb
+RUN dpkg -i influxdb-1.6.0.deb
 
 # Admin server WebUI
 EXPOSE 8083
