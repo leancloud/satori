@@ -131,10 +131,11 @@
       (throw (Exception. "aggregate must accept list of events")))
 
     (when (> (count evts) 0)
-      (let [m (mapv :metric evts), v (f m)]
-        (call-rescue
-          (into (last evts) {:metric v, :description (string/join "\n" (map #(str (:host %) "=" (:metric %)) evts))})
-          children)))))
+      (let [m (mapv :metric evts), v (f m)
+            s (string/join "\n" (map #(str (:host %) "=" (:metric %)) evts))
+            s (if (> (count s) 3000) (subs s 0 3000) s)
+            aggregated (into (last evts) {:metric v, :description s})]
+        (call-rescue aggregated children)))))
 
 (defn aggregate [f & children]
   (apply aggregate* (fn [m] (apply f m)) children))
@@ -166,15 +167,23 @@
    所以由1变到2的变化率是 1.0, 由2变到1的变化率是 -1.0 （而不是 -0.5)
    "
   [& m]
-  (let [r (last m)]
-    (->> (map #(/ (- r %) (min r %)) m)
-         (reduce (fn [v v'] (if (> (Math/abs v') (Math/abs v)) v' v))))))
+  (let [m (filter pos? m)
+        r (last m)]
+    (if r
+      (->> m
+           (map #(/ (- r %) (min r %)))
+           (reduce #(if (|>| %1 %2) %1 %2) 0))
+      0.0)))
 
 (defn avgpdiff
   "计算最后一个点相比于之前的点的平均值的变化率"
   [& m]
-  (let [avg (/ (apply + (- (last m)) m) (- (count m) 1))]
-    (/ (- (last m) avg) (min avg (last m)))))
+  (let [r (last m)
+        c (count m)]
+    (if (not= r 0)
+      (let [avg (/ (apply + (- r) m) (- c 1))]
+        (/ (- r avg) (min avg r)))
+      0)))
 
 
 (defn feed-dog
@@ -365,4 +374,16 @@
           rst (inject! [s] [{:host "meh" :service "metric.ev1" :metric 10},
                             {:host "meh" :service "metric.ev2" :metric 20}])]
       (is (= [{:host "meh" :service "metric.final" :metric [10 20 10 20 10 20]}]
-             (:slot-coalesce-test rst))))))
+             (:slot-coalesce-test rst)))))
+
+  (deftest maxpdiff-test
+    (is (= (alarm/maxpdiff 1.0 1.0 1.0 1.0 1.0 2.0) 1.0))
+    (is (= (alarm/maxpdiff 2.0 1.0 1.0 1.0 1.0 1.0) -1.0))
+    (is (= (alarm/maxpdiff 0.0 0.0 0.0 0.0 1.0 2.0) 1.0))
+    (is (= (alarm/maxpdiff 0.0 0.0 0.0 0.0 0.0 0.0) 0.0)))
+
+  (deftest aggregate-test
+    (let [s (alarm/aggregate + (tap :aggregate-test))
+          rst (inject! [s] [[{:host "meh" :service "bar" :metric 10},
+                            {:host "meh" :service "bar" :metric 80}]])]
+      (is (= 90 (get-in rst [:aggregate-test 0 :metric]))))))

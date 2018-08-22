@@ -110,7 +110,7 @@ def sign():
     msg = re.sub(r'^satori-sign [A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$', '', msg, flags=re.MULTILINE)
     msg = msg.strip() + '\n\n' + line
 
-    proc = subprocess.Popen('git commit --amend -F -', shell=True, stdin=subprocess.PIPE)
+    proc = subprocess.Popen('git commit --allow-empty --amend -F -', shell=True, stdin=subprocess.PIPE)
     proc.stdin.write(msg)
     proc.stdin.close()
     proc.wait()

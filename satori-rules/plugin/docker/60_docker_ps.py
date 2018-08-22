@@ -13,7 +13,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 rst = []
@@ -21,11 +20,10 @@ if os.system('which docker > /dev/null'):
     print '[]'
     sys.exit(0)
 
-stuck = bool(os.system("timeout -k 3s 3s sudo docker ps > /dev/null 2>&1"))
+stuck = bool(os.system("timeout -k 10s 10s sudo docker ps > /dev/null 2>&1"))
 
 rst = [{
     'metric': 'docker.stuck',
-    'endpoint': endpoint,
     'timestamp': ts,
     'step': 60,
     'value': int(stuck),

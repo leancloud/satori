@@ -15,7 +15,6 @@ import time
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -54,7 +53,7 @@ for p in requested:
 
     try:
         r = re.compile(p['cmdline'])
-    except:
+    except Exception:
         continue
 
     for pid, l in cmdlines:
@@ -64,7 +63,6 @@ for p in requested:
 
             metrics.append({
                 "metric": "proc.java.heap",
-                "endpoint": endpoint,
                 "timestamp": ts,
                 "step": step,
                 "tags": {

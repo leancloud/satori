@@ -71,8 +71,8 @@ func GetCurrentPluginVersion() (string, error) {
 	return strings.TrimSpace(stdout.String()), nil
 }
 
-var updateInflight bool = false
-var lastPluginUpdate int64 = 0
+var updateInflight bool
+var lastPluginUpdate int64
 
 func UpdatePlugin(ver string) error {
 	debug := g.Config().Debug
@@ -273,15 +273,10 @@ func verifySignature(checkoutPath string, head string, validKeys []string) error
 }
 
 func getAuthorizedKeys(checkoutPath string, head string, keyFile string, validKeys []string) ([]string, error) {
-	fullPath := path.Join(checkoutPath, keyFile)
-	if !file.IsExist(fullPath) {
-		return nil, fmt.Errorf("keyFile %s does not exist", fullPath)
-	}
-
 	var buf bytes.Buffer
 	var err error
 
-	cmd := exec.Command("git", "rev-list", "-1", head, keyFile)
+	cmd := exec.Command("git", "rev-list", "-1", head, "--", keyFile)
 	cmd.Dir = checkoutPath
 	cmd.Stdout = &buf
 	err = cmd.Run()
@@ -289,14 +284,21 @@ func getAuthorizedKeys(checkoutPath string, head string, keyFile string, validKe
 		return nil, fmt.Errorf("Can't get most recent commit hash of key file: %s\n%s", err, buf.String())
 	}
 	mostRecentHash := strings.TrimSpace(buf.String())
+
 	if err = verifySignature(checkoutPath, mostRecentHash, validKeys); err != nil {
 		return nil, err
 	}
 
-	content, err := ioutil.ReadFile(fullPath)
+	buf.Reset()
+
+	cmd = exec.Command("git", "show", fmt.Sprintf("%s:%s", head, keyFile))
+	cmd.Dir = checkoutPath
+	cmd.Stdout = &buf
+	err = cmd.Run()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Can't get content of key file: %s\n%s", err, buf.String())
 	}
+	content := buf.Bytes()
 
 	parsed := make([]struct {
 		Key string `yaml:"key"`
@@ -372,7 +374,7 @@ func TryUpdate() error {
 	}
 
 	if uconf.Sha256 == "" || uconf.Url == "" {
-		return fmt.Errorf("Update conf incomplete, do nothing:")
+		return fmt.Errorf("Update conf incomplete, do nothing")
 	}
 
 	newHash, err := hex.DecodeString(uconf.Sha256)
@@ -426,5 +428,5 @@ func TryUpdate() error {
 	log.Println("Update triggered, restarting")
 	syscall.Exec(g.BinaryPath, os.Args, os.Environ())
 
-	return fmt.Errorf("Can't do exec!")
+	return fmt.Errorf("Can't do exec")
 }

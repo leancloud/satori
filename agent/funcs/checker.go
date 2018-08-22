@@ -24,7 +24,6 @@ func CheckCollector() {
 	output["cpustat "] = procStatErr == nil
 	output["disk.io "] = listDiskErr == nil
 	output["memory  "] = len(MemMetrics()) > 0
-	output["netstat "] = len(NetstatMetrics()) > 0
 	output["ss -s   "] = len(SocketStatSummaryMetrics()) > 0
 	output["ss -tln "] = listeningPortsErr == nil && len(ports) > 0
 	output["ps aux  "] = psErr == nil && len(procs) > 0

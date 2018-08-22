@@ -1,29 +1,31 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 # -- prioritized --
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
 from gevent import monkey
-monkey.patch_all()
+monkey.patch_all(thread=False)
 
 # -- stdlib --
 import json
 import re
-import socket
 import sys
 import time
+import warnings
 
 # -- third party --
 from gevent.pool import Pool
+import gevent
 import requests
 
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
+warnings.filterwarnings("ignore")
+
 ts = int(time.time())
 
 requested = json.loads(sys.stdin.read())
@@ -54,79 +56,71 @@ def fetch(req):
     params  = req.get("params", {})
     headers = req.get("headers", {})
     match   = req.get("match", {})
+    verify  = req.get("verify", True)
     assert isinstance(params, dict)
     assert isinstance(headers, dict)
     assert isinstance(match, dict)
 
+    kwargs = {
+        'params': params,
+        'headers': headers,
+        'timeout': timeout,
+        'verify': verify,
+        'allow_redirects': True,
+    }
+
+    if method in ('post', 'put'):
+        kwargs['data'] = req['data']
+
+    content_length = 0
+    content = ''
+    req_time = 0
+    status = 0
+
     try:
-        kwargs = {
-            'params': params,
-            'headers': headers,
-            'timeout': timeout,
-            'allow_redirects': True,
-        }
+        b4 = time.time()
+        resp = requests.request(method, url, **kwargs)
+        req_time = time.time() - b4
+        content_length = int(resp.headers.get('content-length', -1))
+        content = resp.content
+        status = resp.status_code
+    except requests.exceptions.Timeout:
+        status = 524
+    except requests.exceptions.ConnectionError:
+        status = 521
 
-        if method in ('post', 'put'):
-            kwargs['data'] = req['data']
+    metrics = [
+        {
+            "metric": "url.check.time",
+            "timestamp": ts,
+            "step": step,
+            "tags": {"name": name},
+            "value": req_time,
+        }, {
+            "metric": "url.check.status",
+            "timestamp": ts,
+            "step": step,
+            "tags": {"name": name},
+            "value": status,
+        }, {
+            "metric": "url.check.content-length",
+            "timestamp": ts,
+            "step": step,
+            "tags": {"name": name},
+            "value": content_length,
+        },
+    ]
 
-        content_length = 0
-        content = ''
-        req_time = 0
-        status = 0
+    for k, v in match.items():
+        metrics.append({
+            "metric": "url.check.match.%s" % k,
+            "timestamp": ts,
+            "step": step,
+            "tags": {"name": name},
+            "value": len(re.findall(v, content)),
+        })
 
-        try:
-            b4 = time.time()
-            resp = requests.request(method, url, **kwargs)
-            req_time = time.time() - b4
-            content_length = int(resp.headers.get('content-length', -1))
-            content = resp.content
-            status = resp.status_code
-        except requests.exceptions.Timeout:
-            status = 524
-        except requests.exceptions.ConnectionError:
-            status = 521
-
-        metrics = [
-            {
-                "metric": "url.check.time",
-                "endpoint": endpoint,
-                "timestamp": ts,
-                "step": step,
-                "tags": {"name": name},
-                "value": req_time,
-            }, {
-                "metric": "url.check.status",
-                "endpoint": endpoint,
-                "timestamp": ts,
-                "step": step,
-                "tags": {"name": name},
-                "value": status,
-            }, {
-                "metric": "url.check.content-length",
-                "endpoint": endpoint,
-                "timestamp": ts,
-                "step": step,
-                "tags": {"name": name},
-                "value": content_length,
-            },
-        ]
-
-        for k, v in match.items():
-            metrics.append({
-                "metric": "url.check.match.%s" % k,
-                "endpoint": endpoint,
-                "timestamp": ts,
-                "step": step,
-                "tags": {"name": name},
-                "value": len(re.findall(v, content)),
-            })
-
-        return metrics
-
-    except Exception:
-        import traceback
-        traceback.print_exc()
-        return None
+    return metrics
 
 
 metrics = []
@@ -134,4 +128,5 @@ metrics = []
 for r in pool.imap_unordered(fetch, requested):
     r and metrics.extend(r)
 
-print json.dumps(metrics)
+gevent.sleep(0.2)  # HACK: wait for DNS threads to terminate, or 'Unhandled thread exception' crap will be dumped to stderr
+print(json.dumps(metrics))

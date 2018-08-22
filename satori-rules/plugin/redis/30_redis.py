@@ -20,7 +20,6 @@ import redis
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 proc = subprocess.Popen(['/bin/bash', '-c', "ps axo cmd | grep 'redis-server '"], stdout=subprocess.PIPE)
@@ -50,6 +49,9 @@ interested = {
     'used_memory',
     'used_memory_lua',
     'used_memory_rss',
+    'maxmemory',
+    'maxclients',
+    'databases',
 }
 
 
@@ -58,13 +60,14 @@ rst = []
 for p in ports:
     r = redis.from_url('redis://0.0.0.0:%s' % p)
     try:
+        config = r.config_get()
         info = r.info()
+        info.update(config)
         rst.extend([{
             'metric': 'redis.%s' % k,
-            'endpoint': endpoint,
             'timestamp': ts,
             'step': 30,
-            'value': info[k],
+            'value': float(info[k]),
             'tags': {'port': str(p)},
         } for k in interested if k in info])
     except redis.ConnectionError:

@@ -74,7 +74,6 @@ def scalar(c):
     return row[0]
 
 
-endpoint = socket.gethostname()
 ts = int(time.time())
 args = json.loads(sys.stdin.read())
 
@@ -113,7 +112,7 @@ for arg in args:
         if arg['host'] not in ('localhost', '127.0.0.1'):
             host = arg['host']
         else:
-            host = endpoint
+            host = None
 
         name = arg.pop('name')
         sql = arg.pop('sql')

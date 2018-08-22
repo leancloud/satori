@@ -1,31 +1,38 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 # -- stdlib --
 from collections import Counter
+import os
 import json
-import socket
 import sys
 import time
-import urllib2
 
 # -- third party --
+import requests
+
 # -- own --
 
 # -- code --
-endpoint = socket.gethostname()
 ts = int(time.time())
 
 result = [{
     "metric": "nginx.collect_success",
-    "endpoint": endpoint,
     "timestamp": ts,
     "step": 30,
     "value": 1,
 }]
 
 try:
-    info = json.loads(urllib2.urlopen('http://127.0.0.1/status?format=json').read())
+    info = requests.get(
+        'http://127.0.0.1:%s/status?format=json' % os.getenv('PORT_80', '80'),
+        headers={'Host': 'health-check'}
+    ).json()
     info = info['servers']['server']
     total = Counter([i['upstream'] for i in info])
     healthy = Counter([i['upstream'] for i in info if i['status'] == 'up'])
@@ -40,7 +47,6 @@ for u in total.keys():
     result.extend([
         {
             "metric": "nginx.upstream.total",
-            "endpoint": endpoint,
             "timestamp": ts,
             "step": 30,
             "value": total[u],
@@ -48,7 +54,6 @@ for u in total.keys():
         },
         {
             "metric": "nginx.upstream.healthy",
-            "endpoint": endpoint,
             "timestamp": ts,
             "step": 30,
             "value": healthy[u],
@@ -56,7 +61,6 @@ for u in total.keys():
         },
         {
             "metric": "nginx.upstream.healthy.ratio",
-            "endpoint": endpoint,
             "timestamp": ts,
             "step": 30,
             "value": 1.0 * healthy[u] / total[u],

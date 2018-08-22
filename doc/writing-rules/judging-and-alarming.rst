@@ -65,7 +65,7 @@ set-state*
 ``(set-state* c & children)``
 
 设置事件的状态。 ``c`` 是接受事件作为参数的函数。
-``c`` 返回值为 ``true`` 则会将时间的 ``:state`` 设置成 ``:problem`` ，否则会设置成 ``:ok``
+``c`` 返回值为 ``true`` 则会将事件的 ``:state`` 设置成 ``:problem`` ，否则会设置成 ``:ok``
 
 .. code-block:: clojure
 
