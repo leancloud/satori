@@ -71,6 +71,7 @@ Satori 是一个由 LeanCloud_ 维护的监控系统。
 
    shipped-plugins/infra
    shipped-plugins/ping
+   shipped-plugins/swcollector
    shipped-plugins/others
 
 
