@@ -34,8 +34,8 @@ function prepare-docker-images
     sudo docker run -it --rm \
         -v /tmp/go-github:/go/src/github.com \
         -v $PWD/..:/go/src/github.com/leancloud/satori \
-        ${USE_MIRROR}golang:wheezy \
-        /bin/bash -c '
+        ${USE_MIRROR}golang:stretch \
+        /bin/sh -c '
         set -e
         for c in agent transfer master riemann-reloader swcollector; do
             echo :: - - Building $c...
@@ -48,7 +48,6 @@ function prepare-docker-images
     cp /tmp/go-github/master images/master/.build
     cp /tmp/go-github/riemann-reloader images/riemann/.build
     cp /tmp/go-github/agent ../satori-agent
-    cp /tmp/go-github/swcollector ../satori-swcollector
 
     echo :: - Generate docker-compose.yml
     cat <<EOF > docker-compose.yml
@@ -143,7 +142,7 @@ function prepare-rules-repo
 
     echo :: Preparing rules repo $RULES_REPO
     cp -rL ../satori-rules $RULES_REPO
-    cp ../satori-swcollector $RULES_REPO/plugin/_metric
+    cp /tmp/go-github/swcollector $RULES_REPO/plugin/_metric
     pushd $RULES_REPO >/dev/null
     rm -rf doc/images
     git init
