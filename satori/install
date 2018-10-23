@@ -451,7 +451,9 @@ elif [ "$1" = "-f" -a -f "$2" ]; then
     setup-frontend-vars
     generate-agent-config
     save-parameters
-    go-live
+    if ! go-live; then
+        echo !! Something goes wrong when starting docker containers, continue anyway
+    fi
     sleep 5
     init-influxdb
     finish
@@ -471,7 +473,9 @@ elif [ "$1" = "" ]; then
     setup-frontend-vars
     generate-agent-config
     save-parameters
-    go-live
+    if ! go-live; then
+        echo !! Something goes wrong when starting docker containers, continue anyway
+    fi
     sleep 5
     init-influxdb
     finish
