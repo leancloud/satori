@@ -2,19 +2,19 @@
 
 cat <<EOF >> /alarm/buildout.cfg
 [buildout]
-index = http://pypi.doubanio.com/simple
+index = https://mirrors.aliyun.com/pypi/simple
 find-links = 
 EOF
 
 mkdir -p ~/.pip
 cat <<EOF >> ~/.pip/pip.conf
 [global]
-index-url = http://pypi.doubanio.com/simple
-[install]
-trusted-host = pypi.doubanio.com
+index-url = https://mirrors.aliyun.com/pypi/simple
+;[install]
+;trusted-host = pypi.doubanio.com
 EOF
 
 cat <<EOF > ~/.pydistutils.cfg
 [easy_install]
-index-url=http://pypi.doubanio.com/simple
+index-url=https://mirrors.aliyun.com/pypi/simple
 EOF

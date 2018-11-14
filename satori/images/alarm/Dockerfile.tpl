@@ -13,7 +13,7 @@ RUN mkdir /alarm/src
 ADD .build/Pipfile .build/Pipfile.lock .build/docker/use-china-mirror .build/docker/get-pip.py /alarm/
 RUN [ -z "USE_MIRROR" ] || /alarm/use-china-mirror
 RUN python /alarm/get-pip.py
-RUN pip install --upgrade pip pipenv
+RUN pip install --upgrade pip!=18.1 pipenv
 RUN cd /alarm && pipenv install
 
 ADD .build/src /alarm/src
