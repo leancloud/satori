@@ -2,7 +2,7 @@
 
 # -- stdlib --
 # -- third party --
-import requests
+import nexmo
 
 # -- own --
 from backend.common import register_backend, Backend
@@ -19,11 +19,11 @@ class NexmoTTSBackend(Backend):
         if event['status'] not in ('PROBLEM', 'EVENT'):
             return
 
-        requests.post('https://api.nexmo.com/tts/json', params={
-            'api_key': str(self.conf['api_key']),
-            'api_secret': str(self.conf['api_secret']),
-            'to': '86' + str(user['phone']),
-            'voice': self.conf['voice'],
-            'lg': self.conf['lg'],
-            'repeat': self.conf['repeat'],
-        }, data={'text': self.conf['prefix'] + event['note']})
+        client = nexmo.Client(application_id=self.conf['app_id'], private_key=self.conf['private_key_path'])
+
+        response = client.create_call({
+            'to':[{'type':'phone', 'number': str(user['phone'])}],
+            'from':[{'type':'phone', 'number': str(self.conf['from_number'])}],
+            'answer_url':str(self.conf['answer_url'])
+            })
+        self.logger.info('Sending tts phone %s to %s(%s)', response['uuid'], user['name'], user['phone'])

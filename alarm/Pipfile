@@ -16,6 +16,7 @@ requests = "*"
 raven = "*"
 python-telegram-bot = "*"
 "contextlib2" = "*"
+nexmo = '*'
 
 
 [dev-packages]
