@@ -12,18 +12,24 @@ from backend.common import register_backend, Backend
 
 @register_backend
 class NexmoTTSBackend(Backend):
-    def send(self, user, event):
-        if not user.get('phone'):
-            return
-
+    def send(self, users, event):
         if event['status'] not in ('PROBLEM', 'EVENT'):
             return
 
-        client = nexmo.Client(application_id=self.conf['app_id'], private_key=self.conf['private_key_path'])
+        phones = []
+        for user in users:
+            if not user.get('phone'):
+                continue
+            phones.append( { 'type':'phone', 'number': '86' + str(user.get('phone'))})
 
-        response = client.create_call({
-            'to':[{'type':'phone', 'number': str(user['phone'])}],
-            'from':{'type':'phone', 'number': str(self.conf['from_number'])},
-            'answer_url': self.conf['answer_url']
-            })
-        self.logger.info('Sending tts phone %s to %s(%s)', response['uuid'], user['name'], user['phone'])
+        client = nexmo.Client(application_id=self.conf['app_id'], private_key=self.conf['private_key_path'])
+        try:
+            response = client.create_call({
+                'to': phones,
+                'from':{'type':'phone', 'number': str(self.conf['from_number'])},
+                'answer_url': self.conf['answer_url']
+                })
+        except:
+            self.logger.info( phones )
+            raise
+        self.logger.info('Sending tts phone %s to %s', response['uuid'], str(phones))

@@ -32,6 +32,7 @@ def from_string(s):
 class Backend(object):
     def __init__(self, conf):
         self.conf = conf
+        self.batchmode = conf.get('batchmode', False)
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.logger.debug('Initializing backend [{}] ...'.format(self.__class__.__name__))
