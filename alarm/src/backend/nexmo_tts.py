@@ -23,7 +23,7 @@ class NexmoTTSBackend(Backend):
 
         response = client.create_call({
             'to':[{'type':'phone', 'number': str(user['phone'])}],
-            'from':[{'type':'phone', 'number': str(self.conf['from_number'])}],
-            'answer_url':str(self.conf['answer_url'])
+            'from':{'type':'phone', 'number': str(self.conf['from_number'])},
+            'answer_url': self.conf['answer_url']
             })
         self.logger.info('Sending tts phone %s to %s(%s)', response['uuid'], user['name'], user['phone'])
