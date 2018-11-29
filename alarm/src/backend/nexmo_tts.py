@@ -17,10 +17,15 @@ class NexmoTTSBackend(Backend):
             return
 
         phones = []
-        for user in users:
+        if isinstance( users, list):
+            for user in users:
+                if not user.get('phone'):
+                    continue
+                phones.append( { 'type':'phone', 'number': '86' + str(user.get('phone'))})
+        else:
             if not user.get('phone'):
-                continue
-            phones.append( { 'type':'phone', 'number': '86' + str(user.get('phone'))})
+                return
+            phones.append( { 'type':'phone', 'number': '86' + str(users.get('phone'))})
 
         client = nexmo.Client(application_id=self.conf['app_id'], private_key=self.conf['private_key_path'])
         try:
