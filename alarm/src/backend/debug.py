@@ -9,10 +9,11 @@ from backend.common import register_backend, Backend
 
 @register_backend
 class DebugBackend(Backend):
-    def send(self, user, event):
-        import pprint
-        print '>>>' + '=' * 77
-        pprint.pprint(user)
-        print '-' * 80
-        pprint.pprint(event)
-        print '<<<' + '=' * 77
+    def send(self, users, event):
+        for user in users:
+            import pprint
+            print '>>>' + '=' * 77
+            pprint.pprint(user)
+            print '-' * 80
+            pprint.pprint(event)
+            print '<<<' + '=' * 77

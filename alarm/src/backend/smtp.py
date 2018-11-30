@@ -36,21 +36,22 @@ def send_mail(send_from, send_to, subject, text, files=[], server="localhost", s
 
 @register_backend
 class SMTPBackend(Backend):
-    def send(self, user, event):
-        if not user.get('email'):
-            return
+    def send(self, users, event):
+        for user in users:
+            if not user.get('email'):
+                continue
 
-        subject = u'%s[P%s]%s' % (
-            status2emoji(event['status']),
-            event['level'],
-            event['title'],
-        )
+            subject = u'%s[P%s]%s' % (
+                status2emoji(event['status']),
+                event['level'],
+                event['title'],
+            )
 
-        send_mail(
-            self.conf['send_from'], user['email'],
-            subject, event['text'],
-            server=self.conf['server'],
-            ssl=self.conf.get('ssl', False),
-            username=self.conf['username'],
-            password=self.conf['password'],
-        )
+            send_mail(
+                self.conf['send_from'], user['email'],
+                subject, event['text'],
+                server=self.conf['server'],
+                ssl=self.conf.get('ssl', False),
+                username=self.conf['username'],
+                password=self.conf['password'],
+            )

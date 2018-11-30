@@ -39,5 +39,5 @@ class Backend(object):
     def shutdown(self):
         self.logger.debug('Shutting down backend [{}] ...'.format(self.__class__.__name__))
 
-    def send(self, user, event):
+    def send(self, users, event):
         pass

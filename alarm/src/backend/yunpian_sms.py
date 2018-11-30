@@ -13,22 +13,23 @@ from utils import status2emoji
 # -- code --
 @register_backend
 class YunpianSMSBackend(Backend):
-    def send(self, user, event):
-        if not user.get('phone'):
-            return
+    def send(self, users, event):
+        for user in users:
+            if not user.get('phone'):
+                continue
 
-        msg = u'【%s】%s[P%s] %s\n' % (
-            self.conf['signature'],
-            status2emoji(event['status']),
-            event['level'],
-            event['title'],
-        ) + event['text']
+            msg = u'【%s】%s[P%s] %s\n' % (
+                self.conf['signature'],
+                status2emoji(event['status']),
+                event['level'],
+                event['title'],
+            ) + event['text']
 
-        rst = requests.post('http://yunpian.com/v1/sms/send.json', data={
-            'apikey': self.conf['api_key'],
-            'mobile': user['phone'],
-            'text': msg,
-        }).json()
+            rst = requests.post('http://yunpian.com/v1/sms/send.json', data={
+                'apikey': self.conf['api_key'],
+                'mobile': user['phone'],
+                'text': msg,
+            }).json()
 
-        if rst['code'] != 0:
-            raise Exception(rst['detail'])
+            if rst['code'] != 0:
+                raise Exception(rst['detail'])

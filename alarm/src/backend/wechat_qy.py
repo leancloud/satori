@@ -93,59 +93,60 @@ class WechatQYBackend(Backend):
         key = '%s:%s' % (corp_id, secret)
         self.token_cache.pop(key)
 
-    def send(self, user, event):
-        corp_id  = user.get('wechat_corpid') or self.conf['corpid']
-        secret   = user.get('wechat_secret') or self.conf['secret']
-        agent_id = user.get('wechat_agentid') or self.conf['agentid']
+    def send(self, users, event):
+        for user in users:
+            corp_id  = user.get('wechat_corpid') or self.conf['corpid']
+            secret   = user.get('wechat_secret') or self.conf['secret']
+            agent_id = user.get('wechat_agentid') or self.conf['agentid']
 
-        touser = user.get('wechat', '')
-        toparty = user.get('wechat_party', '')
+            touser = user.get('wechat', '')
+            toparty = user.get('wechat_party', '')
 
-        if not (touser or toparty):
-            return
-
-        msg = u'%s[P%s] %s\n' % (
-            status2emoji(event['status']),
-            event['level'],
-            event['title'],
-        ) + event['text']
-
-        payload = {
-            "touser": touser,
-            "toparty": toparty,
-            "msgtype": "text",
-            "agentid": agent_id,
-            "text": {
-                "content": msg,
-            },
-            "safe": 0,
-        }
-
-        self.logger.info('Sending wechat message to %s %s', touser, toparty)
-
-        for _ in xrange(2):
-            token = self.get_access_token(corp_id, secret)
-            if not token:
-                return
-
-            resp = requests.post(
-                'https://qyapi.weixin.qq.com/cgi-bin/message/send',
-                params={'access_token': token},
-                headers={'Content-Type': 'application/json'},
-                timeout=10,
-                data=json.dumps(payload).decode('unicode-escape').encode('utf-8'),
-            )
-
-            if not resp.ok:
-                raise Exception(resp.content)
-
-            ret = resp.json()
-            if ret['errcode'] == 40014:
-                self.clear_access_token(corp_id, secret)
+            if not (touser or toparty):
                 continue
-            elif ret['errcode'] != 0:
-                raise Exception(resp.content)
 
-            break
-        else:
-            raise Exception('Too many retries')
+            msg = u'%s[P%s] %s\n' % (
+                status2emoji(event['status']),
+                event['level'],
+                event['title'],
+            ) + event['text']
+
+            payload = {
+                "touser": touser,
+                "toparty": toparty,
+                "msgtype": "text",
+                "agentid": agent_id,
+                "text": {
+                    "content": msg,
+                },
+                "safe": 0,
+            }
+
+            self.logger.info('Sending wechat message to %s %s', touser, toparty)
+
+            for _ in xrange(2):
+                token = self.get_access_token(corp_id, secret)
+                if not token:
+                    return
+
+                resp = requests.post(
+                    'https://qyapi.weixin.qq.com/cgi-bin/message/send',
+                    params={'access_token': token},
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10,
+                    data=json.dumps(payload).decode('unicode-escape').encode('utf-8'),
+                )
+
+                if not resp.ok:
+                    raise Exception(resp.content)
+
+                ret = resp.json()
+                if ret['errcode'] == 40014:
+                    self.clear_access_token(corp_id, secret)
+                    continue
+                elif ret['errcode'] != 0:
+                    raise Exception(resp.content)
+
+                break
+            else:
+                raise Exception('Too many retries')

@@ -52,18 +52,19 @@ class TelegramBackend(Backend):
         super(TelegramBackend, self).shutdown()
         self.updater.stop()
 
-    def send(self, user, event):
-        chat_id = user.get('tg_chat_id', '')
-        if not chat_id:
-            return
+    def send(self, users, event):
+        for user in users:
+            chat_id = user.get('tg_chat_id', '')
+            if not chat_id:
+                continue
 
-        msg = u'{} **[P{}]**\n{}\n'.format(
-            u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
-            event['level'],
-            event['title'],
-        ) + event['text']
+            msg = u'{} **[P{}]**\n{}\n'.format(
+                u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
+                event['level'],
+                event['title'],
+            ) + event['text']
 
-        self.updater.bot.send_message(
-            chat_id, text=msg,
-            parse_mode=telegram.ParseMode.MARKDOWN
-        )
+            self.updater.bot.send_message(
+                chat_id, text=msg,
+                parse_mode=telegram.ParseMode.MARKDOWN
+            )
