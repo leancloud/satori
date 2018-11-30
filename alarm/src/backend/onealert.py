@@ -14,30 +14,31 @@ from backend.common import register_backend, Backend
 
 @register_backend
 class OneAlertBackend(Backend):
-    def send(self, user, event):
+    def send(self, users, event):
         api_key = self.conf.get('api_key')
-
-        if 'onealert' in user:
-            api_key = user['onealert']
-
         if not api_key:
             return
 
-        resp = requests.post(
-            'http://api.110monitor.com/alert/api/event',
-            headers={'Content-Type': 'application/json'},
-            timeout=10,
-            data=json.dumps({
-                "app": api_key,
-                "eventId": event['id'],
-                "eventType": 'trigger' if event['status'] in ('PROBLEM', 'EVENT') else 'resolve',
-                "alarmName": event.get('expr') or event.get('title', '-'),
-                "entityName": event['title'],
-                "entityId": event['title'],
-                "priority": 1,
-                "alarmContent": event['text'],
-            }),
-        )
+        for user in users:
 
-        if not resp.ok:
-            raise Exception(resp.json())
+            if 'onealert' in user:
+                api_key = user['onealert']
+
+            resp = requests.post(
+                'http://api.110monitor.com/alert/api/event',
+                headers={'Content-Type': 'application/json'},
+                timeout=10,
+                data=json.dumps({
+                    "app": api_key,
+                    "eventId": event['id'],
+                    "eventType": 'trigger' if event['status'] in ('PROBLEM', 'EVENT') else 'resolve',
+                    "alarmName": event.get('expr') or event.get('title', '-'),
+                    "entityName": event['title'],
+                    "entityId": event['title'],
+                    "priority": 1,
+                    "alarmContent": event['text'],
+                }),
+            )
+
+            if not resp.ok:
+                raise Exception(resp.json())

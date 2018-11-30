@@ -21,22 +21,28 @@ def status2bccode(s):
 
 @register_backend
 class ZulipBackend(Backend):
-    def send(self, user, event):
-        if 'zulip' not in user:
-            return
+    def send(self, users, event):
+        for user in users:
+            if 'zulip' not in user:
+                continue
 
-        title = u'%s[P%s] %s' % (
-            status2bccode(event['status']),
-            event['level'],
-            event['title'],
-        )
+            title = u'%s[P%s] %s' % (
+                status2bccode(event['status']),
+                event['level'],
+                event['title'],
+            )
 
-        requests.post(
-            self.conf['api_url'],
-            auth=HTTPBasicAuth( self.conf['username'], self.conf['key']),
-            timeout=10,
-            data={  'type': 'stream',
-                    'to': str(self.conf['group']),
-                    'subject': str(self.conf['channel']),
-                    'content': title + "\n" + event['text'] },
-        )
+            try:
+                response = requests.post(
+                    self.conf['api_url'],
+                    auth=HTTPBasicAuth( self.conf['username'], self.conf['key']),
+                    timeout=10,
+                    data={  'type': 'stream',
+                            'to': str(self.conf['channel']),
+                            'subject': str(self.conf['topic'])+'-P'+str(event['level']),
+                            #'subject': str(self.conf['topic']),
+                            'content': title + "\n" + event['text'] },
+                )
+            except:
+                self.logger.info('notiy zulip failed: %s' % response.text)
+                raise

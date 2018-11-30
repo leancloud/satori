@@ -239,18 +239,12 @@ class AlarmDFA(object):
 def send_alarm(ev):
     backends = get_relevant_backends(ev)
 
+    #log.info('alarm event %s' % ev)
     for p in backends:
-        if p.batchmode:
-            try:
-                gevent.spawn(p.send, ev['users'], copy.deepcopy(ev))
-            except Exception:
-                log.exception('Error batch processing event')
-        else:
-            for u in ev['users']:
-                try:
-                    gevent.spawn(p.send, u, copy.deepcopy(ev))
-                except Exception:
-                    log.exception('Error processing event')
+        try:
+            gevent.spawn(p.send, ev['users'], copy.deepcopy(ev))
+        except Exception:
+            log.exception('Error batch processing event')
 
 
 def process_single_event(raw):
