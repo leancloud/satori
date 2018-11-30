@@ -51,6 +51,15 @@ strategies:
   #   backend: bearychat
   #   level: '012345'
 
+  # zulip:
+  #   backend: zulip
+  #   level: '012345'
+  #   channel: 'CHANNEL_NAME'
+  #   topic: 'TOPIC_NAME'
+  #   api_url: 'ZULIP_SERVER_API_URL'
+  #   username: 'BOT_USERNAME'
+  #   key: 'PUT_YOUR_KEY_HERE' 
+
   indicator:
     # do nothing, just consume the queue.
     # BitBar plugin will poll api
