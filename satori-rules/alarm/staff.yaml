@@ -28,3 +28,7 @@ users:
     name: "运维 PagerDuty"
     pagerduty: "PUT_YOUR_KEY_HERE"
     onealert: "PUT_YOUR_KEY_HERE"
+
+  opsgenie_ops:
+    name: "运维 OpsGenie 机器人"
+    opsgenie_key: 'PUT_YOUR_API_KEY_HERE'

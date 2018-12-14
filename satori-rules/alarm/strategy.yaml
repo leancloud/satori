@@ -60,6 +60,10 @@ strategies:
   #   username: 'BOT_USERNAME'
   #   key: 'PUT_YOUR_KEY_HERE' 
 
+  # opsgenie:
+  #   backend: opsgenie
+  #   level: '01234'
+
   indicator:
     # do nothing, just consume the queue.
     # BitBar plugin will poll api
