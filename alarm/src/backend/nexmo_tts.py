@@ -31,6 +31,7 @@ class NexmoTTSBackend(Backend):
         client = nexmo.Client(application_id=self.conf['app_id'], private_key=self.conf['private_key_path'])
         for phone in phones:
             try:
+                # Make sure not reach request api limit
                 time.sleep(1)
                 response = client.create_call({
                     'to': [{'type':'phone','number': phone }],
@@ -40,6 +41,6 @@ class NexmoTTSBackend(Backend):
                 self.logger.info( 'Phone call %s done, uuid: %s', str(phone), response['uuid'] )
             except:
                 if response:
-                    self.logger.info( 'Phone call %s failed, uuid: %s', str(phone), response['uuid'] )
+                    self.logger.error( 'Phone call %s failed, uuid: %s', str(phone), response['uuid'] )
                 else:
                     raise
