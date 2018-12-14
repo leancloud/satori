@@ -60,9 +60,10 @@ class OpsgenieBackend(Backend):
             try:
                 resp = None
                 resp = requests.post( url, headers=headers, timeout=10, data=json.dumps( body ))
+                self.logger.info( 'notify opsgenie %s, %s', satori_id, event)
             except:
                 if resp:
-                    self.logger.info( 'notify opsgenie failed: %s, %s, %s, %s', resp.text, url, headers, body )
+                    self.logger.error( 'notify opsgenie failed: %s, %s, %s, %s', resp.text, url, headers, body )
                 else:
-                    self.logger.info( 'notify opsgenie failed: %s, %s, %s', url, headers, body )
+                    self.logger.error( 'notify opsgenie failed: %s, %s, %s', url, headers, body )
                 raise
