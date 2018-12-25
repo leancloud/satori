@@ -40,7 +40,7 @@ class OpsgenieBackend(Backend):
                 if resp.status_code == 200:
                     alert_status = resp.json()['data']['status']
                     ack = resp.json()['data']['acknowledged']
-                    ack = resp.json()['data']['snoozed']
+                    snoozed = resp.json()['data']['snoozed']
             except:
                 pass
 
@@ -66,9 +66,9 @@ class OpsgenieBackend(Backend):
                         'priority':priority, 'responders': teams, 'details':details,
                         'note': event['note'] }
             elif event['status'] in ( 'OK' ):
+                # 'RECOVERY'
                 if alert_status == 'closed':
                     continue
-                # 'RECOVERY'
                 url = 'https://api.opsgenie.com/v2/alerts/' + alarm_id + '/close?identifierType=alias'
                 body = { 'user':'satori', 'source': 'satori-backend', 'note':'(mark or auto) recovery from satori'}
             elif event['status'] in ( 'TIMEWAIT'):
