@@ -54,8 +54,6 @@ strategies:
   # zulip:
   #   backend: zulip
   #   level: '012345'
-  #   channel: 'CHANNEL_NAME'
-  #   topic: 'TOPIC_NAME'
   #   api_url: 'ZULIP_SERVER_API_URL'
   #   username: 'BOT_USERNAME'
   #   key: 'PUT_YOUR_KEY_HERE' 

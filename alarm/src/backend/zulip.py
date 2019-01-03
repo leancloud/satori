@@ -26,23 +26,29 @@ class ZulipBackend(Backend):
             if 'zulip' not in user:
                 continue
 
+            if 'level' in user:
+                # check alarm level only if user defined acceptable level
+                if str(event['level']) not in list(user.get('level')):
+                    continue
+
             title = u'%s[P%s] %s' % (
                 status2bccode(event['status']),
                 event['level'],
                 event['title'],
             )
 
+            channel = str(user.get('channel'))
+            topic_prefix = str(user.get('topic'))
             try:
                 response = requests.post(
                     self.conf['api_url'],
                     auth=HTTPBasicAuth( self.conf['username'], self.conf['key']),
                     timeout=10,
                     data={  'type': 'stream',
-                            'to': str(self.conf['channel']),
-                            'subject': str(self.conf['topic'])+'-P'+str(event['level']),
+                            'to': channel,
+                            'subject': topic_prefix + '-P' + str(event['level']),
                             #'subject': str(self.conf['topic']),
                             'content': title + "\n" + event['text'] },
                 )
             except:
-                self.logger.info('notiy zulip failed: %s' % response.text)
                 raise
