@@ -36,7 +36,7 @@ users:
     opsgenie_key: 'PUT_YOUR_API_KEY_HERE'
 
   zulip_ops:
-    name: "运维 OpsGenie 机器人"
+    name: "运维 Zulip 机器人"
     zulip: true
     level: '0123'
     channel: 'CHANNEL_NAME'
