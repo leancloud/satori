@@ -161,7 +161,7 @@ function setup-configs
 
     echo :: Setup configs in $CONF_DIR
     sudo cp -r conf $CONF_DIR
-    sudo sed -i "s|SERVER_NAME_TO_REPLACE|$DOMAIN|g" $CONF_DIR/nginx/nginx.conf
+    sudo sed -i "s|SERVER_NAME_TO_REPLACE|$DOMAIN|g" $CONF_DIR/nginx/*.conf
 }
 
 
