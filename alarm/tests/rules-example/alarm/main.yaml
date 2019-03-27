@@ -1,0 +1,16 @@
+teams:
+  "main-characters":
+    - reimu
+    - marisa
+
+users:
+  reimu:
+    name: "博丽灵梦"
+    email: reimu@gensokyo.jp
+    bearychat: "https://hook.bearychat.com/=bw52Y/incoming/24a226228ff3112fd7a4402563ec68a4"
+
+
+  marisa:
+    name: "雾雨魔理沙"
+    email: marisa@gensokyo.jp
+    phone: 18888888888

@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+httmock = "*"
+bottle = "*"
+gevent = ">1.2.0,<1.3.0"
+redis = "*"
+pyaml = "*"
+requests = "*"
+raven = "*"
+python-telegram-bot = "*"
+"contextlib2" = "*"
+nexmo = '*'
+
+[dev-packages]
+pytest = "*"
+
+[requires]
+python_version = "2.7"

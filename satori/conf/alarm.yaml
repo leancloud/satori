@@ -1,0 +1,12 @@
+host: 0.0.0.0
+port: 6060
+
+# Redis 地址，用来接收 riemann 传过来的报警信息
+redis: 'redis://redis:6379/0'
+
+# 规则仓库地址
+rules: '/satori-conf'
+
+# sentry 地址，用来接收异常报告。想收集 alarm 本身产生的异常的话可以提供这个，否则留空。
+# sentry: 'http://user:pass@sentry.leancloud.cn/whatever'
+sentry: ''

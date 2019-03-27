@@ -1,0 +1,63 @@
+#!/usr/bin/python -u
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
+
+# -- stdlib --
+import json
+import os
+import re
+import sys
+import time
+
+# -- third party --
+import gevent
+import redis
+
+# -- own --
+
+# -- code --
+requested = json.loads(sys.stdin.read())
+# [{"_metric": "redis.sentinel", "name": "redis", "url": "redis://localhost:26379"}]
+
+
+def collect(name, url, step):
+    r = redis.from_url(url)
+    info = r.info()
+    metrics = []
+    ts = int(time.time())
+
+    for k in info:
+        if not k.startswith('master'):
+            continue
+
+        v = info[k]
+
+        metrics.extend([{
+            "metric": "redis_sentinel.slaves",
+            "timestamp": ts,
+            "step": step,
+            "tags": {"name": name, 'master': v['name']},
+            "value": v['slaves'],
+        }, {
+            "metric": "redis_sentinel.status",
+            "timestamp": ts,
+            "step": step,
+            "tags": {"name": name, 'master': v['name']},
+            "value": {'ok': 0, 'sdown': 1, 'odown': 2}.get(v['status'], -1),
+        }])
+
+    print(json.dumps(metrics))
+
+
+for p in requested:
+    assert p["_metric"] == "redis.sentinel"
+    assert 'url' in p
+    assert 'name' in p
+    gevent.spawn(collect, p['name'], p['url'], p['_step'])
+
+gevent.hub.get_hub().join()

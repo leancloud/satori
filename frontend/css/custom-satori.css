@@ -1,0 +1,66 @@
+@charset "UTF-8";
+
+html, body, .container, .main_container, .right_col {
+  height: 100%;
+}
+
+.left_col {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.right_col {
+    overflow-y: auto;
+}
+
+.no-left-radius {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.no-right-radius {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.events-row td {
+  vertical-align: middle !important;
+}
+
+.events-row .status {
+  font-size: 20pt;
+}
+
+.icheck {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -o-appearance: none;
+  appearance: none;
+
+  *display: inline;
+  background: url(icheck-green.png) no-repeat;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  height: 20px;
+  top: 0%;
+  left: 0%;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle;
+  width: 20px;
+  transition: background-position 0.2s;
+}
+
+.icheck:checked {
+    background-position: -22px 0;
+}
+
+.icheck:disabled {
+    background-position: -44px 0;
+    cursor: default;
+}
+
+.icheck:checked:disabled {
+    background-position: -66px 0;
+}

@@ -1,0 +1,30 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# pre-receive hook for signature enforcing
+# Copy this file to /path/to/rules-repo-on-server/.git/hooks/pre-receive
+# Then git-push without last commit containing satori signature will be rejected
+
+# 用于强制签名的 git 钩子
+# 把这个文件复制到 /path/to/rules-repo-on-server/.git/hooks/pre-receive
+# 之后如果 git push 的最后一个 commit 没有 satori 签名就会被拒掉
+
+
+import sys
+import subprocess
+import re
+
+for l in sys.stdin.read().split('\n'):
+    if not l:
+        continue
+    old, new, ref = l.split()
+
+    proc = subprocess.Popen('git cat-file -p ' + new, shell=True, stdout=subprocess.PIPE)
+    commit = proc.stdout.read()
+    proc.wait()
+    if not re.findall(r'^satori-sign [A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$', commit, flags=re.MULTILINE):
+        print "-----------------------------"
+        print "You must sign branch", ref
+        print "Take a look at the `sign` tool in rules repo"
+        print "-----------------------------"
+        sys.exit(1)
