@@ -136,13 +136,23 @@ EOF
 }
 
 
+function add-compiled-plugins {
+    echo :: Add compiled plugins to rules repo $RULES_REPO
+    cp /tmp/go-github/swcollector $RULES_REPO/plugin
+
+    pushd $RULES_REPO >/dev/null
+    git add -A :/
+    git commit -a -m 'Add compiled plugins'
+    popd >/dev/null
+}
+
+
 function prepare-rules-repo
 {
     [ -d "$RULES_REPO" ] && return
 
     echo :: Preparing rules repo $RULES_REPO
     cp -rL ../satori-rules $RULES_REPO
-    cp /tmp/go-github/swcollector $RULES_REPO/plugin
     pushd $RULES_REPO >/dev/null
     rm -rf doc/images
     git init
@@ -447,6 +457,7 @@ elif [ "$1" = "-f" -a -f "$2" ]; then
     prepare-rules-repo
     setup-configs
     prepare-docker-images
+    add-compiled-plugins
     generate-basic-auth
     setup-bitbar-plugin
     setup-frontend-vars
@@ -469,6 +480,7 @@ elif [ "$1" = "" ]; then
     prepare-rules-repo
     setup-configs
     prepare-docker-images
+    add-compiled-plugins
     generate-basic-auth
     setup-bitbar-plugin
     setup-frontend-vars
