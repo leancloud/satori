@@ -5,7 +5,7 @@ ENV TERM xterm
 RUN rm -f /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN adduser ubuntu
 RUN [ -z "USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
-RUN apt-get update && apt-get install -y curl nginx fcgiwrap supervisor git python redis-server
+RUN apt-get update && apt-get install -y curl fcgiwrap supervisor git python redis-server
 
 WORKDIR /tmp
 RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/influxdb_1.7.5_amd64.deb -o influxdb-1.7.5.deb && \
