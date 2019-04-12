@@ -7,6 +7,7 @@ DOMAIN="satori.example.com"
 INTERNAL_DOMAIN="meh"
 RULES_REPO="/tmp/rules-repo"
 RULES_REPO_SSH="user@domain.com:repo"
+RESOLVERS=""
 USE_MIRROR=""
 
 DOCKER_MIRROR="https://registry.docker-cn.com"
@@ -127,7 +128,6 @@ services:
     restart: always
     volumes:
       - "$CONF_DIR:/conf"
-      - "/etc/letsencrypt:/ssl"
       - "$RULES_REPO:/satori-conf"
     ports:
       - "80:80"
@@ -186,11 +186,20 @@ function prepare-rules-repo
 
 function setup-configs
 {
-    [ -d "$CONF_DIR" ] && return
+    [ -d "$CONF_DIR/.configured" ] && return
 
     echo :: Setup configs in $CONF_DIR
-    sudo cp -r conf $CONF_DIR
-    sudo sed -i "s|SERVER_NAME_TO_REPLACE|$DOMAIN|g" $CONF_DIR/nginx/*.conf
+    if [ -z "$RESOLVERS" ]; then
+        echo "!! No resolvers available, please configure RESOLVERS"
+        exit 1
+    fi
+
+    sudo cp -rT conf $CONF_DIR
+    cat <<EOF | sudo bash -
+echo "server_name $DOMAIN;" > $CONF_DIR/nginx/name.conf
+echo "resolver $RESOLVERS;" > $CONF_DIR/nginx/resolver.conf
+EOF
+
 }
 
 
@@ -428,6 +437,16 @@ function ask-for-variables
         echo '!! Aborting.'
         exit 1
     fi
+
+    RESOLVERS="$(grep ^nameserver /etc/resolv.conf | grep -v '^nameserver  *127' | awk '{print $2}' | xargs)"
+    if [ -z "$RESOLVERS" ]; then
+        whiptail --title Satori --inputbox "Please provide comma separated DNS server IP address(es). Remove 'ipv6=off' if your network is IPv6 capable." 8 70 "223.5.5.5,119.29.29.29,ipv6=off" 2>/tmp/satori-setting
+        RESOLVERS=$(cat /tmp/satori-setting | sed 's/,/ /g')
+        if [ -z "$RESOLVERS" ]; then
+            echo '!! Aborting.'
+            exit 1
+        fi
+    fi
 }
 
 function init-influxdb
@@ -480,8 +499,8 @@ elif [ "$1" = "-f" -a -f "$2" ]; then
     ensure-docker-auto
     ensure-docker-compose-auto
     ensure-htpasswd-auto
-    prepare-rules-repo
     setup-configs
+    prepare-rules-repo
     setup-docker-mirror
     prepare-docker-images
     add-compiled-plugins
@@ -504,8 +523,8 @@ elif [ "$1" = "" ]; then
     detect-accidental-run
     ask-for-variables
 
-    prepare-rules-repo
     setup-configs
+    prepare-rules-repo
     setup-docker-mirror
     prepare-docker-images
     add-compiled-plugins
