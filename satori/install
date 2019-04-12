@@ -7,8 +7,9 @@ DOMAIN="satori.example.com"
 INTERNAL_DOMAIN="meh"
 RULES_REPO="/tmp/rules-repo"
 RULES_REPO_SSH="user@domain.com:repo"
+USE_MIRROR=""
 
-DOCKER_MIRROR="registry.docker-cn.com/library/"
+DOCKER_MIRROR="https://registry.docker-cn.com"
 
 set -e
 
@@ -34,7 +35,7 @@ function prepare-docker-images
     sudo docker run -it --rm \
         -v /tmp/go-github:/go/src/github.com \
         -v $PWD/..:/go/src/github.com/leancloud/satori \
-        ${USE_MIRROR}golang:stretch \
+        golang:stretch \
         /bin/sh -c '
         set -e
         for c in agent transfer master riemann-reloader swcollector; do
@@ -51,10 +52,13 @@ function prepare-docker-images
 
     echo :: - Generate docker-compose.yml
     cat <<EOF > docker-compose.yml
-version: '2'
+version: '3'
 services:
   master:
-    build: images/master
+    build:
+      context: images/master
+      args:
+        USE_MIRROR: $USE_MIRROR
     restart: always
     links: [redis]
     volumes:
@@ -64,7 +68,10 @@ services:
       - "6041:6041"
 
   transfer:
-    build: images/transfer
+    build:
+      context: images/transfer
+      args:
+        USE_MIRROR: $USE_MIRROR
     restart: always
     links: [influxdb, riemann]
     volumes:
@@ -73,7 +80,10 @@ services:
       - "8433:8433"
 
   alarm:
-    build: images/alarm
+    build:
+      context: images/alarm
+      args:
+        USE_MIRROR: $USE_MIRROR
     restart: always
     links: [redis]
     volumes:
@@ -81,26 +91,38 @@ services:
       - "$CONF_DIR:/conf"
 
   influxdb:
-    build: images/influxdb
+    build:
+      context: images/influxdb
+      args:
+        USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
       - "influxdb:/var/lib/influxdb"
 
   grafana:
-    build: images/grafana
+    build:
+      context: images/grafana
+      args:
+        USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
       - "$CONF_DIR:/conf"
       - "grafana:/var/lib/grafana"
 
   redis:
-    build: images/redis
+    build:
+      context: images/redis
+      args:
+        USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
       - "redis:/data"
 
   nginx:
-    build: images/nginx
+    build:
+      context: images/nginx
+      args:
+        USE_MIRROR: $USE_MIRROR
     links: [influxdb, grafana, alarm, master]
     restart: always
     volumes:
@@ -112,7 +134,10 @@ services:
       - "443:443"
 
   riemann:
-    build: images/riemann
+    build:
+      context: images/riemann
+      args:
+        USE_MIRROR: $USE_MIRROR
     links: [redis]
     restart: always
     volumes:
@@ -125,12 +150,6 @@ volumes:
   grafana: {}
   redis: {}
 EOF
-    echo :: - Generating Dockerfiles
-
-    for f in images/*/Dockerfile.tpl; do
-        sed "s|USE_MIRROR|$USE_MIRROR|g" $f > $(dirname $f)/Dockerfile
-    done
-
     echo :: - Build docker images
     sudo $(which docker-compose) build
 }
@@ -242,11 +261,7 @@ function ensure-docker
 {
     if ! which docker > /dev/null 2>&1; then
         if whiptail --title Satori --yesno "It seems that Docker is unavailable.\nDo you want to install Docker?" 8 60; then
-            if whiptail --title Satori --yesno "Do you want to install Docker from mirrors in mainland China?" 8 60; then
-                curl -sSL https://get.daocloud.io/docker | sh /dev/stdin --mirror Aliyun
-            else
-                curl -sSL https://get.docker.com/ | sh
-            fi
+            ensure-docker-auto
         else
             echo '!! Please install Docker.'
         fi
@@ -256,13 +271,9 @@ function ensure-docker
 
 function ensure-docker-compose
 {
-    local COMPOSE_MIRROR=github.com
     if ! which docker-compose > /dev/null 2>&1; then
         if whiptail --title Satori --yesno "It seems that Docker Compose is unavailable.\nDo you want to install Docker Compose?" 8 60; then
-            curl -L "https://mirrors.aliyun.com/docker-toolbox/linux/compose/1.21.2/docker-compose-Linux-x86_64" > /tmp/docker-compose
-            sudo cp /tmp/docker-compose /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-            echo ':: Docker Compose installed to /usr/local/bin/docker-compose'
+            ensure-docker-compose-auto
         else
             echo '!! Please install Docker Compose.'
         fi
@@ -274,16 +285,7 @@ function ensure-htpasswd
 {
     if ! which htpasswd > /dev/null 2>&1; then
         if whiptail --title Satori --yesno "It seems that htpasswd is unavaliable.\nDo you want to install relevant packages?" 8 60; then
-            if which apt-get > /dev/null 2>&1; then
-                sudo apt-get -y install apache2-utils
-                echo ':: apache2-utils installed'
-            elif which yum > /dev/null 2>&1; then
-                sudo yum install -y httpd-tools
-                echo ':: httpd-tools installed'
-            else
-                echo "!! Don't know how to install htpasswd. Sorry."
-                exit 1
-            fi
+            ensure-htpasswd-auto
         else
             echo '!! Installer requires htpasswd to function.'
         fi
@@ -295,7 +297,7 @@ function ensure-docker-auto
 {
     if ! which docker > /dev/null 2>&1; then
         if ! [ -z "$USE_MIRROR" ]; then
-            curl -sSL https://get.daocloud.io/docker | sh
+            curl -sSL https://get.daocloud.io/docker | sh /dev/stdin --mirror Aliyun
         else
             curl -sSL https://get.docker.com/ | sh
         fi
@@ -304,13 +306,13 @@ function ensure-docker-auto
 
 function ensure-docker-compose-auto
 {
-    local COMPOSE_MIRROR=github.com
     if ! which docker-compose > /dev/null 2>&1; then
         if ! [ -z "$USE_MIRROR" ]; then
-            COMPOSE_MIRROR="get.daocloud.io"
+            curl -L "https://mirrors.aliyun.com/docker-toolbox/linux/compose/1.21.2/docker-compose-$(uname -s)-$(uname -m)" -o /tmp/docker-compose
+        else
+            curl -L "https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m)" -o /tmp/docker-compose
         fi
-        curl -L "https://$COMPOSE_MIRROR/docker/compose/releases/download/1.8.1/docker-compose-$(uname -s)-$(uname -m)" > /tmp/docker-compose
-        sudo cp /tmp/docker-compose /usr/local/bin/docker-compose
+        sudo mv /tmp/docker-compose /usr/local/bin/docker-compose
         sudo chmod +x /usr/local/bin/docker-compose
         echo ':: Docker Compose installed to /usr/local/bin/docker-compose'
     fi
@@ -330,6 +332,36 @@ function ensure-htpasswd-auto
             exit 1
         fi
     fi
+}
+
+function setup-docker-mirror
+{
+    [ -z "$USE_MIRROR" ] && return
+    cat <<EOF | sudo python -
+import sys
+import json
+
+registry = "$DOCKER_MIRROR"
+
+try:
+    content = open('/etc/docker/daemon.json').read()
+except Exception:
+    content = '{}'
+
+v = json.loads(content)
+k = 'registry-mirrors'
+if k not in v:
+    v[k] = [registry]
+elif registry not in v[k]:
+    v[k].append(registry)
+else:
+    sys.exit(0)
+
+open('/etc/docker/daemon.json', 'w').write(json.dumps(v))
+EOF
+    sudo service docker reload
+
+    echo ":: $DOCKER_MIRROR added to Docker registry-mirrors"
 }
 
 function save-parameters
@@ -362,7 +394,7 @@ function ask-for-variables
 {
     USE_MIRROR=""
     if whiptail --title Satori --yesno "Do you want to use various mirrors from mainland China?\nThis will speed up installation process if your server resides in mainland China." 9 60; then
-        USE_MIRROR=$DOCKER_MIRROR
+        USE_MIRROR=1
     fi
 
     DOMAIN=""
@@ -445,17 +477,12 @@ elif [ "$1" = "-f" -a -f "$2" ]; then
     [ -z "$RULES_REPO" ] && echo "!! Missing conf RULES_REPO" && exit 1
     [ -z "$RULES_REPO_SSH" ] && echo "!! Missing conf RULES_REPO_SSH" && exit 1
 
-    if [ "$USE_MIRROR" = "1" ]; then
-        USE_MIRROR=$DOCKER_MIRROR
-    else
-        USE_MIRROR=""
-    fi
-
     ensure-docker-auto
     ensure-docker-compose-auto
     ensure-htpasswd-auto
     prepare-rules-repo
     setup-configs
+    setup-docker-mirror
     prepare-docker-images
     add-compiled-plugins
     generate-basic-auth
@@ -464,7 +491,7 @@ elif [ "$1" = "-f" -a -f "$2" ]; then
     generate-agent-config
     save-parameters
     if ! go-live; then
-        echo !! Something goes wrong when starting docker containers, continue anyway
+        echo !! Something goes wrong while starting docker containers, continuing anyway
     fi
     sleep 5
     init-influxdb
@@ -479,6 +506,7 @@ elif [ "$1" = "" ]; then
 
     prepare-rules-repo
     setup-configs
+    setup-docker-mirror
     prepare-docker-images
     add-compiled-plugins
     generate-basic-auth
@@ -487,7 +515,7 @@ elif [ "$1" = "" ]; then
     generate-agent-config
     save-parameters
     if ! go-live; then
-        echo !! Something goes wrong when starting docker containers, continue anyway
+        echo !! Something goes wrong while starting docker containers, continuing anyway
     fi
     sleep 5
     init-influxdb

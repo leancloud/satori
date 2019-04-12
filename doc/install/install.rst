@@ -47,7 +47,7 @@ build 出 docker image 并启动。这之后设置好DNS和防火墙就可以用
 
 .. code-block:: bash
 
-    USE_MIRROR=1  # 或者 0，是否使用国内的镜像
+    USE_MIRROR=1  # 或者留空，是否使用国内的镜像
     DOMAIN="www.example.com"  # 外网可以访问的域名
     INTERNAL_DOMAIN="satori01"  # 内网可以访问的域名
     RULES_REPO="/home/app/satori-conf"  # 规则仓库的地址
