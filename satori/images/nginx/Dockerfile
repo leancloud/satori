@@ -16,8 +16,11 @@ RUN apt-get install -y libpcre3-dev libssl-dev perl make build-essential zlib1g-
     cd openresty-* && \
     git clone --depth=1 https://github.com/stnoonan/spnego-http-auth-nginx-module && \
     ./configure \
+    --with-debug \
+    -j2 \
     --with-pcre-jit \
     `# --with-ipv6` \
+    --with-threads \
     --with-file-aio \
     --with-http_v2_module \
     --with-http_realip_module \
