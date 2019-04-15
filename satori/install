@@ -230,7 +230,9 @@ function setup-bitbar-plugin
     [ -z "$BASIC_AUTH_PASSWD" ] && return
 
     echo ":: Setup your BitBar plugin (which resides in your rules repo ${RULES_REPO})"
-    sed "s|YOUR_URL|satori:$BASIC_AUTH_PASSWD@$DOMAIN|g" ../alarm/bitbar-plugin.py > $RULES_REPO/bitbar-plugin.py
+    cp ../alarm/bitbar-plugin.py $RULES_REPO/bitbar-plugin.py
+    sed -i "s|CREDENTIAL|satori:$BASIC_AUTH_PASSWD|g" $RULES_REPO/bitbar-plugin.py
+    sed -i "s|DOMAIN|$DOMAIN|g" $RULES_REPO/bitbar-plugin.py
     pushd $RULES_REPO >/dev/null
     chmod +x bitbar-plugin.py
     git add bitbar-plugin.py
