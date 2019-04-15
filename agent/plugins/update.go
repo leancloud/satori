@@ -352,7 +352,7 @@ func ForceResetPlugin() error {
 	return nil
 }
 
-func TryUpdate() error {
+func TryUpdateAgent() error {
 	cfg := g.Config().Plugin
 	if cfg.Update == "" {
 		return nil

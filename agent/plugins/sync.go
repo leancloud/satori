@@ -16,10 +16,8 @@ func SyncConfig(pluginVer string, pluginDirs []string, plugins []model.PluginPar
 			log.Printf("Plugin version old[%s] != new[%s], update.", v, pluginVer)
 			err := UpdatePlugin(pluginVer)
 			if err == nil {
-				err := TryUpdate()
-				if debug {
-					log.Printf("TryUpdate: %s\n", err)
-				}
+				err := TryUpdateAgent()
+				log.Printf("TryUpdateAgent: %s\n", err)
 			}
 		}
 	}
