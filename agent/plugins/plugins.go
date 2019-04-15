@@ -247,7 +247,7 @@ var (
 
 // key: sys/ntp/60_ntp.py
 func getDirPlugins(relativePath string, L *[]*Plugin) {
-	if relativePath == "" || relativePath == "_metric" {
+	if relativePath == "" {
 		return
 	}
 
@@ -292,14 +292,14 @@ func getDirPlugins(relativePath string, L *[]*Plugin) {
 	}
 }
 
-func getMetricPlugins(metrics []model.PluginParam, L *[]*Plugin) {
+func getPlugins(plugins []model.PluginParam, L *[]*Plugin) {
 	type Group struct {
 		Metric string
 		Step   int
 	}
 
 	g := make(map[Group][]model.PluginParam)
-	for _, p := range metrics {
+	for _, p := range plugins {
 		var metric string
 		step := -1
 
@@ -325,21 +325,21 @@ func getMetricPlugins(metrics []model.PluginParam, L *[]*Plugin) {
 
 	for k, v := range g {
 		*L = append(*L, &Plugin{
-			FilePath: filepath.Join("_metric", k.Metric),
+			FilePath: k.Metric,
 			Step:     k.Step,
 			Params:   v,
 		})
 	}
 }
 
-func RunPlugins(dirs []string, metrics []model.PluginParam) {
+func RunPlugins(dirs []string, plugins []model.PluginParam) {
 	L := make([]*Plugin, 0)
 
 	for _, d := range dirs {
 		getDirPlugins(d, &L)
 	}
 
-	getMetricPlugins(metrics, &L)
+	getPlugins(plugins, &L)
 
 	debug := g.Config().Debug
 	if debug {
