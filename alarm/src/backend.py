@@ -25,8 +25,6 @@ def scrape_backends(path):
     if path not in sys.path:
         sys.path.append(path)
 
-    print(sys.path)
-
     BACKENDS.clear()
 
     for dirpath, dirnames, filenames in os.walk(os.path.join(path, 'backends')):

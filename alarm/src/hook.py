@@ -25,7 +25,6 @@ def scrape_hooks(path):
 
     for dirpath, dirnames, filenames in os.walk(os.path.join(path, 'hooks')):
         for fn in filenames:
-            print(fn)
             if not fn.endswith('.py'):
                 continue
 
