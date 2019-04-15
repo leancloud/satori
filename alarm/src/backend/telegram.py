@@ -58,13 +58,12 @@ class TelegramBackend(Backend):
             if not chat_id:
                 continue
 
-            msg = u'{} **[P{}]**\n{}\n'.format(
-                u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
-                event['level'],
-                event['title'],
-            ) + event['text']
+            msg = u'{icon} <b>[P{level}]</b> {title}\n<pre>{text}</pre>\n'.format(
+                icon=u'😱' if event['status'] in ('PROBLEM', 'EVENT') else u'😅',
+                **event
+            )
 
             self.updater.bot.send_message(
                 chat_id, text=msg,
-                parse_mode=telegram.ParseMode.MARKDOWN
+                parse_mode=telegram.ParseMode.HTML
             )
