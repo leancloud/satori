@@ -164,6 +164,7 @@ func ensureGitRepo(path string, remote string) error {
 
 	if !file.IsExist(path) {
 		log.Println("Plugin repo does not exist, creating one")
+
 		buf.Reset()
 		cmd := exec.Command("git", "init", path)
 		cmd.Stdout = &buf
@@ -179,6 +180,16 @@ func ensureGitRepo(path string, remote string) error {
 		cmd.Stdout = &buf
 		cmd.Stderr = &buf
 		err = cmd.Run()
+		if err != nil {
+			os.RemoveAll(path)
+			return fmt.Errorf("Can't set repo remote, aborting: %s", err)
+		}
+	} else {
+		buf.Reset()
+		cmd := exec.Command("git", "remote", "set-url", "origin", path)
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
+		err := cmd.Run()
 		if err != nil {
 			os.RemoveAll(path)
 			return fmt.Errorf("Can't set repo remote, aborting: %s", err)
