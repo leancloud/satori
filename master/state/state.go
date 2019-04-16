@@ -28,7 +28,7 @@ type PluginDirInfo struct {
 type PluginInfo struct {
 	// type = plugin
 	Hostname string              `json:"hostname"`
-	Params   []model.PluginParam `json:"metrics"`
+	Params   []model.PluginParam `json:"plugins"`
 }
 
 type PluginVersionInfo struct {

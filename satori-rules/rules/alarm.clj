@@ -9,6 +9,7 @@
         [clojure.walk :only [postwalk macroexpand-all]]
         [riemann.common :only [event]]
         [riemann.time :only [unix-time]])
+
   (:import riemann.codec.Event))
 
 (defn- evid [ev outstanding-tags m]

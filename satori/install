@@ -39,7 +39,7 @@ function prepare-docker-images
         golang:stretch \
         /bin/sh -c '
         set -e
-        for c in agent transfer master riemann-reloader swcollector; do
+        for c in agent transfer master swcollector; do
             echo :: - - Building $c...
             go build -o /go/src/github.com/$c github.com/leancloud/satori/$c &
         done
@@ -48,7 +48,6 @@ function prepare-docker-images
     mkdir -p ./images/{transfer,master,riemann}/.build
     cp /tmp/go-github/transfer images/transfer/.build
     cp /tmp/go-github/master images/master/.build
-    cp /tmp/go-github/riemann-reloader images/riemann/.build
     cp /tmp/go-github/agent ../satori-agent
 
     echo :: - Generate docker-compose.yml

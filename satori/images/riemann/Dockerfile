@@ -12,5 +12,4 @@ WORKDIR /tmp
 EXPOSE 5555
 ADD app /app
 ADD http://lc-qjnlgvra.cn-n1.lcfile.com/riemann-0.3.1-satori-standalone.jar /app/riemann.jar
-ADD .build/riemann-reloader /app/riemann-reloader
-CMD ["/usr/bin/supervisord","-n","-c","/app/supervisord.conf"]
+CMD ["/app/bootstrap.sh"]
