@@ -116,7 +116,7 @@ services:
         USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
-      - "redis:/data"
+      - "redis:/var/lib/redis"
 
   nginx:
     build:
