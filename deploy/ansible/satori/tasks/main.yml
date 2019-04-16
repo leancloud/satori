@@ -1,0 +1,49 @@
+- name: Satori systemd conf
+  copy:
+    dest: /etc/systemd/system/satori.service
+    content: |
+      [Unit]
+      Description=Satori Monitoring Agent
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=root
+      Group=root
+      ExecStart=/usr/bin/satori-agent -c /etc/satori.yaml
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Check if Satori binary exists
+  stat:
+    path: /usr/bin/satori-agent
+  register: st
+
+- name: Install Satori binary
+  get_url:
+    url: http://lc-d05jitme.cn-n1.lcfile.com/cd2cac58f1a62b01b7d8/satori-agent
+    dest: /usr/bin/satori-agent
+    mode: 0755
+    owner: root
+    group: root
+  when: not st.stat.exists
+
+- name: Install Satori config
+  template:
+    src: satori.yaml.j2
+    dest: /etc/satori.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable Satori service
+  service:
+    name: satori
+    enabled: true
+    daemon_reload: yes
+
+- name: Start Satori
+  systemd:
+    name: satori
+    state: started
