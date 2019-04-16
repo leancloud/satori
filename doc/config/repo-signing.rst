@@ -81,7 +81,7 @@ agent 按照配置了 ``signingKey`` 的新配置启动后，就会在每次更�
 阻止未签名的 push
 -----------------
 
-开启了签名机制后会经常忘了先签名再 push，所以在 :file:`misc/rules-repo-pre-receive-hook`
+开启了签名机制后会经常忘了先签名再 push，所以在 :file:`deploy/rules-repo-pre-receive-hook`
 提供了一个 git hook，将这个文件复制到 :file:`/path/to/rules-repo-on-server/.git/hooks/pre-receive`
 并且加上可执行权限，git 就会阻挡没有签名的 push。
 
