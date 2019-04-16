@@ -66,7 +66,7 @@ if alarms:
             t = ''
 
         if USE_SPNEGO:
-            print(u'{icon}{a[title]}{t} | bash=/usr/bin/curl param1=-u param2=: param3=--negotiate param4=-XPOST param5={base}/alarm/alarms/{a[id]}/toggle-ack terminal=false refresh=true'.format(
+            print(u'{icon}{a[title]}{t} | bash=/usr/bin/curl param1=-u param2=":" param3=--negotiate param4=-XPOST param5={base}/alarm/alarms/{a[id]}/toggle-ack terminal=false refresh=true'.format(
                 icon=ICONS.get(a['status'], "❌"),
                 a=a, t=t, base=BASEURL,
             ))
