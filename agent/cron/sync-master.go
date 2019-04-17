@@ -1,7 +1,6 @@
 package cron
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/rpc"
@@ -93,10 +92,7 @@ func SyncWithMaster() {
 	)
 
 	for {
-		hostname, err := g.Hostname()
-		if err != nil {
-			hostname = fmt.Sprintf("error:%s", err.Error())
-		}
+		hostname := g.Hostname()
 
 		ver, err := plugins.GetCurrentPluginVersion()
 		if err != nil {

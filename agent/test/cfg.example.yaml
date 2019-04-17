@@ -4,6 +4,9 @@ debug: false
 # Set hostname. satori-agent will use machine hostname
 # if this is empty or omitted. Defaults to empty.
 hostname: ''
+# Use FQDN(Fully Qualified Domain Name) instead of short hostname,
+# Has no effect if hostname is manually set.
+fqdn: false
 # Do not report builtin metrics provided by satori-agent binary.
 # Useful in container environment.
 # Defaults to false

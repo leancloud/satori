@@ -23,7 +23,7 @@ func filterMetrics(metrics []*model.MetricValue) []*model.MetricValue {
 	addTags := cfg.AddTags
 	ignore := cfg.Ignore
 	debug := cfg.Debug
-	hostname, _ := Hostname()
+	hostname := Hostname()
 
 	filtered := make([]*model.MetricValue, 0)
 

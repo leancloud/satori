@@ -26,7 +26,8 @@ package g
 // 7.0.18: 修复了新部署的 agent 无法找到 authorized_keys 的问题
 // 7.0.19: TcpExt 的收集转移到了插件中
 // 8.0.0: `plugin-metric` 改名 `plugin`
+// 8.0.1: 支持获取 FQDN
 
 const (
-	VERSION = "8.0.0"
+	VERSION = "8.0.1"
 )

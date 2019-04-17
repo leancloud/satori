@@ -79,7 +79,7 @@ func (p *Plugin) Run() {
 }
 
 func (p *Plugin) reportFailure(subject string, desc string) {
-	hostname, _ := g.Hostname()
+	hostname := g.Hostname()
 	now := time.Now().Unix()
 	m := []*model.MetricValue{
 		&model.MetricValue{

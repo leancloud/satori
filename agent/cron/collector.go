@@ -33,10 +33,7 @@ func collect(sec int64, fns []func() []*model.MetricValue) {
 	for {
 		<-t
 
-		hostname, err := g.Hostname()
-		if err != nil {
-			continue
-		}
+		hostname := g.Hostname()
 
 		mvs := []*model.MetricValue{}
 		debug := g.Config().Debug

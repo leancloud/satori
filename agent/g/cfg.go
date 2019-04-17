@@ -2,18 +2,21 @@ package g
 
 import (
 	"log"
+	"net"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/toolkits/file"
-	"github.com/toolkits/net"
+	tknet "github.com/toolkits/net"
 	"gopkg.in/yaml.v2"
 )
 
 type GlobalConfig struct {
 	Debug     bool     `yaml:"debug"`
 	Hostname  string   `yaml:"hostname"`
+	FQDN      bool     `yaml:"fqdn"`
 	IP        string   `yaml:"ip"`
 	Master    string   `yaml:"master"`
 	Transfer  []string `yaml:"transfer"`
@@ -51,6 +54,8 @@ var (
 	ConfigFile string
 	config     *GlobalConfig
 	lock       = new(sync.RWMutex)
+
+	hostnameCache string
 )
 
 func Config() *GlobalConfig {
@@ -59,17 +64,42 @@ func Config() *GlobalConfig {
 	return config
 }
 
-func Hostname() (string, error) {
+func toFQDN(ip string) string {
+	var err error
+	hosts, err := net.LookupAddr(ip)
+	if err != nil || len(hosts) == 0 {
+		return ""
+	}
+	fqdn := hosts[0]
+	return strings.TrimSuffix(fqdn, ".") // return fqdn without trailing dot
+}
+
+func Hostname() string {
+	if hostnameCache != "" {
+		return hostnameCache
+	}
+
 	hostname := Config().Hostname
 	if hostname != "" {
-		return hostname, nil
+		hostnameCache = hostname
+		return hostname
 	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Println("ERROR: os.Hostname() fail", err)
+		panic("ERROR: os.Hostname() fail")
 	}
-	return hostname, err
+
+	hostnameCache = hostname
+
+	if Config().FQDN {
+		if fqdn := toFQDN(IP()); fqdn != "" {
+			hostnameCache = fqdn
+			return fqdn
+		}
+	}
+
+	return hostname
 }
 
 func IP() string {
@@ -79,7 +109,7 @@ func IP() string {
 		return ip
 	}
 
-	ips, err := net.IntranetIP()
+	ips, err := tknet.IntranetIP()
 	if err != nil {
 		log.Fatalln("get intranet ip fail:", err)
 	}
