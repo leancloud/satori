@@ -55,6 +55,7 @@ var State = MasterState{
 }
 
 func Start() {
+	go notifyRestart()
 	go receiveAgentStates()
 	go purgeStaleNodes()
 }
