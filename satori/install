@@ -30,7 +30,7 @@ function prepare-docker-images
     echo :: - Copy frontend to build dir
     rm -rf images/nginx/.build
     mkdir -p images/nginx/.build
-    cp -r ../frontend images/nginx/.build
+    cp -a ../frontend images/nginx/.build
 
     echo :: - Build golang executables
     sudo docker run -it --rm \
