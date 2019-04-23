@@ -245,6 +245,7 @@ def send_alarm(ev):
                 continue
 
             ev1, _ = rst
+            log.debug('Sending alarm via backend %s', p.__class__.__name__)
             gevent.spawn(p.send, ev1)
         except Exception:
             log.exception('Error sending alarm')

@@ -54,6 +54,8 @@ def scrape_hooks(path):
 
 
 def call_hooks(ev_type, arg):
+    log.debug('Calling `%s` hooks for %s', ev_type, arg)
+
     for hook in HOOKS:
         arg = hook.call(ev_type, arg)
 
