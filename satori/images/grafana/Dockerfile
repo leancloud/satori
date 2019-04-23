@@ -9,9 +9,9 @@ RUN [ -z "$USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyu
 RUN apt-get update && apt-get install -y curl fcgiwrap supervisor git python redis-server
 
 WORKDIR /tmp
-RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/grafana_6.0.2_amd64.deb -o grafana-6.0.2.deb && \
-    dpkg -i grafana-6.0.2.deb && \
-    rm grafana-6.0.2.deb
+RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/eaeee7653f6feb6c23cf/grafana_6.1.4_amd64.deb -o grafana-6.1.4.deb && \
+    dpkg -i grafana-6.1.4.deb && \
+    rm grafana-6.1.4.deb
 
 EXPOSE 3000
 WORKDIR /usr/share/grafana
