@@ -9,9 +9,10 @@ RUN [ -z "$USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyu
 RUN apt-get update && apt-get install -y curl fcgiwrap supervisor git python redis-server
 
 WORKDIR /tmp
-RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/influxdb_1.7.5_amd64.deb -o influxdb-1.7.5.deb && \
-    dpkg -i influxdb-1.7.5.deb && \
-    rm influxdb-1.7.5.deb
+
+RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/daedceb139b819f21ef8/influxdb_1.6.3_amd64.deb -o influxdb-1.6.3.deb && \
+    dpkg -i influxdb-1.6.3.deb && \
+    rm influxdb-1.6.3.deb
 
 # Admin server WebUI
 EXPOSE 8083
