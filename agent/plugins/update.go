@@ -186,7 +186,8 @@ func ensureGitRepo(path string, remote string) error {
 		}
 	} else {
 		buf.Reset()
-		cmd := exec.Command("git", "remote", "set-url", "origin", path)
+		cmd := exec.Command("git", "remote", "set-url", "origin", remote)
+		cmd.Dir = path
 		cmd.Stdout = &buf
 		cmd.Stderr = &buf
 		err := cmd.Run()
