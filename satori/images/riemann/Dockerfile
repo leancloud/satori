@@ -11,5 +11,5 @@ RUN apt-get update && apt-get install -y curl fcgiwrap supervisor git python red
 WORKDIR /tmp
 EXPOSE 5555
 ADD app /app
-ADD http://lc-qjnlgvra.cn-n1.lcfile.com/riemann-0.3.1-satori-standalone.jar /app/riemann.jar
+RUN curl http://lc-qjnlgvra.cn-n1.lcfile.com/riemann-0.3.1-satori-standalone.jar -o /app/riemann.jar
 CMD ["/app/bootstrap.sh"]
