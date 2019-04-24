@@ -182,7 +182,7 @@ func ensureGitRepo(path string, remote string) error {
 		err = cmd.Run()
 		if err != nil {
 			os.RemoveAll(path)
-			return fmt.Errorf("Can't set repo remote, aborting: %s", err)
+			return fmt.Errorf("Can't add repo remote, aborting: %s\n%s", err, buf.String())
 		}
 	} else {
 		buf.Reset()
@@ -192,7 +192,7 @@ func ensureGitRepo(path string, remote string) error {
 		err := cmd.Run()
 		if err != nil {
 			os.RemoveAll(path)
-			return fmt.Errorf("Can't set repo remote, aborting: %s", err)
+			return fmt.Errorf("Can't set repo remote, aborting: %s\n%s", err, buf.String())
 		}
 	}
 
