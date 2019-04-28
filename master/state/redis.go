@@ -56,9 +56,10 @@ func receiveAgentStates() {
 			case error:
 				log.Printf("pubsub error: %v\n", n)
 				time.Sleep(time.Second)
-				break
+				goto bail_out
 			}
 		}
+	bail_out:
 	}
 }
 
