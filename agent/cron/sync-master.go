@@ -40,7 +40,6 @@ func (this HeartbeatClient) Call(req interface{}) (interface{}, error) {
 	var resp model.AgentHeartbeatResponse
 	err := this.cli.Call("Agent.Heartbeat", req, &resp)
 	if err != nil {
-		log.Println("call Agent.Heartbeat fail:", err, "Request:", req, "Response:", resp)
 		return nil, err
 	}
 	return resp, nil
@@ -110,8 +109,8 @@ func SyncWithMaster() {
 		var resp model.AgentHeartbeatResponse
 		r, err := cli.Call(req)
 		if err != nil {
-			log.Println("call Agent.Heartbeat fail:", err, "Request:", req, "Response:", resp)
-			time.Sleep(interval * 3)
+			log.Println("call Agent.Heartbeat fail:", err, "Request:", req)
+			time.Sleep(10 * time.Second)
 			continue
 		}
 
