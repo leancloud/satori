@@ -27,7 +27,8 @@ package g
 // 7.0.19: TcpExt 的收集转移到了插件中
 // 8.0.0: `plugin-metric` 改名 `plugin`
 // 8.0.1: 支持获取 FQDN
+// 8.0.2: Mem 指标微调
 
 const (
-	VERSION = "8.0.1"
+	VERSION = "8.0.2"
 )
