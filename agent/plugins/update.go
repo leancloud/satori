@@ -34,7 +34,6 @@ func reportFailure(subject string, desc string) {
 			Endpoint:  hostname,
 			Metric:    ".satori.agent.plugin." + subject,
 			Value:     1,
-			Step:      1,
 			Timestamp: now,
 			Tags:      map[string]string{},
 			Desc:      desc,

@@ -33,11 +33,6 @@ func RecvMetricValues(args []*cmodel.MetricValue, reply *cmodel.TransferResponse
 			continue
 		}
 
-		if v.Step <= 0 {
-			reply.Invalid += 1
-			continue
-		}
-
 		if len(v.Metric)+len(v.Tags) > 510 {
 			reply.Invalid += 1
 			continue

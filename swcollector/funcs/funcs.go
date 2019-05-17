@@ -37,14 +37,10 @@ func doCollect(ch chan *model.MetricValue) {
 
 func doOutput(ch chan *model.MetricValue) {
 	emptyTags := map[string]string{}
-	interval := config.Config().Interval
 
 	cook := func(m *model.MetricValue) *model.MetricValue {
 		if m.Tags == nil {
 			m.Tags = emptyTags
-		}
-		if m.Step == 0 {
-			m.Step = interval
 		}
 		return m
 	}

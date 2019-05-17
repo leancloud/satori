@@ -144,7 +144,6 @@ func (this *RiemannBackend) Send(items []*cmodel.MetricValue) {
 			Time:        item.Timestamp,
 			Description: item.Desc,
 			Tags:        nil,
-			Ttl:         float32(item.Step),
 			Attributes:  make(map[string]string),
 		}
 

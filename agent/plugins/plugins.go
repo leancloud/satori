@@ -86,7 +86,6 @@ func (p *Plugin) reportFailure(subject string, desc string) {
 			Endpoint:  hostname,
 			Metric:    ".satori.agent.plugin." + subject,
 			Value:     1,
-			Step:      1,
 			Timestamp: now,
 			Tags: map[string]string{
 				"file": p.FilePath,
@@ -188,7 +187,7 @@ func (p *Plugin) terminateCommand() {
 func (p *Plugin) makeTimeoutChan() <-chan time.Time {
 	if p.Step > 0 {
 		// Periodically called plugin
-		t := p.Step*1000 - 500
+		t := p.Step*1000 - 100
 		return time.After(time.Duration(t) * time.Millisecond)
 	}
 

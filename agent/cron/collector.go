@@ -56,7 +56,6 @@ func collect(sec int64, fns []func() []*model.MetricValue) {
 
 		now := time.Now().Unix()
 		for j := 0; j < len(mvs); j++ {
-			mvs[j].Step = sec
 			mvs[j].Endpoint = hostname
 			mvs[j].Timestamp = now
 		}
