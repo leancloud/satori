@@ -41,6 +41,7 @@ type Plugin struct {
 	Params   []model.PluginParam
 
 	proc       *exec.Cmd
+	pipeLock   sync.Mutex
 	stdout     *bufio.Reader
 	stdoutPipe io.ReadCloser
 	stderr     *bufio.Reader
@@ -96,15 +97,27 @@ func (p *Plugin) reportFailure(subject string, desc string) {
 	g.SendToTransfer(m)
 }
 
-func (p *Plugin) setupPipes() {
-	p.stdoutPipe, _ = p.proc.StdoutPipe()
+func (p *Plugin) setupPipes() error {
+	var err error
+	p.pipeLock.Lock()
+	defer p.pipeLock.Unlock()
+	if p.stdoutPipe, err = p.proc.StdoutPipe(); err != nil {
+		return err
+	}
+	if p.stderrPipe, err = p.proc.StderrPipe(); err != nil {
+		_ = p.stdoutPipe.Close()
+		p.stdoutPipe = nil
+		return err
+	}
 	p.stdout = bufio.NewReader(p.stdoutPipe)
-	p.stderrPipe, _ = p.proc.StderrPipe()
 	p.stderr = bufio.NewReader(p.stderrPipe)
 	p.finished = make(chan struct{})
+	return nil
 }
 
 func (p *Plugin) teardownPipes() {
+	p.pipeLock.Lock()
+	defer p.pipeLock.Unlock()
 	if p.stdout != nil {
 		_ = p.stdoutPipe.Close()
 		p.stdoutPipe = nil
@@ -203,7 +216,11 @@ func (p *Plugin) RunOnce() {
 		p.reportFailure("error", err.Error())
 		return
 	}
-	p.setupPipes()
+	if err := p.setupPipes(); err != nil {
+		log.Printf("Can't start plugin %s process: %s\n", p.FilePath, err)
+		p.reportFailure("error", err.Error())
+		return
+	}
 	if err := p.proc.Start(); err != nil {
 		log.Printf("Can't start plugin %s process: %s\n", p.FilePath, err)
 		p.reportFailure("error", err.Error())
