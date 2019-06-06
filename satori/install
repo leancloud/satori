@@ -10,7 +10,7 @@ RULES_REPO_SSH="user@domain.com:repo"
 RESOLVERS=""
 USE_MIRROR=""
 
-DOCKER_MIRROR="https://registry.docker-cn.com"
+DOCKER_MIRROR="https://hub-mirror.c.163.com"
 
 set -e
 
@@ -373,7 +373,7 @@ else:
 
 open('/etc/docker/daemon.json', 'w').write(json.dumps(v))
 EOF
-    sudo service docker reload
+    sudo systemctl reload docker || true
 
     echo ":: $DOCKER_MIRROR added to Docker registry-mirrors"
 }
