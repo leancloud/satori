@@ -34,21 +34,23 @@ function prepare-docker-images
 
     echo :: - Build golang executables
     sudo docker run -it --rm \
-        -v /tmp/go-github:/go/src/github.com \
-        -v $PWD/..:/go/src/github.com/leancloud/satori \
-        golang:stretch \
+        -v /tmp/go-build:/build \
+        -v $PWD/..:/src \
+        golang:1.12.5-stretch \
         /bin/sh -c '
-        set -e
-        for c in agent transfer master swcollector; do
-            echo :: - - Building $c...
-            go build -o /go/src/github.com/$c github.com/leancloud/satori/$c &
-        done
-        wait'
+            set -e
+            cd /src
+            for c in agent transfer master swcollector; do
+                echo :: - - Building $c...
+                go build -o /build/$c github.com/leancloud/satori/$c &
+            done
+            wait
+        '
 
     mkdir -p ./images/{transfer,master,riemann}/.build
-    cp /tmp/go-github/transfer images/transfer/.build
-    cp /tmp/go-github/master images/master/.build
-    cp /tmp/go-github/agent ../satori-agent
+    cp /tmp/go-build/transfer images/transfer/.build
+    cp /tmp/go-build/master images/master/.build
+    cp /tmp/go-build/agent ../satori-agent
 
     echo :: - Generate docker-compose.yml
     cat <<EOF > docker-compose.yml
