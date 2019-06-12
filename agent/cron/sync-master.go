@@ -61,6 +61,11 @@ func heartbeatConnect(name string, p *cpool.ConnPool) (cpool.PoolClient, error) 
 }
 
 func SyncWithMaster() {
+	defer func() {
+		if r := recover(); r != nil {
+			g.LastMessage("cron.SyncWithMaster")
+		}
+	}()
 	debug := g.Config().Debug
 	s := g.Config().Master
 	if s == "" {

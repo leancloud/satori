@@ -93,6 +93,11 @@ func sendMetrics() {
 }
 
 func SendToTransferProc() {
+	defer func() {
+		if r := recover(); r != nil {
+			LastMessage("cron.SendToTransferProc")
+		}
+	}()
 	rand.Seed(time.Now().UnixNano())
 	cfg := Config().Transfer
 	for _, s := range cfg {
@@ -140,4 +145,24 @@ func SendToTransfer(metrics []*model.MetricValue) {
 	defer metricsBufferLock.Unlock()
 
 	metricsBuffer = append(metricsBuffer, metrics...)
+}
+
+func ReportFailure(metric string, desc string, tags map[string]string) {
+	hostname := Hostname()
+	now := time.Now().Unix()
+	if tags == nil {
+		tags = map[string]string{}
+	}
+
+	m := []*model.MetricValue{
+		&model.MetricValue{
+			Endpoint:  hostname,
+			Metric:    metric,
+			Value:     1,
+			Timestamp: now,
+			Tags:      tags,
+			Desc:      desc,
+		},
+	}
+	SendToTransfer(m)
 }

@@ -42,7 +42,7 @@ function prepare-docker-images
             cd /src
             for c in agent transfer master swcollector; do
                 echo :: - - Building $c...
-                go build -o /build/$c github.com/leancloud/satori/$c &
+                go build -mod=vendor -o /build/$c github.com/leancloud/satori/$c &
             done
             wait
         '

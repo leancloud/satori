@@ -22,24 +22,11 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/leancloud/satori/agent/g"
-	"github.com/leancloud/satori/common/model"
 	"github.com/toolkits/file"
 )
 
 func reportFailure(subject string, desc string) {
-	hostname := g.Hostname()
-	now := time.Now().Unix()
-	m := []*model.MetricValue{
-		&model.MetricValue{
-			Endpoint:  hostname,
-			Metric:    ".satori.agent.plugin." + subject,
-			Value:     1,
-			Timestamp: now,
-			Tags:      map[string]string{},
-			Desc:      desc,
-		},
-	}
-	g.SendToTransfer(m)
+	g.ReportFailure(".satori.agent.plugin."+subject, desc, nil)
 }
 
 func GetCurrentPluginVersion() (string, error) {

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/leancloud/satori/agent/cgroups"
@@ -14,9 +15,8 @@ import (
 
 func main() {
 
-	cfg := flag.String("c", "cfg.json", "configuration file")
+	cfg := flag.String("c", "agent-cfg.yaml", "configuration file")
 	version := flag.Bool("v", false, "show version")
-	check := flag.Bool("check", false, "check collector")
 
 	flag.Parse()
 
@@ -25,19 +25,19 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *check {
-		funcs.CheckCollector()
-		os.Exit(0)
-	}
-
 	g.ParseConfig(*cfg)
-
 	funcs.BuildMappers()
+
+	defer func() {
+		if r := recover(); r != nil {
+			g.LastMessage("main")
+		}
+	}()
 
 	cg := g.Config().Cgroups
 	if cg != nil {
 		if err := cgroups.JailMe("satori", cg.CPU, cg.Memory); err != nil {
-			fmt.Println("Can't setup cgroups:", err)
+			log.Println("Can't setup cgroups:", err)
 			if cg.Enforce {
 				panic(err)
 			}
@@ -48,6 +48,7 @@ func main() {
 	go cron.StartCollect()
 	go g.SendToTransferProc()
 	go http.Start()
+	go g.ReportLastMessage()
 
 	select {}
 }

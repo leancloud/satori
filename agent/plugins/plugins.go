@@ -80,21 +80,7 @@ func (p *Plugin) Run() {
 }
 
 func (p *Plugin) reportFailure(subject string, desc string) {
-	hostname := g.Hostname()
-	now := time.Now().Unix()
-	m := []*model.MetricValue{
-		&model.MetricValue{
-			Endpoint:  hostname,
-			Metric:    ".satori.agent.plugin." + subject,
-			Value:     1,
-			Timestamp: now,
-			Tags: map[string]string{
-				"file": p.FilePath,
-			},
-			Desc: desc,
-		},
-	}
-	g.SendToTransfer(m)
+	g.ReportFailure(".satori.agent.plugin."+subject, desc, map[string]string{"file": p.FilePath})
 }
 
 func (p *Plugin) setupPipes() error {
