@@ -139,7 +139,7 @@ class AlarmDFA(object):
 
     def tick(self):
         with self.lock:
-            for k, v in list(self.alarms.iteritems()):
+            for k, v in list(self.alarms.items()):
                 if v['status'] in self.ticking_states:
                     self.transit(id=k, action='TICK')
 

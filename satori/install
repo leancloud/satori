@@ -59,8 +59,6 @@ services:
   master:
     build:
       context: images/master
-      args:
-        USE_MIRROR: $USE_MIRROR
     restart: always
     links: [redis]
     volumes:
@@ -72,8 +70,6 @@ services:
   transfer:
     build:
       context: images/transfer
-      args:
-        USE_MIRROR: $USE_MIRROR
     restart: always
     links: [influxdb, riemann]
     volumes:
@@ -84,8 +80,6 @@ services:
   alarm:
     build:
       context: images/alarm
-      args:
-        USE_MIRROR: $USE_MIRROR
     restart: always
     links: [redis]
     volumes:
@@ -95,8 +89,6 @@ services:
   influxdb:
     build:
       context: images/influxdb
-      args:
-        USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
       - "influxdb:/var/lib/influxdb"
@@ -104,8 +96,6 @@ services:
   grafana:
     build:
       context: images/grafana
-      args:
-        USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
       - "$CONF_DIR:/conf"
@@ -114,8 +104,6 @@ services:
   redis:
     build:
       context: images/redis
-      args:
-        USE_MIRROR: $USE_MIRROR
     restart: always
     volumes:
       - "redis:/var/lib/redis"
@@ -123,8 +111,6 @@ services:
   nginx:
     build:
       context: images/nginx
-      args:
-        USE_MIRROR: $USE_MIRROR
     links: [influxdb, grafana, alarm, master]
     restart: always
     volumes:
@@ -137,8 +123,6 @@ services:
   riemann:
     build:
       context: images/riemann
-      args:
-        USE_MIRROR: $USE_MIRROR
     links: [redis]
     restart: always
     volumes:
@@ -151,14 +135,16 @@ volumes:
   grafana: {}
   redis: {}
 EOF
-    echo :: - Build docker images
+    echo :: - Build base docker image
+    (cd images/base; sudo docker build --build-arg USE_MIRROR=$USE_MIRROR -t satori:base .)
+    echo :: - Build app docker images
     sudo $(which docker-compose) build
 }
 
 
 function add-compiled-plugins {
     echo :: Add compiled plugins to rules repo $RULES_REPO
-    cp /tmp/go-github/swcollector $RULES_REPO/plugin
+    cp /tmp/go-build/swcollector $RULES_REPO/plugin
 
     pushd $RULES_REPO >/dev/null
     git add -A :/

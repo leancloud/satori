@@ -1,3 +1,4 @@
+# 来个中文
 host: 0.0.0.0
 port: 6060
 redis: 'redis://localhost:6379/0'

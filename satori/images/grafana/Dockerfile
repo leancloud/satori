@@ -1,12 +1,4 @@
-FROM openjdk:8-slim
-MAINTAINER feisuzhu@163.com
-ARG USE_MIRROR
-
-ENV TERM xterm
-RUN rm -f /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-RUN adduser ubuntu
-RUN [ -z "$USE_MIRROR" ] || sed -E -i 's/(deb|security).debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
-RUN apt-get update && apt-get install -y curl fcgiwrap supervisor git python redis-server
+FROM satori:base
 
 WORKDIR /tmp
 RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/eaeee7653f6feb6c23cf/grafana_6.1.4_amd64.deb -o grafana-6.1.4.deb && \
