@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "alarm"
+version = "0.1.0"
+description = ""
+authors = ["Proton <feisuzhu@163.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+flask = "^1.0"
+gevent = "^1.4"
+redis = "^3.2"
+pyaml = "^19.4"
+requests = "^2.22"
+raven = "^6.10"
+python-telegram-bot = "^11.1"
+nexmo = "^2.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^4.6"
+httmock = "^1.3"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

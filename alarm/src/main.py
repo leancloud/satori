@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- stdlib --
 import copy
@@ -27,9 +26,9 @@ log = logging.getLogger('main')
 def cook_event(ev):
     ev.pop('version', '')
     required = {
-        u'id', u'time', u'level', u'status', u'endpoint',
-        u'metric', u'tags', u'note', u'expected', u'actual',
-        u'groups',
+        'id', 'time', 'level', 'status', 'endpoint',
+        'metric', 'tags', 'note', 'expected', 'actual',
+        'groups',
     }
 
     missing = required - (required & set(ev.keys()))
@@ -39,23 +38,23 @@ def cook_event(ev):
 
     ts = datetime.datetime. \
         fromtimestamp(ev['time']). \
-        strftime("%Y-%m-%d %H:%M:%S").decode('utf-8')
+        strftime("%Y-%m-%d %H:%M:%S")
 
     final = [
-        (u"Time", ts),
-        (u"Metric", "%s == %s" % (ev['metric'], ev['actual'])),
+        ("Time", ts),
+        ("Metric", "%s == %s" % (ev['metric'], ev['actual'])),
     ]
 
-    final.extend(ev['tags'].items())
+    final.extend(list(ev['tags'].items()))
 
-    ev['text'] = u'\n'.join([u"%s: %s" % (k, v) for k, v in final])
+    ev['text'] = '\n'.join(["%s: %s" % (k, v) for k, v in final])
 
     desc = ev.get('description')
     if desc:
         ev['text'] += '\n' + desc
 
     ev['formatted_time'] = ts
-    ev['title'] = u'%s: %s' % (ev['endpoint'], ev['note'])
+    ev['title'] = '%s: %s' % (ev['endpoint'], ev['note'])
 
     teams = ev['groups']
     mapping = {t: State.teams.get(t, []) for t in teams}
@@ -154,7 +153,7 @@ class AlarmDFA(object):
 
     def values(self):
         with self.lock:
-            return self.alarms.values()
+            return list(self.alarms.values())
 
     @classmethod
     def _dump_dfa(cls):

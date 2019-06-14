@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- stdlib --
 # -- third party --
@@ -23,7 +22,7 @@ def spawn_autorestart(*args, **kwargs):
 
 def status2emoji(s):
     return {
-        'PROBLEM': u'😱',
-        'EVENT': u'😱',
-        'OK': u'😅',
+        'PROBLEM': '😱',
+        'EVENT': '😱',
+        'OK': '😅',
     }.get(s, s)

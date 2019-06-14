@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- stdlib --
 import gevent
@@ -55,7 +54,7 @@ def read_config(path):
 
         others.update(conf)
 
-    for k, v in users.iteritems():
+    for k, v in users.items():
         v['id'] = k
 
     State.teams = teams

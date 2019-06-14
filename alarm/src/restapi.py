@@ -1,47 +1,46 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- stdlib --
 # -- third party --
-from bottle import route, run
+from flask import Flask, jsonify
 
 # -- own --
 from state import State
 
 
 # -- code --
-@route('/alarms')
+app = Flask("alarm")
+
+
+@app.route('/alarms')
 def alarms():
-    return {'alarms': State.alarms.values()}
+    return jsonify({'alarms': list(State.alarms.values())})
 
 
-@route('/alarms/<ids>', method='DELETE')
+@app.route('/alarms/<ids>', method='DELETE')
 def resolve(ids):
     ids = ids.split(',')
     dfa = State.alarms
     for i in ids:
         dfa.transit(id=i, action='RESOLVE')
 
-    return {}
+    return jsonify({})
 
 
-@route('/alarms/<id>/toggle-ack', method='POST')
+@app.route('/alarms/<id>/toggle-ack', method='POST')
 def toggle_ack(id):
     new = State.alarms.transit(id=id, action='TOGGLE_ACK')
-    return {'new-state': new}
+    return jsonify({'new-state': new})
 
 
-@route('/reload', method='POST')
+@app.route('/reload', method='POST')
 def reload():
     from entry import read_users
     State.teams, State.users = read_users(State.config['rules'])
-    return True
+    return jsonify({})
 
 
 def serve():
-    run(
-        server='gevent',
-        host=State.config['host'],
-        port=State.config['port'],
-        debug=True,
-    )
+    from gevent.pywsgi import WSGIServer
+    svr = WSGIServer(f'{State.config["host"]}:{State.config["port"]}', app)
+    svr.serve_forever()

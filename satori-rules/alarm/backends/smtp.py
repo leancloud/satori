@@ -2,9 +2,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # -- stdlib --
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
-from email.Utils import formatdate
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate
 import smtplib
 
 # -- third party --

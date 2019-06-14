@@ -11,11 +11,11 @@ class DebugBackend(Backend):
     def send(self, ev):
         for user in ev['users']:
             import pprint
-            print '>>>' + '=' * 77
+            print('>>>' + '=' * 77)
             pprint.pprint(user)
-            print '-' * 80
+            print('-' * 80)
             pprint.pprint(ev)
-            print '<<<' + '=' * 77
+            print('<<<' + '=' * 77)
 
 
 EXPORT = DebugBackend

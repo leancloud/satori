@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- stdlib --
 
@@ -21,7 +20,7 @@ class TestMain(TestBase):
 
         @urlmatch(netloc=r'(api.nexmo.com|yunpian.com)')
         def response_content(url, request):
-            print url
+            print(url)
             headers = {'Content-Type': 'application/json'}
             if url.netloc == 'api.nexmo.com':
                 return response(200, '{}', headers)

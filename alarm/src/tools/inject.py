@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 # -- stdlib --
 import argparse
@@ -31,17 +31,17 @@ def main():
     options = parser.parse_args()
 
     ev = {
-        u'status':   options.status,
-        u'tags':     options.tags,
-        u'metric':   options.metric,
-        u'groups':   options.teams,
-        u'id':       options.id,
-        u'endpoint': options.endpoint,
-        u'actual':   options.actual,
-        u'level':    options.level,
-        u'note':     options.note,
-        u'time':     options.time,
-        u'expected': options.expected,
+        'status':   options.status,
+        'tags':     options.tags,
+        'metric':   options.metric,
+        'groups':   options.teams,
+        'id':       options.id,
+        'endpoint': options.endpoint,
+        'actual':   options.actual,
+        'level':    options.level,
+        'note':     options.note,
+        'time':     options.time,
+        'expected': options.expected,
     }
 
     r = redis.from_url(options.redis)

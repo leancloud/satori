@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- prioritized --
 from gevent import monkey
@@ -9,7 +8,7 @@ monkey.patch_all()
 # -- third party --
 # -- own --
 from base import TestBase
-from example_data import alarm_example, user_example
+from example_data import alarm_example
 
 
 # -- code --
@@ -19,7 +18,7 @@ class TestBackend(TestBase):
         import main
         from state import State
         f = State.backends[name]
-        f.send(user_example, main.cook_event(alarm_example))
+        f.send(main.cook_event(alarm_example))
 
     # def test_bearychat(self):
     #    return self.do_tezt_backend('bearychat')

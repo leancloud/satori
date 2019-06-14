@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
-import os
-import sys
 import importlib
 import logging
+import os
 import os.path
+import sys
 
 # -- third party --
 # -- own --

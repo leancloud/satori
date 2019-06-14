@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 # -- prioritized --
 from gevent import monkey
@@ -49,18 +48,18 @@ class ServerLogFormatter(logging.Formatter):
             s.append('>>>>>>' + '-' * 74)
             s.append(self._format(rec))
             import traceback
-            s.append(u''.join(traceback.format_exception(*rec.exc_info)).strip())
+            s.append(''.join(traceback.format_exception(*rec.exc_info)).strip())
             s.append('<<<<<<' + '-' * 74)
-            return u'\n'.join(s)
+            return '\n'.join(s)
         else:
             return self._format(rec)
 
     def _format(self, rec):
         import time
-        return u'[%s %s] %s' % (
+        return '[%s %s] %s' % (
             rec.levelname[0],
             time.strftime('%y%m%d %H:%M:%S'),
-            (rec.msg % rec.args) if isinstance(rec.msg, basestring) else repr((rec.msg, rec.args))
+            (rec.msg % rec.args) if isinstance(rec.msg, str) else repr((rec.msg, rec.args))
         )
 
 
