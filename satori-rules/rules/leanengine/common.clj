@@ -1,7 +1,8 @@
 (ns leanengine.common
-  (:use riemann.streams
-        agent-plugin
-        alarm))
+  (:require [riemann.streams :refer :all]
+            [agent-plugin :refer :all]
+            [alarm :refer :all]
+            [lib :refer :all]))
 
 (def leanengine-common-rules
   (where (host #"docker\d+")

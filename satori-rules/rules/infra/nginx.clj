@@ -1,7 +1,8 @@
 (ns infra.nginx
-  (:use riemann.streams
-        agent-plugin
-        alarm))
+  (:require [riemann.streams :refer :all]
+            [agent-plugin :refer :all]
+            [alarm :refer :all]
+            [lib :refer :all]))
 
 (def infra-nginx-rules
   (where (host #"nginx\d+$")

@@ -5,7 +5,6 @@ from __future__ import absolute_import
 # -- stdlib --
 import json
 import os
-import socket
 import sys
 import time
 
@@ -14,6 +13,9 @@ import time
 
 # -- code --
 ts = int(time.time())
+args = json.loads(sys.stdin.read())
+
+assert args[0]['_metric'] == 'docker.stuck'
 
 rst = []
 if os.system('which docker > /dev/null'):
@@ -25,7 +27,7 @@ stuck = bool(os.system("timeout -k 10s 10s sudo docker ps > /dev/null 2>&1"))
 rst = [{
     'metric': 'docker.stuck',
     'timestamp': ts,
-    'step': 60,
+    'step': args[0]['_step'],
     'value': int(stuck),
 }]
 

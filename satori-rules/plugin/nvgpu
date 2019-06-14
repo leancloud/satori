@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), './libs'))
+
+# -- stdlib --
+import sys
+import json
+import time
+
+# -- third party --
+import pynvml as N
+
+# -- own --
+
+# -- code --
+args = json.loads(sys.stdin.read())
+sys.stdin.close()
+assert len(args) == 1
+assert(args[0]['_step'] == 0)
+duration = args[0]['duration']
+
+
+N.nvmlInit()
+
+devices = []
+for i in range(N.nvmlDeviceGetCount()):
+    hDev = N.nvmlDeviceGetHandleByIndex(i)
+    model = N.nvmlDeviceGetName(hDev)
+    id = N.nvmlDeviceGetUUID(hDev).split('-')[1]
+    devices.append({
+        'i': i,
+        'handle': hDev,
+        'model': model,
+        'id': id,
+    })
+
+
+def W(f):
+    def wrapped(*args):
+        try:
+            return f(*args)
+        except Exception:
+            pass
+    return wrapped
+
+
+for i in xrange(100):
+    metrics = []
+    ts = int(time.time())
+    for dev in devices:
+        l = {}
+        hDev = dev['handle']
+        l['pwr'] = W(N.nvmlDeviceGetPowerUsage)(hDev)
+        l['gtemp'] = W(N.nvmlDeviceGetTemperature)(hDev, N.NVML_TEMPERATURE_GPU)
+        l['fan'] = W(N.nvmlDeviceGetFanSpeed)(hDev)
+        m = W(N.nvmlDeviceGetMemoryInfo)(hDev)
+        if m:
+            l['mem.used'] = m.used
+            l['mem.free'] = m.free
+            l['mem.total'] = m.total
+        u = W(N.nvmlDeviceGetUtilizationRates)(hDev)
+        if u:
+            l['util.gpu'] = u.gpu
+            l['util.mem'] = u.memory
+        metrics.extend([{
+            'metric': 'nvgpu.%s' % k,
+            'timestamp': ts,
+            'step': duration,
+            'value': float(v),
+            'tags': {'idx': str(dev['i']), 'id': '%s [%s]' % (dev['model'], dev['id'])},
+        } for k, v in l.items() if v is not None])
+
+    print(json.dumps(metrics))
+    time.sleep(duration)

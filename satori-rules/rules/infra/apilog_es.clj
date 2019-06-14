@@ -1,7 +1,8 @@
 (ns infra.apilog-es
-  (:use riemann.streams
-        agent-plugin
-        alarm))
+  (:require [riemann.streams :refer :all]
+            [agent-plugin :refer :all]
+            [alarm :refer :all]
+            [lib :refer :all]))
 
 (def infra-apilog-es-rules
   (where (host #"^host-of-elasticsearch\d$")

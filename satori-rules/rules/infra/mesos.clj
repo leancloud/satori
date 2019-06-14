@@ -1,7 +1,8 @@
 (ns infra.mesos
-  (:use riemann.streams
-        agent-plugin
-        alarm))
+  (:require [riemann.streams :refer :all]
+            [agent-plugin :refer :all]
+            [alarm :refer :all]
+            [lib :refer :all]))
 
 (def infra-mesos-rules
   (where (host #"^mesos-slave\d+$")

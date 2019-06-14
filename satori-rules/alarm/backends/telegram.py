@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 # -- stdlib --
 # -- third party --
@@ -57,8 +57,8 @@ class TelegramBackend(Backend):
             if not chat_id:
                 continue
 
-            msg = u'{} **[P{}]**\n{}\n'.format(
-                u'😱' if ev['status'] in ('PROBLEM', 'EVENT') else u'😅',
+            msg = '{} **[P{}]**\n{}\n'.format(
+                '😱' if ev['status'] in ('PROBLEM', 'EVENT') else '😅',
                 ev['level'],
                 ev['title'],
             ) + ev['text']

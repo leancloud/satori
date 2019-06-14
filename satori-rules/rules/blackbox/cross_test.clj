@@ -1,8 +1,9 @@
 (ns blackbox.cross-test
-  (:use riemann.streams
-        agent-plugin
-        alarm)
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [riemann.streams :refer :all]
+            [agent-plugin :refer :all]
+            [alarm :refer :all]
+            [lib :refer :all]))
 
 
 (defn- ->region [ev]

@@ -5,7 +5,6 @@ from __future__ import absolute_import
 # -- stdlib --
 import ctypes
 import json
-import socket
 import time
 
 # -- third party --

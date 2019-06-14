@@ -1,7 +1,8 @@
 (ns infra.kestrel
-  (:use riemann.streams
-        agent-plugin
-        alarm))
+  (:require [riemann.streams :refer :all]
+            [agent-plugin :refer :all]
+            [alarm :refer :all]
+            [lib :refer :all]))
 
 (def ^{:private true} qmeta
   ; "queue-name" [rising falling [:notify :groups]]

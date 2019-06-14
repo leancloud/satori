@@ -1,8 +1,9 @@
 (ns mysql.query
-  (:use riemann.streams
-        agent-plugin
-        alarm)
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [riemann.streams :refer :all]
+            [alarm :refer :all]
+            [agent-plugin :refer :all]
+            [lib :refer :all]))
 
 (def mysql-query-rules
   (sdo
@@ -28,9 +29,9 @@
          :sql "SELECT count(*) FROM user"}))
 
     (where (service "mysql.query.bad-user-count")
-      (set-state (> 50)
+      (judge (> 50)
         (runs 2 :state
-          (should-alarm-every 300
+          (alarm-every 5 :min
             (! {:note "坏用户太多了！"
                 :level 3
                 :groups [:operation]})))))
@@ -40,9 +41,9 @@
                              :bad   "mysql.query.bad-user-count"}
         (slot-coalesce {:service "app.sms.bad-user-percent",
                         :metric (if (> bad 5) (/ bad total) -1)}
-          (set-state (> 0.5)
+          (judge (> 0.5)
             (runs 2 :state
-              (should-alarm-every 300
+              (alarm-every 5 :min
                 (! {:note "坏用户占比过高！"
                     :level 3
                     :groups [:operation]})))))))))

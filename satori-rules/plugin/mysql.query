@@ -18,12 +18,11 @@ from __future__ import absolute_import
 # -- prioritized --
 import sys
 import os.path
-sys.path.append(os.path.join(os.path.dirname(__file__), '../libs'))
+sys.path.append(os.path.join(os.path.dirname(__file__), './libs'))
 
 # -- stdlib --
 import itertools
 import json
-import socket
 import time
 
 # -- third party --

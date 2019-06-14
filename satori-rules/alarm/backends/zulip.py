@@ -13,9 +13,9 @@ from backend import Backend
 # -- code --
 def status2bccode(s):
     return {
-        'PROBLEM': u':scream:',
-        'EVENT': u':scream:',
-        'OK': u':sweat_smile:',
+        'PROBLEM': ':scream:',
+        'EVENT': ':scream:',
+        'OK': ':sweat_smile:',
     }.get(s, s)
 
 
@@ -30,7 +30,7 @@ class ZulipBackend(Backend):
                 if str(ev['level']) not in list(user.get('level')):
                     continue
 
-            title = u'%s[P%s] %s' % (
+            title = '%s[P%s] %s' % (
                 status2bccode(ev['status']),
                 ev['level'],
                 ev['title'],

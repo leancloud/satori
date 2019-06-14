@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+# -- prioritized --
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), './libs'))
+
+# -- stdlib --
+import re
+import json
+import socket
+import subprocess
+import time
+
+# -- third party --
+
+# -- own --
+from utils.region import nodes_of
+
+# -- code --
+os.stat('/usr/bin/fping')  # should exist
+
+args = json.loads(sys.stdin.read())
+# [{'_metric': 'cross.ping', 'region': 'ops'}]
+args, = args
+
+endpoint = socket.getfqdn()
+ts = int(time.time())
+
+payload = '\n'.join(nodes_of(args['region'])) + '\n'
+
+p = subprocess.Popen(['/usr/bin/fping', '-c', '1', '-q'], stdin=subprocess.PIPE, stdout=open('/dev/null', 'w'), stderr=subprocess.PIPE)
+p.stdin.write(payload)
+p.stdin.close()
+out = p.stderr.read()
+
+rst = [i.groupdict() for i in re.finditer(r'(?P<host>[a-z0-9.-]+) *: xmt/rcv/%loss = (?P<tx>\d+)/(?P<rx>\d+)/\d+%(, min/avg/max = (?P<min>[0-9.]+)/(?P<avg>[0-9.]+)/(?P<max>[0-9.]+))?', out)]
+
+rst = [[{
+    "metric": "cross.ping.alive",
+    "endpoint": v['host'],
+    "timestamp": ts,
+    "step": args['_step'],
+    "value": float(bool(v['rx'])),
+    "tags": {"from": endpoint},
+}, {
+    "metric": "cross.ping.latency",
+    "endpoint": v['host'],
+    "timestamp": ts,
+    "step": args['_step'],
+    "value": float(v['avg'] or 0.0),
+    "tags": {"from": endpoint},
+}] for v in rst]
+
+metric = []
+map(metric.extend, rst)
+
+print(json.dumps(metric))

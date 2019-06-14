@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
+
 
 # -- stdlib --
 from email.mime.multipart import MIMEMultipart
@@ -40,7 +40,7 @@ class SMTPBackend(Backend):
             if not user.get('email'):
                 continue
 
-            subject = u'%s[P%s]%s' % (
+            subject = '%s[P%s]%s' % (
                 status2emoji(ev['status']),
                 ev['level'],
                 ev['title'],

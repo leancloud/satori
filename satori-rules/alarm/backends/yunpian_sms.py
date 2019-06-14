@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 # -- stdlib --
 # -- third party --
@@ -17,7 +17,7 @@ class YunpianSMSBackend(Backend):
             if not user.get('phone'):
                 continue
 
-            msg = u'【%s】%s[P%s] %s\n' % (
+            msg = '【%s】%s[P%s] %s\n' % (
                 self.conf['signature'],
                 status2emoji(ev['status']),
                 ev['level'],

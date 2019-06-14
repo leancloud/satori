@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 # -- stdlib --
 import time
 import json
+import codecs
 
 # -- third party --
 from gevent.lock import RLock
@@ -60,7 +61,7 @@ class WechatQYBackend(Backend):
             if token:
                 return token
 
-            for _ in xrange(3):
+            for _ in range(3):
                 resp = requests.get('https://qyapi.weixin.qq.com/cgi-bin/gettoken',
                     params={'corpid': corp_id, 'corpsecret': secret},
                     timeout=10,
@@ -103,11 +104,13 @@ class WechatQYBackend(Backend):
             if not (touser or toparty):
                 continue
 
-            msg = u'%s[P%s] %s\n' % (
+            text = ev['text']
+            text = text if len(text) < 500 else "[消息太长了，无法从微信发出]"
+            msg = '%s[P%s] %s\n' % (
                 status2emoji(ev['status']),
                 ev['level'],
                 ev['title'],
-            ) + ev['text']
+            ) + text
 
             payload = {
                 "touser": touser,
@@ -122,7 +125,7 @@ class WechatQYBackend(Backend):
 
             self.logger.info('Sending wechat message to %s %s', touser, toparty)
 
-            for _ in xrange(2):
+            for _ in range(2):
                 token = self.get_access_token(corp_id, secret)
                 if not token:
                     return
@@ -132,7 +135,7 @@ class WechatQYBackend(Backend):
                     params={'access_token': token},
                     headers={'Content-Type': 'application/json'},
                     timeout=10,
-                    data=json.dumps(payload).decode('unicode-escape').encode('utf-8'),
+                    data=json.dumps(payload),
                 )
 
                 if not resp.ok:

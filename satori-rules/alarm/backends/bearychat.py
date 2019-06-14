@@ -13,9 +13,9 @@ from backend import Backend
 # -- code --
 def status2bccode(s):
     return {
-        'PROBLEM': u':scream:',
-        'EVENT': u':scream:',
-        'OK': u':sweat_smile:',
+        'PROBLEM': ':scream:',
+        'EVENT': ':scream:',
+        'OK': ':sweat_smile:',
     }.get(s, s)
 
 
@@ -29,16 +29,16 @@ class BearychatBackend(Backend):
 
             if ev['status'] in ('PROBLEM', 'EVENT'):
                 color = [
-                    u'#be10c2',  # purple 0
-                    u'#ef1000',  # red 1
-                    u'#fbb726',  # orange 2
-                    u'#fdfd00',  # yellow 3
-                    u'#f5f5f5',  # grey 4+
+                    '#be10c2',  # purple 0
+                    '#ef1000',  # red 1
+                    '#fbb726',  # orange 2
+                    '#fdfd00',  # yellow 3
+                    '#f5f5f5',  # grey 4+
                 ][min(ev['level'], 4)]
             else:
-                color = u'#5cab2a'  # green
+                color = '#5cab2a'  # green
 
-            title = u'%s[P%s] %s' % (
+            title = '%s[P%s] %s' % (
                 status2bccode(ev['status']),
                 ev['level'],
                 ev['title'],
