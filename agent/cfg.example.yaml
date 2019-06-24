@@ -111,7 +111,7 @@ addTags:
 ignore:
   - metric: "^df\\."
     tag: "mount"
-    tagValue: ".*/(docker|ureadahead|netns)/.*$"
+    tagValue: ".*/(docker|ureadahead|netns|kubelet)/.*$"
   - metric: "^df\\."
     tag: "fstype"
     tagValue: "^squashfs$"
