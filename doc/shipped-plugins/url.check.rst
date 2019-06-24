@@ -100,7 +100,7 @@ url.check.match. ``key``
                     (= (:name event) "check-baidu"))
           (by :host
             (adjust [:metric int]
-              (set-state (not= 200)
+              (judge (not= 200)
                 (runs 3 :state
                   (should-alarm-every 300
                     (! {:note "百度挂了！"
@@ -111,7 +111,7 @@ url.check.match. ``key``
         (where (and (service "url.check.time")
                     (= (:name event) "check-baidu"))
           (by :host
-            (set-state (> 1)
+            (judge (> 1)
               (runs 3 :state
                 (should-alarm-every 300
                   (! {:note "百度好卡！"
@@ -122,7 +122,7 @@ url.check.match. ``key``
         (where (and (service "url.check.match.not-exist")
                     (= (:name event) "check-baidu"))
           (by :host
-            (set-state (> 0)
+            (judge (> 0)
               (runs 3 :state
                 (should-alarm-every 300
                   (! {:note "百度被我们入侵了咩哈哈！"

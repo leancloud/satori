@@ -25,7 +25,7 @@
           ; 按照 host（插件中是 endpoint）分离监控项，并分别判定
           (by :host
             ; 报警在监控值 < 10000 时触发，在 > 50000 时恢复
-            (set-state-gapped (< 10000) (> 50000)
+            (judge-gapped (< 10000) (> 50000)
               ; 600 秒内只报告一次
               (should-alarm-every 600
                 ; 报告的标题、级别（影响报警方式）、报告给 operation 组和 api 组
@@ -36,7 +36,7 @@
       ; 另一个监控项
       (where (service "mongodb.globalLock.currentQueue.total")
         (by :host
-          (set-state-gapped (> 250) (< 50)
+          (judge-gapped (> 250) (< 50)
             (should-alarm-every 600
               (! {:note "MongoDB 队列长度 > 250"
                   :level 1
@@ -95,7 +95,7 @@
                     ; 再次做聚集：比较一下是不是全部 10 个数量都是先来的小于等于后来的（是不是堆积）
                     (aggregate <=
                       ; 如果结果是 true，那么认为现在是有问题的
-                      (set-state (= true)
+                      (judge (= true)
                         ; 每 1800 秒告警一次
                         (should-alarm-every 1800
                           ; 这里 outstanding-tags 是用来区分报警的，

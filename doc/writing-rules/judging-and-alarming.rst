@@ -57,74 +57,74 @@
 .. note::
     ``!`` 接受的事件需要将 ``:state`` 设置成 ``:problem`` 或者 ``:ok`` 来表示是有问题还是恢复。
 
-    参见下文的 :ref:`set-state` 和 :ref:`set-state-gapped`
+    参见下文的 :ref:`judge` 和 :ref:`judge-gapped`
 
 
-.. _set-state-star:
+.. _judge-star:
 
-set-state*
+judge*
 ----------
 
-``(set-state* c & children)``
+``(judge* c & children)``
 
 设置事件的状态。 ``c`` 是接受事件作为参数的函数。
 ``c`` 返回值为 ``true`` 则会将事件的 ``:state`` 设置成 ``:problem`` ，否则会设置成 ``:ok``
 
 .. code-block:: clojure
 
-    (set-state* #(> (:metric %) 1)
+    (judge* #(> (:metric %) 1)
       (! ...))
 
 
-.. _set-state:
+.. _judge:
 
-set-state
+judge
 ---------
 
-``(set-state c & children)``
+``(judge c & children)``
 
-参见 :ref:`set-state-star` ，这里 c 是形如 ``(> 1.0)`` 的 form。
+参见 :ref:`judge-star` ，这里 c 是形如 ``(> 1.0)`` 的 form。
 
 
 .. code-block:: clojure
 
-    (set-state (> 1)
+    (judge (> 1)
       (! ...))
 
 .. note::
-    ``set-state (> 1.0) ...)`` 会被重写成 ``(set-state* #(> (:metric %) 1.0) ...)``
+    ``judge (> 1.0) ...)`` 会被重写成 ``(judge* #(> (:metric %) 1.0) ...)``
 
 
-.. _set-state-gapped-star:
+.. _judge-gapped-star:
 
-set-state-gapped*
+judge-gapped*
 -----------------
 
-``(set-state-gapped* rising falling & children)``
+``(judge-gapped* rising falling & children)``
 
 设置事件的状态。 ``rising`` 是 OK -> PROBLEM 的条件， ``falling`` 是 PROBLEM -> OK 的条件
 
-参见 :ref:`set-state-star`
+参见 :ref:`judge-star`
 
 .. code-block:: clojure
 
-    (set-state-gapped* #(> (:metric %) 10) #(< (:metric %) 1)
+    (judge-gapped* #(> (:metric %) 10) #(< (:metric %) 1)
       (! ...))
 
 
-.. _set-state-gapped:
+.. _judge-gapped:
 
-set-state-gapped
+judge-gapped
 ----------------
 
-``(set-state-gapped rising falling & children)``
+``(judge-gapped rising falling & children)``
 
-参见 :ref:`set-state-gapped-star` ，这里 ``rising`` 和 ``falling`` 是形如 ``(> 1.0)`` 的 form。
+参见 :ref:`judge-gapped-star` ，这里 ``rising`` 和 ``falling`` 是形如 ``(> 1.0)`` 的 form。
 
 
 .. code-block:: clojure
 
-    (set-state-gapped (> 10) (< 1)
+    (judge-gapped (> 10) (< 1)
       (! ...))
 
 
@@ -142,6 +142,6 @@ should-alarm-every
 
 .. code-block:: clojure
 
-    (set-state (> 1)
+    (judge (> 1)
       (should-alarm-every 60
         (! ...)))

@@ -51,5 +51,5 @@ watchdog
 .. warning::
     ``watchdog`` 流下出现的事件都是已经过期或者恢复的报警，
     ``state`` 已经帮你设置成 ``:problem`` 或者 ``:ok`` 了，并且一个周期内只会出现一次，
-    所以请不要接 ``(set-state ...)`` 流或者 ``(runs 2 ...)`` 之类过滤的流，直接用 ``where``
+    所以请不要接 ``(judge ...)`` 流或者 ``(runs 2 ...)`` 之类过滤的流，直接用 ``where``
     过滤出想要的结果喂给 :ref:`exclaimation-mark` 就可以了。

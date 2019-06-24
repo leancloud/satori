@@ -66,7 +66,7 @@ mysql.query. ``name``
              :sql "SELECT count(*) FROM user WHERE bad = 1"})
 
         (where (service "mysql.query.bad-user-count")
-          (set-state (> 50)
+          (judge (> 50)
             (runs 2 :state
               (should-alarm-every 300
                 (! {:note "坏用户太多了！"

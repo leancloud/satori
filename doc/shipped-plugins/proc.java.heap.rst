@@ -54,7 +54,7 @@ proc.java.heap
         (where (and (service "proc.java.heap")
                     (= (:name event) "elasticsearch"))
           (by [:host :region]
-            (set-state-gapped (> 99.8) (< 95)
+            (judge-gapped (> 99.8) (< 95)
               (runs 3 :state
                 (should-alarm-every 120
                   (! {:note "ElasticSearch OldGen 满了！"

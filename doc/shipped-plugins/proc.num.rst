@@ -57,7 +57,7 @@ proc.num
         (where (and (service "proc.num")
                     (= (:name event) "proc-unbound"))
           (by :host
-            (set-state (< 1)
+            (judge (< 1)
               (should-alarm-every 120
                 (!{:note "Unbound 进程不在了"
                    :level 1

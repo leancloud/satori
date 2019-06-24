@@ -21,7 +21,7 @@ aggregate*
 
   (fixed-time-window 60
     (aggregate* #(apply + %)
-      (set-state (> 100)
+      (judge (> 100)
         (! ...))))
 
 
@@ -55,7 +55,7 @@ aggregate
     (moving-time-window 60
       (->difference
         (aggregate maxpdiff
-          (set-state-gapped (|>| 0.5) (|<| 0.1)
+          (judge-gapped (|>| 0.5) (|<| 0.1)
             (! ...)))))
 
 
@@ -94,7 +94,7 @@ maxpdiff
 
 将 ``args`` 取绝对值后进行比较。
 通常你不会关心变化率的符号（变化方向），只对绝对值感兴趣。
-在 :ref:`set-state` 和 :ref:`set-state-gapped` 上可以用这个函数作比较。
+在 :ref:`judge` 和 :ref:`judge-gapped` 上可以用这个函数作比较。
 
 参见 :ref:`to-difference` 上的例子。
 
@@ -211,7 +211,7 @@ slot-window
     ; 构造出想要的 event
     (slot-coalesce {:service "app.req.error_rate"
                     :metric (if (> error 100) (/ error count) -1)}
-      (set-state (> 0.5)
+      (judge (> 0.5)
         (runs :state 5
           (should-alarm-every 120
             (! ...))))))

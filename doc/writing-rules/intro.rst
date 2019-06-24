@@ -39,7 +39,7 @@ Copy & Paste 的正确姿势
         (where (and (service "net.port.listen")
                     (= (:port event) 11211))
           (by :host
-            (set-state-gapped (< 1) (> 0)
+            (judge-gapped (< 1) (> 0)
               (should-alarm-every 120
                 (! {:note "memcache 端口不监听了！"
                     :level 0
@@ -62,7 +62,7 @@ Copy & Paste 的正确姿势
         (where (and (service "net.port.listen")
                     (= (:port event) 12345)) ; 匹配 net.port.listen 插件收集的 metric
           (by :host ; 按照 host 分成子流（这个例子里就只有一个 host 所以并不会分）
-            (set-state-gapped (< 1) (> 0)  ; 根据条件设置事件的 :state
+            (judge-gapped (< 1) (> 0)  ; 根据条件设置事件的 :state
               (should-alarm-every 120  ; 如果是 :problem 每120秒发一次报警。
                 (! {:note "foobar 服务端口不监听了！"
                     :level 0
@@ -92,8 +92,8 @@ commit 然后 push 上去就会生效了。
 流向 :ref:`exclaimation-mark` 流的事件都会发送到 alarm 进行报警。
 但是不能直接把事件喂给 :ref:`exclaimation-mark` ，因为
 :ref:`exclaimation-mark` 并不知道这个事件是正常还是有问题的状态， 所以需要指定事件的状态是
-``:ok`` 还是 ``:problem`` 。 通常可以用 :ref:`set-state` 和
-:ref:`set-state-gapped` 这两个流来完成。
+``:ok`` 还是 ``:problem`` 。 通常可以用 :ref:`judge` 和
+:ref:`judge-gapped` 这两个流来完成。
 
 Riemann 提供的文档
 ------------------
@@ -107,7 +107,7 @@ Riemann 提供的文档
     .. code-block:: clojure
         (def app-important-rules
         (where (service "service.very.important.latency")
-            (set-state-gapped (> 1000) (< 100)  ; 当 latency 超过 1000 后报警，回落到 100 以下变成正常状态
+            (judge-gapped (> 1000) (< 100)  ; 当 latency 超过 1000 后报警，回落到 100 以下变成正常状态
                 (! {:note "报警标题，标题对于一个特定的报警是不能变的（不要把报警的数据编码在这里面）"
                     :level 1  ;报警级别, 0最高，6最小。报警级别影响报警方式。
                     :event? false  ; 可选，是不是事件（而不是状态）。默认 false。如果是事件的话，只会发报警，不会记录状态（alarm插件里看不到）。

@@ -57,7 +57,7 @@ ping.alive
 
     (where (service "ping.alive")
       (by :host
-        (set-state (< 1)
+        (judge (< 1)
           (runs 3 :state
             (should-alarm-every 120
               (! {:note "Ping 不通了！"

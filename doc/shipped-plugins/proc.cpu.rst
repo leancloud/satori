@@ -53,7 +53,7 @@ proc.cpu
           (where (and (service "proc.cpu")
                       (= (:name event) "redis"))
             (by [:host :name]
-              (set-state (> 90)
+              (judge (> 90)
                 (runs 12 :state
                   (should-alarm-every 120
                     (! {:note "Redis 进程 CPU 占用过高"

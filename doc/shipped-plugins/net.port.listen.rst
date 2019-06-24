@@ -48,7 +48,7 @@ net.port.listen
           (where (and (service "net.port.listen")
                       (= (:name event) "redis-port"))
             (by [:host :port]
-              (set-state (< 1)
+              (judge (< 1)
                 (runs 3 :state
                   (should-alarm-every 120
                     (! {:note "Redis 端口不监听了"

@@ -172,7 +172,7 @@ switch.if.OperStatus
         (where (service "switch.if.OperStatus")
           (by [:host :ifName]
             (adjust [:metric int]
-              (set-state (!= 1)
+              (judge (!= 1)
                 (runs 2 :state
                   (should-alarm-every 300
                     (! {:note "交换机接口挂掉了"
