@@ -48,16 +48,14 @@ metric 一致， 比如 :file:`plugin/net.port.listen` 会上报
         "metric": "net.port.listen",
         "value": 1,
         "timestamp": 1431349763,
-        "tags": {"port": 3306},
-        "step": 30
+        "tags": {"port": "3306"}
       },
       {
         "endpoint": "mysql-and-redis-host",
         "metric": "net.port.listen",
         "value": 0,
         "timestamp": 1431349763,
-        "tags": {"port": 6379},
-        "step": 30
+        "tags": {"port": "6379"}
       }
     ]
 
@@ -82,8 +80,6 @@ metric 一致， 比如 :file:`plugin/net.port.listen` 会上报
 | metric    | 监控项的名字。在 riemann 中对应事件的 ``:service`` 表示。  |
 +-----------+------------------------------------------------------------+
 | value     | 监控项的值。在 riemann 中对应事件的 ``:metric`` 。         |
-+-----------+------------------------------------------------------------+
-| step      | 采集周期，单位是秒。                                       |
 +-----------+------------------------------------------------------------+
 
 .. [#] 缺失则 agent 会按照自身配置填充这个值。 如果不需要控制这个值推荐省略让 agent 填充。
