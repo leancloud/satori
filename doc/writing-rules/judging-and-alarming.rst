@@ -128,20 +128,22 @@ judge-gapped
       (! ...))
 
 
-.. _should-alarm-every:
+.. _alarm-every:
 
-should-alarm-every
-------------------
+alarm-every
+-----------
 
-``(should-alarm-every dt & children)``
+``(alarm-every dt unit & children)``
 
 用于对报警事件限流，通常接在 :ref:`exclaimation-mark` 流前面。
-当事件的 ``:state`` 是 ``:problem`` 时，每 ``dt`` 秒向下传递一次。
+当事件的 ``:state`` 是 ``:problem`` 时，每 ``dt`` 时间向下传递一次。时间的单位由 ``unit`` 决定。
 当事件的 ``:state`` 由 ``:problem`` 变成 ``:ok`` 时，向下传递一次。
 其他时间不放行。
+
+``unit`` 可以是 ``:sec`` ``:secs`` ``:second`` ``:seconds`` ``:min`` ``:mins`` ``:minute`` ``:minutes`` ``:hour`` ``:hours`` 。
 
 .. code-block:: clojure
 
     (judge (> 1)
-      (should-alarm-every 60
+      (alarm-every 1 :min
         (! ...)))

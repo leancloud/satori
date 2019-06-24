@@ -50,7 +50,7 @@ net.port.listen
             (by [:host :port]
               (judge (< 1)
                 (runs 3 :state
-                  (should-alarm-every 120
+                  (alarm-every 2 :min
                     (! {:note "Redis 端口不监听了"
                         :level 1
                         :expected 3

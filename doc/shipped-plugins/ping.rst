@@ -59,7 +59,7 @@ ping.alive
       (by :host
         (judge (< 1)
           (runs 3 :state
-            (should-alarm-every 120
+            (alarm-every 2 :min
               (! {:note "Ping 不通了！"
                   :level 1
                   :expected 1

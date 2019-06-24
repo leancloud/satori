@@ -56,7 +56,7 @@ proc.java.heap
           (by [:host :region]
             (judge-gapped (> 99.8) (< 95)
               (runs 3 :state
-                (should-alarm-every 120
+                (alarm-every 2 :min
                   (! {:note "ElasticSearch OldGen 满了！"
                       :level 1
                       :expected true

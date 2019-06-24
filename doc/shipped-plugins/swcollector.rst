@@ -174,7 +174,7 @@ switch.if.OperStatus
             (adjust [:metric int]
               (judge (!= 1)
                 (runs 2 :state
-                  (should-alarm-every 300
+                  (alarm-every 5: min
                     (! {:note "交换机接口挂掉了"
                         :level 3
                         :groups [:operation]})))))))))

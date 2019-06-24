@@ -27,7 +27,7 @@
             ; 报警在监控值 < 10000 时触发，在 > 50000 时恢复
             (judge-gapped (< 10000) (> 50000)
               ; 600 秒内只报告一次
-              (should-alarm-every 600
+              (alarm-every 10 :min
                 ; 报告的标题、级别（影响报警方式）、报告给 operation 组和 api 组
                 (! {:note "mongod 可用连接数 < 10000 ！"
                     :level 1
@@ -37,7 +37,7 @@
       (where (service "mongodb.globalLock.currentQueue.total")
         (by :host
           (judge-gapped (> 250) (< 50)
-            (should-alarm-every 600
+            (alarm-every 10 :min
               (! {:note "MongoDB 队列长度 > 250"
                   :level 1
                   :groups [:operation :api]})))))))
@@ -96,8 +96,8 @@
                     (aggregate <=
                       ; 如果结果是 true，那么认为现在是有问题的
                       (judge (= true)
-                        ; 每 1800 秒告警一次
-                        (should-alarm-every 1800
+                        ; 每半小时告警一次
+                        (alarm-every 0.5 :hour
                           ; 这里 outstanding-tags 是用来区分报警的，
                           ; 即如果 region 的值不一样，那么就会被当做不同的报警
                           (! {:note #(str "队列 " (:queue %) " 正在堆积！")

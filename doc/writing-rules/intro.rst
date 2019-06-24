@@ -40,7 +40,7 @@ Copy & Paste 的正确姿势
                     (= (:port event) 11211))
           (by :host
             (judge-gapped (< 1) (> 0)
-              (should-alarm-every 120
+              (alarm-every 2 :min
                 (! {:note "memcache 端口不监听了！"
                     :level 0
                     :groups [:operation :api]})))))))
@@ -63,7 +63,7 @@ Copy & Paste 的正确姿势
                     (= (:port event) 12345)) ; 匹配 net.port.listen 插件收集的 metric
           (by :host ; 按照 host 分成子流（这个例子里就只有一个 host 所以并不会分）
             (judge-gapped (< 1) (> 0)  ; 根据条件设置事件的 :state
-              (should-alarm-every 120  ; 如果是 :problem 每120秒发一次报警。
+              (alarm-every 2 :min ; 如果是 :problem 每2分钟发一次报警。
                 (! {:note "foobar 服务端口不监听了！"
                     :level 0
                     :groups [:operation :api]})))))))

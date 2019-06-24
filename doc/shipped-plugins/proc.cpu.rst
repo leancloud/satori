@@ -55,7 +55,7 @@ proc.cpu
             (by [:host :name]
               (judge (> 90)
                 (runs 12 :state
-                  (should-alarm-every 120
+                  (alarm-every 2 :min
                     (! {:note "Redis 进程 CPU 占用过高"
                         :level 1
                         :expected 3

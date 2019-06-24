@@ -213,7 +213,7 @@ slot-window
                     :metric (if (> error 100) (/ error count) -1)}
       (judge (> 0.5)
         (runs :state 5
-          (should-alarm-every 120
+          (alarm-every 2 :min
             (! ...))))))
 
 .. _slot-coalesce:

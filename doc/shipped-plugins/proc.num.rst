@@ -58,7 +58,7 @@ proc.num
                     (= (:name event) "proc-unbound"))
           (by :host
             (judge (< 1)
-              (should-alarm-every 120
+              (alarm-every 2 :min
                 (!{:note "Unbound 进程不在了"
                    :level 1
                    :expected 1.0
