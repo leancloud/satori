@@ -168,8 +168,6 @@ function prepare-rules-repo
     git commit -m 'Initial Satori rules repo'
     git config receive.denyCurrentBranch ignore
     popd >/dev/null
-
-    cp -a ../deploy/rules-repo-pre-receive-hook $RULES_REPO/.git/hooks/pre-receive
 }
 
 
