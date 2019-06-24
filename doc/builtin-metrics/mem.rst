@@ -18,15 +18,34 @@ mem.memused
 
     .. note::
         这个值不包括 page cache 和 buffer
-        是通过 ``memtotal`` - ``memfree`` 算出来的
+        是通过 ``memtotal`` - ``memusable`` 算出来的
 
-mem.memfree
-    :意义: 内存剩余
+mem.free
+    :意义: 空闲内存
     :取值: 0 - 无上限，整数，单位：字节
     :Tags: 无
 
     .. note::
-        这个值包括 page cache 和 buffer。
+        这个值不包括 page cache 和 buffer，
+        是真正没有被利用的内存
+
+mem.buffers
+    :意义: 用作 buffer 的内存
+    :取值: 0 - 无上限，整数，单位：字节
+    :Tags: 无
+
+mem.cached
+    :意义: 用作 page cache 的内存
+    :取值: 0 - 无上限，整数，单位：字节
+    :Tags: 无
+
+mem.memusable
+    :意义: 可用内存
+    :取值: 0 - 无上限，整数，单位：字节
+    :Tags: 无
+
+    .. note::
+        这个值包括 page cache、buffer 和 free。
 
 mem.swaptotal
     :意义: 交换内存总量
