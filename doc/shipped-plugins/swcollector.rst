@@ -167,14 +167,14 @@ switch.if.OperStatus
                              {:metric "switch.ConnectionStat"
                               :oid "1.3.6.1.4.1.9.9.147.1.2.2.2.1.5.40.6"
                               :ipRange ["192.168.20.1-192.168.20.100"]
-                              :tags {}}]})
+                              :tags {}}]}))
 
         (where (service "switch.if.OperStatus")
           (by [:host :ifName]
             (adjust [:metric int]
               (judge (!= 1)
                 (runs 2 :state
-                  (alarm-every 5: min
+                  (alarm-every 5 :min
                     (! {:note "交换机接口挂掉了"
                         :level 3
                         :groups [:operation]})))))))))

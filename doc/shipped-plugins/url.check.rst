@@ -94,38 +94,38 @@ url.check.match. ``key``
            :verify true
            :match {:html5 "<!DOCTYPE html>",
                    :not-exist "I'll be surprised if this strings exists!"}
-           :url "https://www.baidu.com"})
+           :url "https://www.baidu.com"}))
 
-        (where (and (service "url.check.status")
-                    (= (:name event) "check-baidu"))
-          (by :host
-            (adjust [:metric int]
-              (judge (not= 200)
-                (runs 3 :state
-                  (alarm-every 5 :min
-                    (! {:note "百度挂了！"
-                        :level 3
-                        :expected true
-                        :groups [:operation]})))))))
-
-        (where (and (service "url.check.time")
-                    (= (:name event) "check-baidu"))
-          (by :host
-            (judge (> 1)
+      (where (and (service "url.check.status")
+                  (= (:name event) "check-baidu"))
+        (by :host
+          (adjust [:metric int]
+            (judge (not= 200)
               (runs 3 :state
-                (alarm-every 5: min
-                  (! {:note "百度好卡！"
+                (alarm-every 5 :min
+                  (! {:note "百度挂了！"
                       :level 3
                       :expected true
                       :groups [:operation]})))))))
 
-        (where (and (service "url.check.match.not-exist")
-                    (= (:name event) "check-baidu"))
-          (by :host
-            (judge (> 0)
-              (runs 3 :state
-                (alarm-every 5: min
-                  (! {:note "百度被我们入侵了咩哈哈！"
-                      :level 3
-                      :expected true
-                      :groups [:operation]})))))))
+      (where (and (service "url.check.time")
+                  (= (:name event) "check-baidu"))
+        (by :host
+          (judge (> 1)
+            (runs 3 :state
+              (alarm-every 5 :min
+                (! {:note "百度好卡！"
+                    :level 3
+                    :expected true
+                    :groups [:operation]}))))))
+
+      (where (and (service "url.check.match.not-exist")
+                  (= (:name event) "check-baidu"))
+        (by :host
+          (judge (> 0)
+            (runs 3 :state
+              (alarm-every 5 :min
+                (! {:note "百度被我们入侵了咩哈哈！"
+                    :level 3
+                    :expected true
+                    :groups [:operation]})))))))
