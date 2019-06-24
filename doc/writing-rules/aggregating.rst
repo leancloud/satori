@@ -15,6 +15,9 @@ aggregate*
 
 希望计算一组数据的和、平均、方差…… 等等的话就需要这个流。
 
+``aggregate`` 会将每个事件的值按照顺序写在变换后的事件的 ``description`` 里，
+如果事件中有 ``:aggregate-desc-key`` 这个 key 那么每个事件的信息会用这个值来标识，否则使用 ``:host`` 来标识。
+
 常接在各种窗口后面。
 
 .. code-block:: clojure

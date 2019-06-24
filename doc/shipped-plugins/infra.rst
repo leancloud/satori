@@ -128,6 +128,58 @@ proc.uninterruptables
        最常见的不可中断睡眠状态的进程状态是由磁盘 IO 导致的，是正常状态。
        如果持续性的数量过多就需要调查了。
 
+.. _infra-softirq:
+
+软中断统计
+----------
+softirq.timer
+    :意义: 时钟中断
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+softirq.net_tx: 89 84
+    :意义: 发送网络数据
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+softirq.net_rx: 776 1331
+    :意义: 接收网络数据
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+softirq.block: 60 89
+    :意义: 块设备请求
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+softirq.tasklet: 141 29
+    :意义: Tasklet
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+    .. note::
+       一些内核中高优先级但是不合适做成软中断的任务
+
+softirq.sched:
+    :意义: 进程调度
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+softirq.rcu:
+    :意义: RCU 回收
+    :提供: :file:`infra/30_softirq.py`
+    :取值: 0 - 无上限，累积，整数
+    :Tags: 无
+
+   .. note::
+      RCU 是内核中用的一种并发数据结构，需要定期清理
+
 
 监控规则样例
 ------------

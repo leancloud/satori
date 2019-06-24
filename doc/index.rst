@@ -1,7 +1,7 @@
 Satori 监控系统
 ===============
 
-Satori 是一个由 LeanCloud_ 维护的监控系统。
+Satori 是一个由 LeanCloud_ 发起的监控系统。
 
 .. toctree::
    :maxdepth: 2
@@ -68,9 +68,10 @@ Satori 是一个由 LeanCloud_ 维护的监控系统。
    shipped-plugins/url.check
    shipped-plugins/proc.java.heap
    shipped-plugins/mysql.query
+   shipped-plugins/nvgpu
 
    shipped-plugins/infra
-   shipped-plugins/ping
+   shipped-plugins/cross
    shipped-plugins/swcollector
    shipped-plugins/others
 

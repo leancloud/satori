@@ -46,3 +46,52 @@ sdo
     (sdo
         (rule1 ...)
         (rule2 ...))
+
+.. _waterfall:
+
+->waterfall
+-----------
+
+``(->waterfall & children)``
+
+用这个将规则改写成瀑布流的方式，会比较好看。
+仅适用于每个规则下仅有一个子流的情况。
+
+比如：
+
+.. code-block:: clojure
+
+    (->waterfall
+      (where (service "nvgpu.gtemp"))
+      (by :host)
+      (copy :id :aggregate-desc-key)
+      (group-window :id)
+      (aggregate max)
+      (judge-gapped (> 90) (< 86))
+      (alarm-every 2 :min)
+      (! {:note "GPU 过热"
+          :level 1
+          :expected 85
+          :outstanding-tags [:host]
+          :groups [:operation :devs]}))
+
+与如下代码等价：
+
+.. code-block:: clojure
+
+    (where (service "nvgpu.gtemp")
+      (by :host
+        (copy :id :aggregate-desc-key
+          (group-window :id
+            (aggregate max
+              (judge-gapped (> 90) (< 86)
+                (alarm-every 2 :min
+                  (! {:note "GPU 过热"
+                      :level 1
+                      :expected 85
+                      :outstanding-tags [:host]
+                      :groups [:operation :devs]}))))))))
+
+.. note::
+
+   并没有推荐这样做，要不要看个人喜好就好。
