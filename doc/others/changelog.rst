@@ -1,12 +1,13 @@
 .. _changelog:
 
 ChangeLog
----------
+*********
 
 2.0.0
 =====
 
-相对于 1.x 更新了以下东西：
+相对于 1.x 更新了以下东西
+-------------------------
 
 1. alarm 的后端放进了规则仓库，增加报警方式不再需要 fork alarm
 2. alarm 增加了 hook 机制，用来在发送报警的时候对报警做变换，或者阻止发送
@@ -20,11 +21,15 @@ ChangeLog
 10. agent 现在可以选择使用 FQDN 作为自己的机器名（可配置）
 11. 添加了 Kerberos(SPNEGO) 验证的支持
 
-不兼容的改变：
+不兼容的改变
+------------
+
 1. agent 不再将接受参数的插件放在单独的 ``_metric`` 目录中
 2. agent 内置的内存指标 ``mem.memfree`` 改名为 ``mem.memusable``, 并分拆了 ``mem.free`` ``mem.cached`` ``mem.buffers``
 
-修复 BUG：
+修复 BUG
+--------
+
 1. 修复了一个插件调度的极端情况导致 agent crash 的 bug
 2. 修复了一个 agent 无法更新规则仓库的 bug
 3. 修复了部署描述符错误导致丢失数据的 bug
