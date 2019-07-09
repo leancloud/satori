@@ -65,7 +65,7 @@ def cook_event(ev):
             related_teams.setdefault(uid, set()).add(t)
 
     users = [State.users.get(u) for l in mapping.values() for u in l]
-    users = [copy.deepcopy(u) for u in users if not u or u.get('threshold', 1000) > ev['level']]
+    users = [copy.deepcopy(u) for u in users if u and u.get('threshold', 1000) > ev['level']]
 
     for u in users:
         u['related_groups'] = list(related_teams[u['id']])
