@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+# -- stdlib --
+from collections import defaultdict
+import json
+import subprocess
+import time
+
+# -- third party --
+# -- own --
+
+# -- code --
+ts = int(time.time())
+
+
+class proxy(object):
+    def __init__(self, d):
+        self.d = d
+
+    def __getitem__(self, k):
+        v = self.d.get(k, 0)
+        if isinstance(v, dict):
+            return proxy(v)
+        else:
+            return v
+
+
+rst = []
+
+# ----- status -----
+
+proc = subprocess.Popen("ceph -s --format json", shell=True, stdout=subprocess.PIPE)
+status = proxy(json.loads(proc.stdout.read()))
+
+M = {}
+M['ceph.mon.quorum']                    = len(status['quorum'])
+M['ceph.mon.num']                       = len(status['monmap']['mons'])
+M['ceph.osd.num']                       = float(status['osdmap']['osdmap']['num_osds'])
+M['ceph.osd.up']                        = float(status['osdmap']['osdmap']['num_up_osds'])
+M['ceph.osd.in']                        = float(status['osdmap']['osdmap']['num_in_osds'])
+M['ceph.osd.full']                      = float(status['osdmap']['osdmap']['full'])
+M['ceph.osd.nearfull']                  = float(status['osdmap']['osdmap']['nearfull'])
+M['ceph.osd.remapped_pgs']              = float(status['osdmap']['osdmap']['num_remapped_pgs'])
+M['ceph.pg.num']                        = float(status['pgmap']['num_pgs'])
+M['ceph.pg.pools']                      = float(status['pgmap']['num_pools'])
+M['ceph.pg.objects']                    = float(status['pgmap']['num_objects'])
+M['ceph.pg.data_bytes']                 = float(status['pgmap']['data_bytes'])
+M['ceph.pg.used_bytes']                 = float(status['pgmap']['bytes_used'])
+M['ceph.pg.avail_bytes']                = float(status['pgmap']['bytes_avail'])
+M['ceph.pg.total_bytes']                = float(status['pgmap']['bytes_total'])
+M['degraded_objects']                   = float(status['pgmap']['degraded_objects'])
+M['degraded_total']                     = float(status['pgmap']['degraded_total'])
+M['degraded_ratio']                     = float(status['pgmap']['degraded_ratio'])
+M['ceph.pg.misplaced_objects']          = float(status['pgmap']['misplaced_objects'])
+M['ceph.pg.misplaced_total']            = float(status['pgmap']['misplaced_total'])
+M['ceph.pg.misplaced_ratio']            = float(status['pgmap']['misplaced_ratio'])
+M['ceph.pg.recovering_objects_per_sec'] = float(status['pgmap']['recovering_objects_per_sec'])
+M['ceph.pg.recovering_bytes_per_sec']   = float(status['pgmap']['recovering_bytes_per_sec'])
+M['ceph.pg.recovering_keys_per_sec']    = float(status['pgmap']['recovering_keys_per_sec'])
+M['ceph.pg.num_objects_recovered']      = float(status['pgmap']['num_objects_recovered'])
+M['ceph.pg.num_bytes_recovered']        = float(status['pgmap']['num_bytes_recovered'])
+M['ceph.pg.num_keys_recovered']         = float(status['pgmap']['num_keys_recovered'])
+M['ceph.pg.read_bytes_per_sec']         = float(status['pgmap']['read_bytes_sec'])
+M['ceph.pg.write_bytes_per_sec']        = float(status['pgmap']['write_bytes_sec'])
+M['ceph.pg.read_ops_per_sec']           = float(status['pgmap']['read_op_per_sec'])
+M['ceph.pg.write_ops_per_sec']          = float(status['pgmap']['write_op_per_sec'])
+M['ceph.fs.up']                         = float(status['fsmap']['up'])
+M['ceph.fs.in']                         = float(status['fsmap']['in'])
+
+rst.extend([{
+    "metric": k,
+    "value": v,
+    "timestamp": ts,
+    "tags": {},
+} for k, v in M.items()])
+
+cnt = defaultdict(int)
+for i in status['pgmap']['pgs_by_state']:
+    for s in i['state_name'].split('+'):
+        cnt[s] += i['count']
+
+rst.extend([{
+    "metric": 'ceph.pg.by_state',
+    "value": v,
+    "timestamp": ts,
+    "tags": {
+        "pg_state": k,
+    },
+} for k, v in cnt.items()])
+
+# ----- df -----
+proc = subprocess.Popen("ceph df --format json", shell=True, stdout=subprocess.PIPE)
+df = proxy(json.loads(proc.stdout.read()))
+M = {}
+M['ceph.df.total_bytes'] = float(df['stats']['total_bytes'])
+M['ceph.df.used_bytes']  = float(df['stats']['total_used_bytes'])
+M['ceph.df.avail_bytes'] = float(df['stats']['total_avail_bytes'])
+
+
+for p in df['pools']:
+    rst.extend([{
+        "metric": 'ceph.df.by_pool.%s' % k,
+        "value": float(p['stats'][k]),
+        "timestamp": ts,
+        "tags": {
+            "pool": p['name'],
+        },
+    } for k in ('bytes_used', 'objects')])
+
+print(json.dumps(rst))
