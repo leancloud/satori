@@ -155,12 +155,14 @@ func CpuMetrics() []*model.MetricValue {
 	}
 
 	cpuIdleVal := CpuIdle()
+	cpuIowaitVal := CpuIowait()
 	idle := V("cpu.idle", cpuIdleVal)
+	idle := V("cpu.free", cpuIdleVal+cpuIoWaitVal)
 	busy := V("cpu.busy", 100.0-cpuIdleVal)
 	user := V("cpu.user", CpuUser())
 	nice := V("cpu.nice", CpuNice())
 	system := V("cpu.system", CpuSystem())
-	iowait := V("cpu.iowait", CpuIowait())
+	iowait := V("cpu.iowait", cpuIowaitVal)
 	irq := V("cpu.irq", CpuIrq())
 	softirq := V("cpu.softirq", CpuSoftIrq())
 	steal := V("cpu.steal", CpuSteal())

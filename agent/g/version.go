@@ -30,7 +30,8 @@ package g
 // 8.0.2: Mem 指标微调
 // 8.0.4: 修复一个关于插件的 crash 问题
 // 8.0.5: 增加了 agent crash 的报警
+// 8.0.6: 增加了 cpu.free == cpu.idle + cpu.iowait
 
 const (
-	VERSION = "8.0.5"
+	VERSION = "8.0.6"
 )
