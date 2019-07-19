@@ -1,7 +1,7 @@
 FROM satori:base
 
 WORKDIR /tmp
-RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/eaeee7653f6feb6c23cf/grafana_6.1.4_amd64.deb -o grafana-6.1.4.deb && \
+RUN curl https://satori.thb.io/eaeee7653f6feb6c23cf/grafana_6.1.4_amd64.deb -o grafana-6.1.4.deb && \
     dpkg -i grafana-6.1.4.deb && \
     rm grafana-6.1.4.deb
 

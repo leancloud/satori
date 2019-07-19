@@ -2,7 +2,7 @@ FROM satori:base
 
 WORKDIR /tmp
 
-RUN curl https://lc-qjnlgvra.cn-n1.lcfile.com/daedceb139b819f21ef8/influxdb_1.6.3_amd64.deb -o influxdb-1.6.3.deb && \
+RUN curl https://satori.thb.io/daedceb139b819f21ef8/influxdb_1.6.3_amd64.deb -o influxdb-1.6.3.deb && \
     dpkg -i influxdb-1.6.3.deb && \
     rm influxdb-1.6.3.deb
 
