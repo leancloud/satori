@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # -- stdlib --
-from collections import defaultdict
 import json
 import subprocess
 import time
@@ -30,9 +29,42 @@ class proxy(object):
 rst = []
 
 # ----- status -----
+PG_STATES = [
+    "active",
+    "clean",
+    "down",
+    "recovery_unfound",
+    "backfill_unfound",
+    "scrubbing",
+    "degraded",
+    "inconsistent",
+    "peering",
+    "repair",
+    "recovering",
+    "forced_recovery",
+    "backfill_wait",
+    "incomplete",
+    "stale",
+    "remapped",
+    "deep",
+    "backfilling",
+    "forced_backfill",
+    "backfill_toofull",
+    "recovery_wait",
+    "recovery_toofull",
+    "undersized",
+    "activating",
+    "peered",
+    "snaptrim",
+    "snaptrim_wait",
+    "snaptrim_error",
+    "creating",
+    "unknown"
+]
 
-proc = subprocess.Popen("ceph -s --format json", shell=True, stdout=subprocess.PIPE)
+proc = subprocess.Popen("exec ceph -s --format json", shell=True, stdout=subprocess.PIPE)
 status = proxy(json.loads(proc.stdout.read()))
+proc.kill()
 
 M = {}
 M['ceph.mon.quorum']                    = len(status['quorum'])
@@ -50,9 +82,9 @@ M['ceph.pg.data_bytes']                 = float(status['pgmap']['data_bytes'])
 M['ceph.pg.used_bytes']                 = float(status['pgmap']['bytes_used'])
 M['ceph.pg.avail_bytes']                = float(status['pgmap']['bytes_avail'])
 M['ceph.pg.total_bytes']                = float(status['pgmap']['bytes_total'])
-M['degraded_objects']                   = float(status['pgmap']['degraded_objects'])
-M['degraded_total']                     = float(status['pgmap']['degraded_total'])
-M['degraded_ratio']                     = float(status['pgmap']['degraded_ratio'])
+M['ceph.pg.degraded_objects']           = float(status['pgmap']['degraded_objects'])
+M['ceph.pg.degraded_total']             = float(status['pgmap']['degraded_total'])
+M['ceph.pg.degraded_ratio']             = float(status['pgmap']['degraded_ratio'])
 M['ceph.pg.misplaced_objects']          = float(status['pgmap']['misplaced_objects'])
 M['ceph.pg.misplaced_total']            = float(status['pgmap']['misplaced_total'])
 M['ceph.pg.misplaced_ratio']            = float(status['pgmap']['misplaced_ratio'])
@@ -76,7 +108,7 @@ rst.extend([{
     "tags": {},
 } for k, v in M.items()])
 
-cnt = defaultdict(int)
+cnt = {k: 0 for k in PG_STATES}
 for i in status['pgmap']['pgs_by_state']:
     for s in i['state_name'].split('+'):
         cnt[s] += i['count']
@@ -91,8 +123,9 @@ rst.extend([{
 } for k, v in cnt.items()])
 
 # ----- df -----
-proc = subprocess.Popen("ceph df --format json", shell=True, stdout=subprocess.PIPE)
+proc = subprocess.Popen("exec ceph df --format json", shell=True, stdout=subprocess.PIPE)
 df = proxy(json.loads(proc.stdout.read()))
+proc.kill()
 M = {}
 M['ceph.df.total_bytes'] = float(df['stats']['total_bytes'])
 M['ceph.df.used_bytes']  = float(df['stats']['total_used_bytes'])
