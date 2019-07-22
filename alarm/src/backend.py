@@ -64,5 +64,9 @@ class Backend(object):
     def shutdown(self):
         self.logger.debug('Shutting down backend [{}] ...'.format(self.__class__.__name__))
 
+    def set_state(self, state):
+        self.logger.debug('Injecting states to backend [{}] ...'.format(self.__class__.__name__))
+        self.state = state
+
     def send(self, ev):
         pass

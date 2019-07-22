@@ -77,9 +77,10 @@ def refresh():
 
     backends = {}
     for strategy in State.strategies.values():
-        backends[strategy['backend']] = backend.from_string(
-            strategy['backend']
-        )(strategy)
+        name = strategy['backend']
+        backends[name] = backend.from_string(name)(strategy)
+        backends[name].set_state(State)
+
     State.backends = backends
 
 
