@@ -157,7 +157,7 @@ func CpuMetrics() []*model.MetricValue {
 	cpuIdleVal := CpuIdle()
 	cpuIowaitVal := CpuIowait()
 	idle := V("cpu.idle", cpuIdleVal)
-	idle := V("cpu.free", cpuIdleVal+cpuIoWaitVal)
+	free := V("cpu.free", cpuIdleVal+cpuIowaitVal)
 	busy := V("cpu.busy", 100.0-cpuIdleVal)
 	user := V("cpu.user", CpuUser())
 	nice := V("cpu.nice", CpuNice())
@@ -168,5 +168,5 @@ func CpuMetrics() []*model.MetricValue {
 	steal := V("cpu.steal", CpuSteal())
 	guest := V("cpu.guest", CpuGuest())
 	switches := V("cpu.switches", float64(CurrentCpuSwitches()))
-	return []*model.MetricValue{idle, busy, user, nice, system, iowait, irq, softirq, steal, guest, switches}
+	return []*model.MetricValue{idle, free, busy, user, nice, system, iowait, irq, softirq, steal, guest, switches}
 }
