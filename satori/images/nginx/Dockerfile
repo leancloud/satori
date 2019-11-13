@@ -4,13 +4,13 @@ RUN apt-get install -y libpcre3-dev libssl-dev perl make build-essential zlib1g-
     luarocks install lua-resty-auto-ssl && \
     mkdir -p /tmp/build && \
     cd /tmp/build && \
-    curl https://openresty.org/download/openresty-1.13.6.2.tar.gz -o openresty.tgz && \
+    curl https://openresty.org/download/openresty-1.15.8.2.tar.gz -o openresty.tgz && \
     tar -xzvf openresty.tgz && \
     cd openresty-* && \
     git clone --depth=1 https://github.com/stnoonan/spnego-http-auth-nginx-module && \
     ./configure \
     --with-debug \
-    -j2 \
+    -j$(nproc) \
     --with-pcre-jit \
     `# --with-ipv6` \
     --with-threads \
