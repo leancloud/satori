@@ -100,6 +100,8 @@ services:
     volumes:
       - "$CONF_DIR:/conf"
       - "grafana:/var/lib/grafana"
+    command:
+      - --config=/conf/grafana.ini
 
   redis:
     build:
