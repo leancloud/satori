@@ -491,7 +491,7 @@ elif [ "$1" = "-f" -a -f "$2" ]; then
     ensure-htpasswd-auto
     setup-configs
     prepare-rules-repo
-    setup-docker-mirror
+    # setup-docker-mirror  # seems official registry is fast enough now
     prepare-docker-images
     add-compiled-plugins
     generate-basic-auth
@@ -515,7 +515,7 @@ elif [ "$1" = "" ]; then
 
     setup-configs
     prepare-rules-repo
-    setup-docker-mirror
+    # setup-docker-mirror  # seems official registry is fast enough now
     prepare-docker-images
     add-compiled-plugins
     generate-basic-auth
