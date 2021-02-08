@@ -94,12 +94,14 @@ services:
       - "influxdb:/var/lib/influxdb"
 
   grafana:
-    build:
-      context: images/grafana
+    image: grafana/grafana:7.1.5
+    user: root
     restart: always
     volumes:
       - "$CONF_DIR:/conf"
       - "grafana:/var/lib/grafana"
+    command:
+      - --config=/conf/grafana.ini
 
   redis:
     build:
