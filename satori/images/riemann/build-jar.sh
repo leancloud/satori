@@ -3,4 +3,4 @@
 # require lein+jdk
 
 lein uberjar && \
-  cp target/riemann-*-satori-standalone.jar app/
+  cp target/riemann-*-satori-standalone.jar app/riemann.jar
