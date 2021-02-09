@@ -7,9 +7,11 @@
             [riemann.streams :refer :all]
             [riemann.test :refer [io]]
             [riemann.time :refer [unix-time]]
-            [taoensso.carmine :as car])
+            [taoensso.carmine :as car]
+            [clojure.tools.logging :refer [info]])
 
-  (:import riemann.codec.Event))
+  (:import [riemann.codec Event]
+           [org.quartz CronExpression]))
 
 (defn- evid [ev outstanding-tags m]
   (let [f #(let [v (% m)] (if (fn? v) (v ev) v))]
@@ -137,6 +139,31 @@
   [dt & children]
   (apply alarm-every (concat [dt :secs] children)))
 
+(defn quiet?
+  "接收数组格式的 rules 作为静默规则， 如 [['backup','* * 1-9 * * ?']]
+   backup 是个正则（也可以为 string), 用来匹配 host(endpoint)
+   '* * 1-9 * * ?' 为 cron 的表达式(local timezone)，用来表示生效的时间范围"
+  [rule & children]
+  ;; 只能处理单个 event
+  (fn [evt]
+    (try
+      (let [matched-rule (-> (filter
+                              (fn [r] (or (= (:host evt) (first r))
+                                          (not-empty
+                                            (re-matches (re-pattern (first r)) (:host evt))))) rule)
+                              (first)
+                              (second))
+            time (java.util.Date. (* (:time evt) 1000))]
+        (if matched-rule
+          ;; http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html
+          (let [cron-exp (CronExpression. matched-rule)]
+            ;; fix timezone later
+            (.setTimeZone cron-exp (java.util.TimeZone/getTimeZone "Asia/Shanghai"))
+            (when-not (.isSatisfiedBy cron-exp time)
+              (call-rescue evt children)))
+          (call-rescue evt children)))
+      (catch Exception e
+        (info e)))))
 
 (defn feed-dog
   "喂狗。如果 ttl 之内没有再次喂狗，就会触发 watchdog 报警，配合 watchdog 流使用。"
