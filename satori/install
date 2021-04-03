@@ -54,9 +54,18 @@ function prepare-docker-images
 
     echo :: - Generate docker-compose.yml
     cat <<EOF > docker-compose.yml
-version: '3'
+version: '3.4'
+
+x-defautl:
+  &default
+  logging:
+    options:
+      max-size: "10m"
+      max-file: "10"
+
 services:
   master:
+    <<: *default
     build:
       context: images/master
     restart: always
@@ -68,6 +77,7 @@ services:
       - "6041:6041"
 
   transfer:
+    <<: *default
     build:
       context: images/transfer
     restart: always
@@ -78,6 +88,7 @@ services:
       - "8433:8433"
 
   alarm:
+    <<: *default
     build:
       context: images/alarm
     restart: always
@@ -87,6 +98,7 @@ services:
       - "$CONF_DIR:/conf"
 
   influxdb:
+    <<: *default
     build:
       context: images/influxdb
     restart: always
@@ -94,6 +106,7 @@ services:
       - "influxdb:/var/lib/influxdb"
 
   grafana:
+    <<: *default
     image: grafana/grafana:7.1.5
     user: root
     restart: always
@@ -104,6 +117,7 @@ services:
       - --config=/conf/grafana.ini
 
   redis:
+    <<: *default
     build:
       context: images/redis
     restart: always
@@ -111,6 +125,7 @@ services:
       - "redis:/var/lib/redis"
 
   nginx:
+    <<: *default
     build:
       context: images/nginx
     links: [influxdb, grafana, alarm, master]
@@ -123,6 +138,7 @@ services:
       - "443:443"
 
   riemann:
+    <<: *default
     build:
       context: images/riemann
     links: [redis]
