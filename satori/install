@@ -107,7 +107,7 @@ services:
 
   grafana:
     <<: *default
-    image: grafana/grafana:7.1.5
+    image: grafana/grafana:7.5.2
     user: root
     restart: always
     volumes:
