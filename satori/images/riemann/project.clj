@@ -10,5 +10,6 @@
                  [org.clojure/core.match "0.3.0"]
                  [org.clojure/core.async "0.4.490"]
                  [com.taoensso/carmine "2.19.1"]
+                 [org.quartz-scheduler/quartz "2.3.0" :exclusions [org.slf4j/slf4j-api]]
                  [io.aviso/pretty "0.1.37"]
                  [riemann "0.3.2"]])
